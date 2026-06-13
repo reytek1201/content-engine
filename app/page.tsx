@@ -1,10 +1,25 @@
 "use client";
 
+import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
 import { createClient } from "@/utils/supabase/client";
+import { uploadReferenceImage } from "@/utils/upload-reference";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
+import {
+  DEFAULT_SLIDE_COUNT,
+  getAllowedSlideCounts,
+  type SlideCount,
+} from "@/types/slides";
+
 type AspectRatio = "4:5" | "9:16";
+
+const SLIDE_COUNT_LABELS: Record<SlideCount, string> = {
+  3: "Quick post",
+  5: "Standard carousel",
+  7: "Deep carousel",
+};
 
 interface GenerateTextSuccess {
   success: true;
@@ -31,9 +46,44 @@ export default function Home() {
 
   const [topic, setTopic] = useState("");
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("4:5");
+  const [slideCount, setSlideCount] = useState<SlideCount>(DEFAULT_SLIDE_COUNT);
+  const allowedSlideCounts = getAllowedSlideCounts(user?.id);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
+
+  const [productFile, setProductFile] = useState<File | null>(null);
+  const [styleFile, setStyleFile] = useState<File | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [productPreview, setProductPreview] = useState<string | null>(null);
+  const [stylePreview, setStylePreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  function handleReferenceSelect(
+    type: "product" | "style" | "logo",
+    file: File | null
+  ) {
+    const setFile =
+      type === "product"
+        ? setProductFile
+        : type === "style"
+          ? setStyleFile
+          : setLogoFile;
+    const setPreview =
+      type === "product"
+        ? setProductPreview
+        : type === "style"
+          ? setStylePreview
+          : setLogoPreview;
+
+    setFile(file);
+    setPreview((current) => {
+      if (current) {
+        URL.revokeObjectURL(current);
+      }
+      return file ? URL.createObjectURL(file) : null;
+    });
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
@@ -93,15 +143,58 @@ export default function Home() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!user) {
+      return;
+    }
+
     setError(null);
     setCampaignId(null);
     setIsLoading(true);
 
     try {
+      const references: {
+        product?: string;
+        style?: string;
+        logo?: string;
+      } = {};
+
+      if (productFile) {
+        references.product = await uploadReferenceImage(
+          supabase,
+          productFile,
+          user.id,
+          "product"
+        );
+      }
+
+      if (styleFile) {
+        references.style = await uploadReferenceImage(
+          supabase,
+          styleFile,
+          user.id,
+          "style"
+        );
+      }
+
+      if (logoFile) {
+        references.logo = await uploadReferenceImage(
+          supabase,
+          logoFile,
+          user.id,
+          "logo"
+        );
+      }
+
       const response = await fetch("/api/generate-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, aspect_ratio: aspectRatio }),
+        body: JSON.stringify({
+          topic,
+          aspect_ratio: aspectRatio,
+          slide_count: slideCount,
+          references:
+            Object.keys(references).length > 0 ? references : undefined,
+        }),
       });
 
       const data = (await response.json()) as GenerateTextResponse;
@@ -142,8 +235,8 @@ export default function Home() {
             Generate your next campaign
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
-            Enter a marketing topic or pain point. We&apos;ll draft five slides
-            with overlays, voiceover scripts, and image prompts.
+            Enter a marketing topic or pain point. We&apos;ll draft slide
+            scripts with overlays, voiceover, and image prompts.
           </p>
         </header>
 
@@ -218,13 +311,21 @@ export default function Home() {
           <>
             <div className="mb-6 flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
               <span>{user.email}</span>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="font-medium text-zinc-200 transition hover:text-zinc-50"
-              >
-                Sign out
-              </button>
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/campaigns"
+                  className="font-medium text-zinc-200 transition hover:text-zinc-50"
+                >
+                  My campaigns
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="font-medium text-zinc-200 transition hover:text-zinc-50"
+                >
+                  Sign out
+                </button>
+              </div>
             </div>
 
             <form
@@ -289,6 +390,68 @@ export default function Home() {
                 </div>
               </div>
 
+              <div className="mt-8">
+                <p className="text-sm font-medium text-zinc-300">Slide count</p>
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                  {allowedSlideCounts.map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => setSlideCount(count)}
+                      className={`rounded-xl border px-4 py-3 text-left transition ${
+                        slideCount === count
+                          ? "border-zinc-200 bg-zinc-100 text-zinc-950"
+                          : "border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-500"
+                      } disabled:cursor-not-allowed disabled:opacity-60`}
+                    >
+                      <span className="block text-sm font-semibold">
+                        {count} slides
+                      </span>
+                      <span className="mt-1 block text-xs opacity-70">
+                        {SLIDE_COUNT_LABELS[count]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <p className="text-sm font-medium text-zinc-300">
+                  References (optional)
+                </p>
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  Upload product, style, or logo assets to steer copy and slide
+                  visuals.
+                </p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                  <ReferenceUploadSlot
+                    id="product-reference"
+                    label="Product"
+                    description="Your product, app, or offer to feature."
+                    previewUrl={productPreview}
+                    disabled={isLoading}
+                    onFileSelect={(file) => handleReferenceSelect("product", file)}
+                  />
+                  <ReferenceUploadSlot
+                    id="style-reference"
+                    label="Style"
+                    description="Mood board or carousel style to match."
+                    previewUrl={stylePreview}
+                    disabled={isLoading}
+                    onFileSelect={(file) => handleReferenceSelect("style", file)}
+                  />
+                  <ReferenceUploadSlot
+                    id="logo-reference"
+                    label="Logo"
+                    description="Brand mark for consistent placement."
+                    previewUrl={logoPreview}
+                    disabled={isLoading}
+                    onFileSelect={(file) => handleReferenceSelect("logo", file)}
+                  />
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={isLoading || topic.trim().length === 0}
@@ -316,12 +479,18 @@ export default function Home() {
                   Text generation complete
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-zinc-400">
-                  Your campaign metadata and five slide scripts are saved. The
-                  image pipeline workspace will attach to this campaign next.
+                  Your campaign metadata and {slideCount} slide scripts are saved.
+                  Open the workspace to review overlays and voiceover copy.
                 </p>
-                <div className="mt-5 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 font-mono text-sm text-zinc-300">
+                <Link
+                  href={`/campaign/${campaignId}`}
+                  className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-400"
+                >
+                  View campaign workspace
+                </Link>
+                <p className="mt-4 truncate font-mono text-xs text-zinc-500">
                   {campaignId}
-                </div>
+                </p>
               </section>
             )}
           </>

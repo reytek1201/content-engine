@@ -1,0 +1,140 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+function countWords(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+interface SlideOverlayEditorProps {
+  slideId: string;
+  value: string;
+  disabled?: boolean;
+  onSaved: (textOverlay: string) => void;
+  onError: (message: string) => void;
+}
+
+export default function SlideOverlayEditor({
+  slideId,
+  value,
+  disabled = false,
+  onSaved,
+  onError,
+}: SlideOverlayEditorProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setDraft(value);
+    }
+  }, [value, isEditing]);
+
+  const wordCount = countWords(draft);
+  const isValid = draft.trim().length > 0 && wordCount <= 12;
+  const hasChanges = draft.trim() !== value.trim();
+
+  async function handleSave() {
+    if (!isValid) {
+      onError("Headline must be 1–12 words");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const response = await fetch(`/api/slides/${slideId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text_overlay: draft.trim() }),
+      });
+
+      const data = (await response.json()) as {
+        success: boolean;
+        error?: string;
+        slide?: { text_overlay: string | null };
+      };
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? "Failed to save headline");
+      }
+
+      onSaved(data.slide?.text_overlay?.trim() ?? draft.trim());
+      setIsEditing(false);
+    } catch (saveError) {
+      onError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Failed to save headline"
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+          Text overlay
+        </p>
+        {!isEditing ? (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => setIsEditing(true)}
+            className="text-xs font-medium text-zinc-400 transition hover:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Edit headline
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={disabled || isSaving}
+            onClick={() => {
+              setDraft(value);
+              setIsEditing(false);
+            }}
+            className="text-xs font-medium text-zinc-400 transition hover:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+
+      {isEditing ? (
+        <div className="mt-2">
+          <input
+            type="text"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            disabled={disabled || isSaving}
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-lg font-semibold text-zinc-50 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+          />
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+            <p
+              className={`text-xs ${
+                wordCount > 12 ? "text-red-300" : "text-zinc-500"
+              }`}
+            >
+              {wordCount}/12 words
+            </p>
+            <button
+              type="button"
+              disabled={disabled || isSaving || !isValid || !hasChanges}
+              onClick={handleSave}
+              className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSaving ? "Saving…" : "Save headline"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-2 text-lg font-semibold leading-snug text-zinc-50">
+          {value || "—"}
+        </p>
+      )}
+    </div>
+  );
+}

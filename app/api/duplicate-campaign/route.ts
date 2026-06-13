@@ -1,12 +1,33 @@
-import { createClient } from "@/utils/supabase/server";
 import { generateCampaignContent } from "@/utils/gemini";
 import {
   assertSlideCountAllowed,
-  normalizeReferencesInput,
-  RequestSchema,
+  referencesFromCampaign,
 } from "@/utils/campaign-generation";
+import { createClient } from "@/utils/supabase/server";
+import type { Campaign } from "@/types/campaign";
+import {
+  DEFAULT_SLIDE_COUNT,
+  isSlideCount,
+  type SlideCount,
+} from "@/types/slides";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+
+export const maxDuration = 300;
+
+const RequestSchema = z.object({
+  campaignId: z.string().uuid(),
+});
+
+function resolveSlideCount(campaign: Campaign, slideCount?: number): SlideCount {
+  const value = campaign.slide_count ?? slideCount ?? DEFAULT_SLIDE_COUNT;
+
+  if (isSlideCount(value)) {
+    return value;
+  }
+
+  return DEFAULT_SLIDE_COUNT;
+}
 
 export async function POST(request: Request) {
   try {
@@ -38,42 +59,74 @@ export async function POST(request: Request) {
       );
     }
 
-    const { topic, aspect_ratio, slide_count, references: referencesInput } =
-      parsedInput.data;
-    const references = normalizeReferencesInput(referencesInput);
+    const { campaignId } = parsedInput.data;
 
-    assertSlideCountAllowed(slide_count, user.id);
+    const { data: sourceCampaign, error: campaignError } = await supabase
+      .from("campaigns")
+      .select("*")
+      .eq("id", campaignId)
+      .single();
+
+    if (campaignError || !sourceCampaign) {
+      return NextResponse.json(
+        { success: false, error: "Campaign not found" },
+        { status: 404 }
+      );
+    }
+
+    const typedSource = sourceCampaign as Campaign;
+
+    if (typedSource.user_id !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 403 }
+      );
+    }
+
+    const { count: slideCount } = await supabase
+      .from("slides")
+      .select("*", { count: "exact", head: true })
+      .eq("campaign_id", campaignId);
+
+    const resolvedSlideCount = resolveSlideCount(
+      typedSource,
+      slideCount ?? undefined
+    );
+
+    assertSlideCountAllowed(resolvedSlideCount, user.id);
+
+    const references = referencesFromCampaign(typedSource);
 
     const generated = await generateCampaignContent(
-      topic,
-      aspect_ratio,
-      slide_count,
+      typedSource.topic,
+      typedSource.aspect_ratio,
+      resolvedSlideCount,
       references
     );
 
-    const { data: campaign, error: campaignError } = await supabase
+    const { data: campaign, error: insertError } = await supabase
       .from("campaigns")
       .insert({
         user_id: user.id,
-        topic,
+        topic: typedSource.topic,
         title: generated.title,
         target_audience: generated.target_audience,
-        aspect_ratio,
-        slide_count,
+        aspect_ratio: typedSource.aspect_ratio,
+        slide_count: resolvedSlideCount,
         status: "idle",
-        product_reference_url: references.product ?? null,
-        style_reference_url: references.style ?? null,
-        logo_reference_url: references.logo ?? null,
+        product_reference_url: typedSource.product_reference_url,
+        style_reference_url: typedSource.style_reference_url,
+        logo_reference_url: typedSource.logo_reference_url,
       })
       .select("id")
       .single();
 
-    if (campaignError || !campaign) {
+    if (insertError || !campaign) {
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to create campaign",
-          details: campaignError?.message,
+          error: "Failed to create duplicate campaign",
+          details: insertError?.message,
         },
         { status: 500 }
       );
@@ -97,7 +150,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to persist slides",
+          error: "Failed to persist slides for duplicate campaign",
           details: slidesError.message,
         },
         { status: 500 }

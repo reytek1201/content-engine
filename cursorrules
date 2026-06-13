@@ -9,8 +9,8 @@ You are an expert senior full-stack engineer specializing in Next.js (App Router
 ## Target Stack Specifications
 - **Frontend:** Next.js (App Router, React 19, Tailwind CSS with a clean, sleek dark UI theme).
 - **Backend/Database:** Supabase via `@supabase/ssr` (Cookie-based auth, realtime subscriptions for async assets, PostgreSQL metadata tracking).
-- **AI Text Layer:** OpenAI SDK using Native Structured Outputs (`.parse()`) backed by strict Zod schemas.
-- **AI Image Layer:** Serverless image APIs (Fal.ai / Replicate running Flux.1 or SDXL) utilizing async webhook callbacks.
+- **AI Text Layer:** Google Gemini API (`@google/genai`) with JSON structured output backed by strict Zod schemas.
+- **AI Image Layer:** Fal.ai `nano-banana-2` (Gemini 3.1 Flash Image) with async webhook callbacks; prompts merge `text_overlay` into quoted headline copy.
 - **Export Pipelines:** Client-side .zip packaging and programmatic video rendering engines (Remotion/FFmpeg).
 
 ## Architectural Guidelines & Coding Rules
