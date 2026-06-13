@@ -1,26 +1,111 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #09090b;
+  --foreground: #f4f4f5;
+
+  --card: #18181b;
+  --card-foreground: #f4f4f5;
+
+  --popover: #18181b;
+  --popover-foreground: #f4f4f5;
+
+  --primary: #f97316;
+  --primary-foreground: #ffffff;
+
+  --secondary: #27272a;
+  --secondary-foreground: #f4f4f5;
+
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+
+  --accent: #27272a;
+  --accent-foreground: #f4f4f5;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #f4f4f5;
+
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #ea580c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-primary to-ring px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/10 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-primary-full {
+    @apply inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-primary to-ring px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/10 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .field-input {
+    @apply w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .surface-panel {
+    @apply rounded-2xl border border-border bg-card/60;
+  }
+
+  .surface-muted {
+    @apply rounded-xl border border-border bg-card/40;
+  }
+
+  .brand-kicker {
+    @apply text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground;
+  }
+
+  .option-toggle {
+    @apply rounded-xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .option-toggle-selected {
+    @apply border-primary bg-primary/15 text-foreground ring-1 ring-primary/40;
+  }
+
+  .option-toggle-default {
+    @apply border-border bg-background text-secondary-foreground hover:border-ring/60;
+  }
+
+  .chip-selected {
+    @apply border-primary bg-primary/15 text-orange-200;
+  }
+
+  .chip-default {
+    @apply border-border text-secondary-foreground hover:border-ring/60 hover:text-foreground;
+  }
 }

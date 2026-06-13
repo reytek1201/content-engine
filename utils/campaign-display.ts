@@ -9,7 +9,7 @@ export const STATUS_LABELS: Record<Campaign["status"], string> = {
 };
 
 export const STATUS_STYLES: Record<Campaign["status"], string> = {
-  idle: "border-zinc-700 bg-zinc-800/60 text-zinc-300",
+  idle: "border-border bg-secondary/60 text-secondary-foreground",
   generating_text: "border-amber-900/60 bg-amber-950/40 text-amber-200",
   generating_images: "border-amber-900/60 bg-amber-950/40 text-amber-200",
   completed: "border-emerald-900/60 bg-emerald-950/40 text-emerald-200",

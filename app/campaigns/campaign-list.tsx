@@ -29,14 +29,14 @@ export default function CampaignList({ campaigns }: CampaignListProps) {
         return (
           <article
             key={campaign.id}
-            className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 transition hover:border-zinc-600 hover:bg-zinc-900/80"
+            className="overflow-hidden rounded-2xl border border-border bg-card/50 transition hover:border-border hover:bg-card/80"
           >
             <div className="flex flex-col sm:flex-row">
               <Link
                 href={`/campaign/${campaign.id}`}
                 className="group flex flex-1 flex-col sm:flex-row"
               >
-                <div className="flex h-40 w-full items-center justify-center border-b border-zinc-800 bg-zinc-950 sm:h-auto sm:w-40 sm:border-b-0 sm:border-r">
+                <div className="flex h-40 w-full items-center justify-center border-b border-border bg-background sm:h-auto sm:w-40 sm:border-b-0 sm:border-r">
                   {previewImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -45,7 +45,7 @@ export default function CampaignList({ campaigns }: CampaignListProps) {
                       className="h-full w-full object-cover sm:max-h-40"
                     />
                   ) : (
-                    <span className="px-4 text-center text-xs uppercase tracking-wide text-zinc-600">
+                    <span className="px-4 text-center text-xs uppercase tracking-wide text-muted-foreground/80">
                       No preview
                     </span>
                   )}
@@ -54,7 +54,7 @@ export default function CampaignList({ campaigns }: CampaignListProps) {
                 <div className="flex flex-1 flex-col justify-between gap-4 p-5 sm:p-6">
                   <div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-lg font-semibold text-zinc-50 transition group-hover:text-white">
+                      <h2 className="text-lg font-semibold text-foreground transition group-hover:text-foreground">
                         {campaign.title ?? "Untitled campaign"}
                       </h2>
                       <span
@@ -63,19 +63,19 @@ export default function CampaignList({ campaigns }: CampaignListProps) {
                         {STATUS_LABELS[campaign.status]}
                       </span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-400">
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
                       {campaign.topic}
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-500">
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                     <span>{formatAspectRatio(campaign.aspect_ratio)}</span>
                     <span>{formatCampaignDate(campaign.created_at)}</span>
                   </div>
                 </div>
               </Link>
 
-              <div className="flex flex-col gap-3 border-t border-zinc-800 p-4 sm:border-l sm:border-t-0">
+              <div className="flex flex-col gap-3 border-t border-border p-4 sm:border-l sm:border-t-0">
                 <DuplicateCampaignButton
                   campaignId={campaign.id}
                   className="w-full sm:w-auto"

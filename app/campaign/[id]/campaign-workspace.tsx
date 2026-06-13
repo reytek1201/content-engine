@@ -369,25 +369,25 @@ export default function CampaignWorkspace({
   }
 
   return (
-    <div className="min-h-full bg-zinc-950 text-zinc-50">
+    <div className="min-h-full bg-background text-foreground">
       <main className="mx-auto w-full max-w-5xl px-6 py-12 sm:px-10">
         <Link
           href="/campaigns"
-          className="inline-flex items-center text-sm font-medium text-zinc-400 transition hover:text-zinc-50"
+          className="inline-flex items-center text-sm font-medium text-muted-foreground transition hover:text-foreground"
         >
           ← All campaigns
         </Link>
 
-        <header className="mt-8 border-b border-zinc-800 pb-8">
+        <header className="mt-8 border-b border-border pb-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-zinc-500">
+              <p className="brand-kicker">
                 Campaign workspace
               </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                 {campaign.title ?? "Untitled campaign"}
               </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-400">
+              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
                 {campaign.topic}
               </p>
             </div>
@@ -424,35 +424,35 @@ export default function CampaignWorkspace({
           )}
 
           <dl className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
-              <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <div className="rounded-xl border border-border bg-card/40 p-4">
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Target audience
               </dt>
-              <dd className="mt-2 text-sm leading-6 text-zinc-200">
+              <dd className="mt-2 text-sm leading-6 text-secondary-foreground">
                 {campaign.target_audience ?? "—"}
               </dd>
             </div>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
-              <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <div className="rounded-xl border border-border bg-card/40 p-4">
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Aspect ratio
               </dt>
-              <dd className="mt-2 text-sm text-zinc-200">
+              <dd className="mt-2 text-sm text-secondary-foreground">
                 {formatAspectRatio(campaign.aspect_ratio)}
               </dd>
             </div>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
-              <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <div className="rounded-xl border border-border bg-card/40 p-4">
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Slides
               </dt>
-              <dd className="mt-2 text-sm text-zinc-200">
+              <dd className="mt-2 text-sm text-secondary-foreground">
                 {campaign.slide_count ?? slides.length}
               </dd>
             </div>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
-              <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <div className="rounded-xl border border-border bg-card/40 p-4">
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Campaign ID
               </dt>
-              <dd className="mt-2 truncate font-mono text-xs text-zinc-400">
+              <dd className="mt-2 truncate font-mono text-xs text-muted-foreground">
                 {campaign.id}
               </dd>
             </div>
@@ -462,13 +462,13 @@ export default function CampaignWorkspace({
             campaign.style_reference_url ||
             campaign.logo_reference_url) && (
             <div className="mt-8">
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Campaign references
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
                 {campaign.product_reference_url && (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
-                    <p className="text-xs font-semibold text-zinc-300">Product</p>
+                  <div className="rounded-xl border border-border bg-card/40 p-3">
+                    <p className="text-xs font-semibold text-secondary-foreground">Product</p>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={campaign.product_reference_url}
@@ -478,8 +478,8 @@ export default function CampaignWorkspace({
                   </div>
                 )}
                 {campaign.style_reference_url && (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
-                    <p className="text-xs font-semibold text-zinc-300">Style</p>
+                  <div className="rounded-xl border border-border bg-card/40 p-3">
+                    <p className="text-xs font-semibold text-secondary-foreground">Style</p>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={campaign.style_reference_url}
@@ -489,8 +489,8 @@ export default function CampaignWorkspace({
                   </div>
                 )}
                 {campaign.logo_reference_url && (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
-                    <p className="text-xs font-semibold text-zinc-300">Logo</p>
+                  <div className="rounded-xl border border-border bg-card/40 p-3">
+                    <p className="text-xs font-semibold text-secondary-foreground">Logo</p>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={campaign.logo_reference_url}
@@ -504,11 +504,11 @@ export default function CampaignWorkspace({
           )}
         </header>
 
-        <section className="mt-10 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-6 sm:p-8">
+        <section className="mt-10 rounded-2xl border border-border bg-card/30 p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-zinc-50">Publish</h2>
-              <p className="mt-1 max-w-2xl text-sm text-zinc-400">
+              <h2 className="text-xl font-semibold text-foreground">Publish</h2>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                 AI-written post copy for TikTok, Instagram, and YouTube Shorts.
                 Regenerating captions only updates publish copy — not your slide
                 images.
@@ -520,7 +520,7 @@ export default function CampaignWorkspace({
                 <button
                   type="button"
                   onClick={handleCopyAllCaptions}
-                  className="inline-flex items-center justify-center rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-zinc-50"
+                  className="inline-flex items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground"
                 >
                   {copiedPlatform === "all" ? "Copied all" : "Copy all"}
                 </button>
@@ -530,7 +530,7 @@ export default function CampaignWorkspace({
                 type="button"
                 onClick={handleGenerateCaptions}
                 disabled={!canGenerateCaptions}
-                className="inline-flex items-center justify-center rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isGeneratingCaptions
                   ? "Generating captions…"
@@ -549,29 +549,29 @@ export default function CampaignWorkspace({
 
           <div className="mt-6">
             {sortedCaptions.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-950/40 px-6 py-8 text-center">
-                <p className="text-sm text-zinc-400">
+              <div className="rounded-xl border border-dashed border-border bg-background/40 px-6 py-8 text-center">
+                <p className="text-sm text-muted-foreground">
                   Click Generate captions to create hooks, post copy, and hashtags
                   tailored to each platform from your slide content.
                 </p>
               </div>
             ) : (
-              <article className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50">
+              <article className="overflow-hidden rounded-xl border border-border bg-card/50">
                 {sortedCaptions.map((platformCaption, index) => (
                   <section
                     key={platformCaption.id}
                     className={
-                      index > 0 ? "border-t border-zinc-800" : undefined
+                      index > 0 ? "border-t border-border" : undefined
                     }
                   >
                     <div className="flex items-center justify-between px-5 py-4 sm:px-6">
-                      <h3 className="text-sm font-semibold text-zinc-200">
+                      <h3 className="text-sm font-semibold text-secondary-foreground">
                         {PLATFORM_LABELS[platformCaption.platform]}
                       </h3>
                       <button
                         type="button"
                         onClick={() => handleCopyCaption(platformCaption)}
-                        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-50"
+                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-secondary-foreground transition hover:border-ring/60 hover:text-foreground"
                       >
                         {copiedPlatform === platformCaption.platform
                           ? "Copied"
@@ -583,10 +583,10 @@ export default function CampaignWorkspace({
                       {platformCaption.platform === "youtube_shorts" &&
                         platformCaption.title && (
                           <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                               Title
                             </p>
-                            <p className="mt-2 text-sm font-semibold text-zinc-100">
+                            <p className="mt-2 text-sm font-semibold text-foreground">
                               {platformCaption.title}
                             </p>
                           </div>
@@ -594,27 +594,27 @@ export default function CampaignWorkspace({
 
                       {platformCaption.hook && (
                         <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                             Hook
                           </p>
-                          <p className="mt-2 text-sm leading-6 text-zinc-200">
+                          <p className="mt-2 text-sm leading-6 text-secondary-foreground">
                             {platformCaption.hook}
                           </p>
                         </div>
                       )}
 
                       <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           Caption
                         </p>
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-zinc-300">
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-secondary-foreground">
                           {platformCaption.caption}
                         </p>
                       </div>
 
                       {platformCaption.hashtags.length > 0 && (
                         <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                             Hashtags
                           </p>
                           <p className="mt-2 text-sm leading-6 text-sky-300">
@@ -633,8 +633,8 @@ export default function CampaignWorkspace({
         <section className="mt-10">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-zinc-50">Slides</h2>
-              <p className="mt-1 text-sm text-zinc-400">
+              <h2 className="text-xl font-semibold text-foreground">Slides</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
                 {slides.length} slide{slides.length === 1 ? "" : "s"} ·{" "}
                 {imagesComplete
                   ? "All images ready"
@@ -661,7 +661,7 @@ export default function CampaignWorkspace({
                   type="button"
                   onClick={handleGenerateImages}
                   disabled={isGenerating}
-                  className="inline-flex items-center justify-center rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isGenerating ? "Starting…" : "Generate images"}
                 </button>
@@ -679,10 +679,10 @@ export default function CampaignWorkspace({
             {slides.map((slide) => (
               <article
                 key={slide.id}
-                className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50"
+                className="overflow-hidden rounded-2xl border border-border bg-card/50"
               >
-                <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
-                  <h3 className="text-sm font-semibold text-zinc-200">
+                <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                  <h3 className="text-sm font-semibold text-secondary-foreground">
                     Slide {slide.slide_index + 1}
                   </h3>
                   {slide.image_url ? (
@@ -694,7 +694,7 @@ export default function CampaignWorkspace({
                       Generating…
                     </span>
                   ) : (
-                    <span className="text-xs font-medium text-zinc-500">
+                    <span className="text-xs font-medium text-muted-foreground">
                       Image pending
                     </span>
                   )}
@@ -709,7 +709,7 @@ export default function CampaignWorkspace({
                 >
                   {slide.image_url && (
                     <div
-                      className={`flex items-center justify-center border-b border-zinc-800 bg-zinc-950 p-6 lg:border-b-0 lg:border-r ${
+                      className={`flex items-center justify-center border-b border-border bg-background p-6 lg:border-b-0 lg:border-r ${
                         campaign.aspect_ratio === "4:5"
                           ? "aspect-4/5 lg:aspect-auto lg:min-h-[300px]"
                           : "aspect-9/16 lg:aspect-auto lg:min-h-[300px]"
@@ -744,10 +744,10 @@ export default function CampaignWorkspace({
                       onError={setError}
                     />
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         Voiceover script
                       </p>
-                      <p className="mt-2 text-sm leading-7 text-zinc-300">
+                      <p className="mt-2 text-sm leading-7 text-secondary-foreground">
                         {slide.voiceover_script ?? "—"}
                       </p>
                     </div>

@@ -76,7 +76,7 @@ export default function SlideOverlayEditor({
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Text overlay
         </p>
         {!isEditing ? (
@@ -84,7 +84,7 @@ export default function SlideOverlayEditor({
             type="button"
             disabled={disabled}
             onClick={() => setIsEditing(true)}
-            className="text-xs font-medium text-zinc-400 transition hover:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="text-xs font-medium text-muted-foreground transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
           >
             Edit headline
           </button>
@@ -96,7 +96,7 @@ export default function SlideOverlayEditor({
               setDraft(value);
               setIsEditing(false);
             }}
-            className="text-xs font-medium text-zinc-400 transition hover:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="text-xs font-medium text-muted-foreground transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>
@@ -110,12 +110,12 @@ export default function SlideOverlayEditor({
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             disabled={disabled || isSaving}
-            className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-lg font-semibold text-zinc-50 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-lg font-semibold text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60"
           />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
             <p
               className={`text-xs ${
-                wordCount > 12 ? "text-red-300" : "text-zinc-500"
+                wordCount > 12 ? "text-red-300" : "text-muted-foreground"
               }`}
             >
               {wordCount}/12 words
@@ -124,14 +124,14 @@ export default function SlideOverlayEditor({
               type="button"
               disabled={disabled || isSaving || !isValid || !hasChanges}
               onClick={handleSave}
-              className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? "Saving…" : "Save headline"}
             </button>
           </div>
         </div>
       ) : (
-        <p className="mt-2 text-lg font-semibold leading-snug text-zinc-50">
+        <p className="mt-2 text-lg font-semibold leading-snug text-foreground">
           {value || "—"}
         </p>
       )}

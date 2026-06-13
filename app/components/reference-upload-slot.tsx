@@ -18,13 +18,13 @@ export default function ReferenceUploadSlot({
   onFileSelect,
 }: ReferenceUploadSlotProps) {
   return (
-    <div className="rounded-xl border border-zinc-700 bg-zinc-950 p-4">
-      <label htmlFor={id} className="block text-sm font-semibold text-zinc-200">
+    <div className="rounded-xl border border-border bg-background p-4">
+      <label htmlFor={id} className="block text-sm font-semibold text-secondary-foreground">
         {label}
       </label>
-      <p className="mt-1 text-xs leading-5 text-zinc-500">{description}</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
 
-      <div className="mt-4 flex min-h-[112px] items-center justify-center overflow-hidden rounded-lg border border-dashed border-zinc-700 bg-zinc-900/50">
+      <div className="mt-4 flex min-h-[112px] items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-card/50">
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -33,7 +33,7 @@ export default function ReferenceUploadSlot({
             className="max-h-28 max-w-full object-contain"
           />
         ) : (
-          <span className="px-3 text-center text-xs text-zinc-500">
+          <span className="px-3 text-center text-xs text-muted-foreground">
             JPG, PNG, or WebP up to 5MB
           </span>
         )}
@@ -42,7 +42,7 @@ export default function ReferenceUploadSlot({
       <div className="mt-3 flex gap-2">
         <label
           htmlFor={id}
-          className={`inline-flex flex-1 cursor-pointer items-center justify-center rounded-lg border border-zinc-600 px-3 py-2 text-xs font-semibold text-zinc-200 transition hover:border-zinc-400 ${
+          className={`inline-flex flex-1 cursor-pointer items-center justify-center rounded-lg border border-border px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 ${
             disabled ? "cursor-not-allowed opacity-60" : ""
           }`}
         >
@@ -53,7 +53,7 @@ export default function ReferenceUploadSlot({
             type="button"
             disabled={disabled}
             onClick={() => onFileSelect(null)}
-            className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-200 disabled:opacity-60"
+            className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:border-ring/60 hover:text-secondary-foreground disabled:opacity-60"
           >
             Remove
           </button>

@@ -218,32 +218,33 @@ export default function Home() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-full items-center justify-center bg-zinc-950 text-zinc-400">
+      <div className="flex min-h-full items-center justify-center bg-background text-muted-foreground">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-full bg-zinc-950 text-zinc-50">
+    <div className="min-h-full bg-background text-foreground">
       <main className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-6 py-16 sm:px-10">
         <header className="mb-12">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-zinc-500">
-            Content Engine
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-zinc-50">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+            <p className="brand-kicker">SlidePress</p>
+          </div>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-foreground">
             Generate your next campaign
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
+          <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
             Enter a marketing topic or pain point. We&apos;ll draft slide
             scripts with overlays, voiceover, and image prompts.
           </p>
         </header>
 
         {!user ? (
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 sm:p-8">
-            <h2 className="text-lg font-semibold text-zinc-50">Sign in</h2>
-            <p className="mt-2 text-sm text-zinc-400">
+          <section className="rounded-2xl border border-border bg-card/60 p-6 sm:p-8">
+            <h2 className="text-lg font-semibold text-foreground">Sign in</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               Use the test account you created in Supabase, or sign up with
               email.
             </p>
@@ -251,7 +252,7 @@ export default function Home() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-zinc-300"
+                  className="block text-sm font-medium text-secondary-foreground"
                 >
                   Email
                 </label>
@@ -262,13 +263,13 @@ export default function Home() {
                   onChange={(event) => setEmail(event.target.value)}
                   required
                   disabled={authSubmitting}
-                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-50 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-700 disabled:opacity-60"
+                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-60"
                 />
               </div>
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-zinc-300"
+                  className="block text-sm font-medium text-secondary-foreground"
                 >
                   Password
                 </label>
@@ -280,7 +281,7 @@ export default function Home() {
                   required
                   minLength={6}
                   disabled={authSubmitting}
-                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-50 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-700 disabled:opacity-60"
+                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-60"
                 />
               </div>
               {authError && (
@@ -292,7 +293,7 @@ export default function Home() {
                 <button
                   type="submit"
                   disabled={authSubmitting}
-                  className="inline-flex flex-1 items-center justify-center rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-60"
+                  className="btn-primary flex-1"
                 >
                   Sign in
                 </button>
@@ -300,7 +301,7 @@ export default function Home() {
                   type="button"
                   disabled={authSubmitting}
                   onClick={handleSignUp}
-                  className="inline-flex flex-1 items-center justify-center rounded-xl border border-zinc-600 px-5 py-3 text-sm font-semibold text-zinc-200 transition hover:border-zinc-400 disabled:opacity-60"
+                  className="inline-flex flex-1 items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 disabled:opacity-60"
                 >
                   Sign up
                 </button>
@@ -309,19 +310,19 @@ export default function Home() {
           </section>
         ) : (
           <>
-            <div className="mb-6 flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
+            <div className="mb-6 flex items-center justify-between rounded-xl border border-border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
               <span>{user.email}</span>
               <div className="flex items-center gap-4">
                 <Link
                   href="/campaigns"
-                  className="font-medium text-zinc-200 transition hover:text-zinc-50"
+                  className="font-medium text-secondary-foreground transition hover:text-foreground"
                 >
                   My campaigns
                 </Link>
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="font-medium text-zinc-200 transition hover:text-zinc-50"
+                  className="font-medium text-secondary-foreground transition hover:text-foreground"
                 >
                   Sign out
                 </button>
@@ -330,11 +331,11 @@ export default function Home() {
 
             <form
               onSubmit={handleSubmit}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 shadow-2xl shadow-black/20 backdrop-blur sm:p-8"
+              className="rounded-2xl border border-border bg-card/60 p-6 shadow-2xl shadow-black/20 backdrop-blur sm:p-8"
             >
               <label
                 htmlFor="topic"
-                className="block text-sm font-medium text-zinc-300"
+                className="block text-sm font-medium text-secondary-foreground"
               >
                 Topic / pain point
               </label>
@@ -346,20 +347,20 @@ export default function Home() {
                 placeholder="e.g. Founders wasting hours on manual social posting"
                 required
                 disabled={isLoading}
-                className="mt-3 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-50 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60"
               />
 
               <div className="mt-8">
-                <p className="text-sm font-medium text-zinc-300">Aspect ratio</p>
+                <p className="text-sm font-medium text-secondary-foreground">Aspect ratio</p>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     disabled={isLoading}
                     onClick={() => setAspectRatio("4:5")}
-                    className={`rounded-xl border px-4 py-3 text-left transition ${
+                    className={`option-toggle ${
                       aspectRatio === "4:5"
-                        ? "border-zinc-200 bg-zinc-100 text-zinc-950"
-                        : "border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-500"
+                        ? "option-toggle-selected"
+                        : "option-toggle-default"
                     } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     <span className="block text-sm font-semibold">
@@ -374,10 +375,10 @@ export default function Home() {
                     type="button"
                     disabled={isLoading}
                     onClick={() => setAspectRatio("9:16")}
-                    className={`rounded-xl border px-4 py-3 text-left transition ${
+                    className={`option-toggle ${
                       aspectRatio === "9:16"
-                        ? "border-zinc-200 bg-zinc-100 text-zinc-950"
-                        : "border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-500"
+                        ? "option-toggle-selected"
+                        : "option-toggle-default"
                     } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     <span className="block text-sm font-semibold">
@@ -391,7 +392,7 @@ export default function Home() {
               </div>
 
               <div className="mt-8">
-                <p className="text-sm font-medium text-zinc-300">Slide count</p>
+                <p className="text-sm font-medium text-secondary-foreground">Slide count</p>
                 <div className="mt-3 grid grid-cols-3 gap-3">
                   {allowedSlideCounts.map((count) => (
                     <button
@@ -399,10 +400,10 @@ export default function Home() {
                       type="button"
                       disabled={isLoading}
                       onClick={() => setSlideCount(count)}
-                      className={`rounded-xl border px-4 py-3 text-left transition ${
+                      className={`option-toggle ${
                         slideCount === count
-                          ? "border-zinc-200 bg-zinc-100 text-zinc-950"
-                          : "border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-500"
+                          ? "option-toggle-selected"
+                          : "option-toggle-default"
                       } disabled:cursor-not-allowed disabled:opacity-60`}
                     >
                       <span className="block text-sm font-semibold">
@@ -417,10 +418,10 @@ export default function Home() {
               </div>
 
               <div className="mt-8">
-                <p className="text-sm font-medium text-zinc-300">
+                <p className="text-sm font-medium text-secondary-foreground">
                   References (optional)
                 </p>
-                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
                   Upload product, style, or logo assets to steer copy and slide
                   visuals.
                 </p>
@@ -455,7 +456,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={isLoading || topic.trim().length === 0}
-                className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-primary-full mt-8"
               >
                 {isLoading ? "Generating campaign..." : "Generate campaign"}
               </button>
@@ -475,20 +476,20 @@ export default function Home() {
                 <p className="text-sm font-medium uppercase tracking-[0.18em] text-emerald-400">
                   Campaign ready
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-zinc-50">
+                <h2 className="mt-2 text-2xl font-semibold text-foreground">
                   Text generation complete
                 </h2>
-                <p className="mt-3 text-sm leading-6 text-zinc-400">
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   Your campaign metadata and {slideCount} slide scripts are saved.
                   Open the workspace to review overlays and voiceover copy.
                 </p>
                 <Link
                   href={`/campaign/${campaignId}`}
-                  className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-400"
+                  className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-background transition hover:bg-emerald-400"
                 >
                   View campaign workspace
                 </Link>
-                <p className="mt-4 truncate font-mono text-xs text-zinc-500">
+                <p className="mt-4 truncate font-mono text-xs text-muted-foreground">
                   {campaignId}
                 </p>
               </section>
