@@ -1,8 +1,15 @@
 import CampaignWorkspace from "@/app/campaign/[id]/campaign-workspace";
 import { createClient } from "@/utils/supabase/server";
+import { appRobots } from "@/utils/site-metadata";
 import type { Campaign, Slide } from "@/types/campaign";
 import type { PlatformCaption } from "@/types/captions";
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Campaign",
+  robots: appRobots,
+};
 
 interface CampaignPageProps {
   params: Promise<{ id: string }>;

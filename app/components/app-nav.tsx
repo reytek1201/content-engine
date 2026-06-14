@@ -1,6 +1,7 @@
 "use client";
 
 import CreateCampaignSheet from "@/app/components/create-campaign-sheet";
+import BrandLogo from "@/app/components/brand-logo";
 import {
   CreateSheetProvider,
   useCreateSheet,
@@ -120,15 +121,10 @@ function DesktopNav({
     <header className="hidden border-b border-border bg-card/40 md:block">
       <div className="page-shell flex items-center justify-between gap-4 py-4">
         <div className="flex min-w-0 flex-1 items-center gap-8">
-          <Link
+          <BrandLogo
             href="/campaigns"
             className="flex shrink-0 items-center gap-2 transition hover:opacity-90"
-          >
-            <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
-            <span className="text-sm font-semibold tracking-tight text-foreground">
-              SlidePress
-            </span>
-          </Link>
+          />
 
           <nav className="flex items-center gap-1" aria-label="Main navigation">
             <Link href="/campaigns" className={navLinkClass(isCampaignsActive)}>
@@ -151,15 +147,10 @@ function MobileTopBar() {
   return (
     <header className="border-b border-border bg-card/40 md:hidden">
       <div className="flex items-center px-4 py-3">
-        <Link
+        <BrandLogo
           href="/campaigns"
           className="flex items-center gap-2 transition active:opacity-80"
-        >
-          <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
-          <span className="text-sm font-semibold tracking-tight text-foreground">
-            SlidePress
-          </span>
-        </Link>
+        />
       </div>
     </header>
   );

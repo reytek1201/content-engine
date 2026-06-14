@@ -100,13 +100,14 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 - Email sign-in via Supabase Auth
 - **Forgot password** on the sign-in screen
-- **Settings** — email, password reset email, sign out
+- **Settings** — email, password reset email, sign out, **account deletion** (Settings → Account deletion)
 - Your campaigns are private to your account (row-level security)
 - Production auth configured for SlidePress.co domain
 
 ### Settings
 
 - **Account** — view email, send password reset link, sign out
+- **Delete account** — collapsed under **Account deletion…** at the bottom of Settings; type `DELETE` to confirm; removes all campaigns, brand library, usage data, and auth access (Apple App Store requirement)
 - **Brand library** — upload, replace, or clear saved product/style/logo references (same assets used on create)
 - **Usage** — campaigns and slide regenerations this month with beta limits (default 10 campaigns, 30 regenerations; resets monthly)
 
@@ -164,6 +165,7 @@ Phased delivery for SlidePress. **Mobile today = responsive web** in Safari/Chro
 Already shipped in Phase 4:
 
 - **Marketing landing page** — public **`/`** hero; app at **`/login`**, **`/new`**, **`/campaigns`**, etc.
+- **SEO** — sitemap, robots, Open Graph / Twitter metadata on **`/`**, JSON-LD, custom OG image, **`noindex`** on app routes
 - **Beta usage limits** — 10 campaigns / month, 30 slide regenerations / month (env-configurable); enforced server-side
 - **Mobile workspace polish** — compact sticky bar, tighter slide cards, denser publish section
 

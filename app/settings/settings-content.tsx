@@ -1,6 +1,7 @@
 "use client";
 
 import BrandLibraryEditor from "@/app/components/brand-library-editor";
+import DeleteAccountSection from "@/app/components/delete-account-section";
 import { createClient } from "@/utils/supabase/client";
 import type { UsageSummary } from "@/types/usage";
 import Link from "next/link";
@@ -278,6 +279,8 @@ export default function SettingsContent({ user }: SettingsContentProps) {
               .
             </p>
           </SettingsSection>
+
+          <DeleteAccountSection />
         </div>
         </div>
       </main>

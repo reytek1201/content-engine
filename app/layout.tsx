@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppNavLayout } from "@/app/components/app-nav";
+import {
+  brandLogoSrc,
+  defaultDescription,
+  defaultTitle,
+  getSiteUrl,
+  siteName,
+} from "@/utils/site-metadata";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,8 +21,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SlidePress",
-  description: "Topic to post-ready carousel slides, images, and captions.",
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: defaultTitle,
+    template: `%s · ${siteName}`,
+  },
+  description: defaultDescription,
+  applicationName: siteName,
+  icons: {
+    icon: brandLogoSrc,
+    apple: brandLogoSrc,
+  },
 };
 
 export const viewport = {

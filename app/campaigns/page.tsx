@@ -1,8 +1,15 @@
 import CampaignList from "@/app/campaigns/campaign-list";
 import NewCampaignButton from "@/app/components/new-campaign-button";
 import { createClient } from "@/utils/supabase/server";
+import { appRobots } from "@/utils/site-metadata";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import type { Campaign } from "@/types/campaign";
+
+export const metadata: Metadata = {
+  title: "Campaigns",
+  robots: appRobots,
+};
 
 interface CampaignWithSlides extends Campaign {
   slides: Array<{ slide_index: number; image_url: string | null }>;

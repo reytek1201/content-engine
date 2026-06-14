@@ -1,4 +1,10 @@
+import BrandLogo from "@/app/components/brand-logo";
 import Link from "next/link";
+import {
+  defaultDescription,
+  getSiteUrl,
+  siteName,
+} from "@/utils/site-metadata";
 
 const FEATURES = [
   {
@@ -30,17 +36,40 @@ const STEPS = [
   "Post to social",
 ] as const;
 
+const landingJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: siteName,
+      url: getSiteUrl(),
+      description: defaultDescription,
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: siteName,
+      description: defaultDescription,
+      url: getSiteUrl(),
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+    },
+  ],
+};
+
 export default function MarketingLanding() {
   return (
     <div className="min-h-full bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd) }}
+      />
       <header className="page-shell flex items-center justify-between py-5 md:py-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2 transition hover:opacity-90"
-        >
-          <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
-          <span className="text-sm font-semibold tracking-tight">SlidePress</span>
-        </Link>
+        <BrandLogo href="/" />
         <Link
           href="/login"
           className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground"

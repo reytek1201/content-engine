@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
+import BrandLogo from "@/app/components/brand-logo";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -11,9 +12,14 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") ?? "/campaigns";
 
+  function resolveNextPath(): string {
+    return nextPath.startsWith("/") ? nextPath : "/campaigns";
+  }
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authSubmitting, setAuthSubmitting] = useState(false);
   const [forgotSending, setForgotSending] = useState(false);
   const [forgotMessage, setForgotMessage] = useState<string | null>(null);
@@ -21,7 +27,7 @@ function LoginForm() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        router.replace(nextPath.startsWith("/") ? nextPath : "/campaigns");
+        router.replace(resolveNextPath());
       }
     });
   }, [supabase, router, nextPath]);
@@ -29,6 +35,8 @@ function LoginForm() {
   async function handleSignIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setAuthError(null);
+    setAuthMessage(null);
+    setForgotMessage(null);
     setAuthSubmitting(true);
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -42,26 +50,44 @@ function LoginForm() {
       return;
     }
 
-    router.replace(nextPath.startsWith("/") ? nextPath : "/campaigns");
+    router.replace(resolveNextPath());
     router.refresh();
     setAuthSubmitting(false);
   }
 
   async function handleSignUp() {
     setAuthError(null);
+    setAuthMessage(null);
+    setForgotMessage(null);
     setAuthSubmitting(true);
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (signUpError) {
       setAuthError(signUpError.message);
-    } else {
-      setAuthError("Check your email to confirm your account, then sign in.");
+      setAuthSubmitting(false);
+      return;
     }
 
+    if (data.session) {
+      router.replace(resolveNextPath());
+      router.refresh();
+      setAuthSubmitting(false);
+      return;
+    }
+
+    if (data.user?.identities?.length === 0) {
+      setAuthMessage(
+        "An account with this email already exists. Sign in below.",
+      );
+      setAuthSubmitting(false);
+      return;
+    }
+
+    setAuthMessage("Check your email to confirm your account, then sign in.");
     setAuthSubmitting(false);
   }
 
@@ -72,6 +98,7 @@ function LoginForm() {
     }
 
     setAuthError(null);
+    setAuthMessage(null);
     setForgotMessage(null);
     setForgotSending(true);
 
@@ -98,13 +125,7 @@ function LoginForm() {
   return (
     <div className="min-h-full bg-background text-foreground">
       <header className="page-shell flex items-center justify-between py-5 md:py-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2 transition hover:opacity-90"
-        >
-          <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
-          <span className="text-sm font-semibold tracking-tight">SlidePress</span>
-        </Link>
+        <BrandLogo href="/" />
       </header>
 
       <main className="page-main flex min-h-[calc(100vh-4rem)] flex-col">
@@ -158,6 +179,11 @@ function LoginForm() {
               {authError && (
                 <p className="text-sm text-red-300" role="alert">
                   {authError}
+                </p>
+              )}
+              {authMessage && (
+                <p className="text-sm text-primary" role="status">
+                  {authMessage}
                 </p>
               )}
               {forgotMessage && (
