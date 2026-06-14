@@ -1,0 +1,21 @@
+{
+	"appId": "co.slidepress.app",
+	"appName": "SlidePress",
+	"webDir": "capacitor-www",
+	"appendUserAgent": "SlidePressApp/1",
+	"server": {
+		"url": "https://www.slidepress.co",
+		"androidScheme": "https",
+		"allowNavigation": [
+			"slidepress.co",
+			"www.slidepress.co",
+			"*.slidepress.co",
+			"*.supabase.co"
+		]
+	},
+	"packageClassList": [
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"NativeAppleSignInPlugin"
+	]
+}

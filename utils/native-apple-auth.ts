@@ -1,10 +1,29 @@
-import { SignInWithApple } from "@capacitor-community/apple-sign-in";
+import { registerPlugin } from "@capacitor/core";
 import { Capacitor } from "@capacitor/core";
 import { createClient } from "@/utils/supabase/client";
 import { applyNativeAuthTokens } from "@/utils/native-oauth-session";
 import { createNativeAuthClient } from "@/utils/supabase/native-auth-client";
 
 const APP_BUNDLE_ID = "co.slidepress.app";
+
+const SignInWithApple = registerPlugin<{
+  authorize(options: {
+    clientId: string;
+    redirectURI: string;
+    scopes?: string;
+    state?: string;
+    nonce?: string;
+  }): Promise<{
+    response: {
+      user: string | null;
+      email: string | null;
+      givenName: string | null;
+      familyName: string | null;
+      identityToken: string;
+      authorizationCode: string;
+    };
+  }>;
+}>("SignInWithApple");
 
 async function generateAppleNonce(): Promise<{ raw: string; hashed: string }> {
   const raw = crypto.randomUUID();
@@ -20,6 +39,13 @@ async function generateAppleNonce(): Promise<{ raw: string; hashed: string }> {
 export async function startNativeAppleAuth(): Promise<{ error: string | null }> {
   if (Capacitor.getPlatform() !== "ios") {
     return { error: "Apple sign-in is only available on iOS." };
+  }
+
+  if (!Capacitor.isPluginAvailable("SignInWithApple")) {
+    return {
+      error:
+        "Apple sign-in is not available in this build. Run npm run cap:sync, rebuild in Xcode, and reinstall the app.",
+    };
   }
 
   try {

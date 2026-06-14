@@ -12,12 +12,11 @@
     "cap:assets": "npm run cap:assets:prepare && capacitor-assets generate --ios --android --iconBackgroundColor '#09090b' --iconBackgroundColorDark '#09090b' --splashBackgroundColor '#09090b' --splashBackgroundColorDark '#09090b'",
     "cap:assets:ios": "npm run cap:assets:prepare && capacitor-assets generate --ios --iconBackgroundColor '#09090b' --iconBackgroundColorDark '#09090b' --splashBackgroundColor '#09090b' --splashBackgroundColorDark '#09090b'",
     "cap:assets:android": "npm run cap:assets:prepare && capacitor-assets generate --android --iconBackgroundColor '#09090b' --iconBackgroundColorDark '#09090b' --splashBackgroundColor '#09090b' --splashBackgroundColorDark '#09090b'",
-    "cap:sync": "cap sync",
+    "cap:sync": "cap sync && node scripts/patch-ios-capacitor-config.mjs",
     "cap:ios": "cap open ios",
     "cap:android": "cap open android"
   },
   "dependencies": {
-    "@capacitor-community/apple-sign-in": "^7.1.0",
     "@capacitor/android": "^8.4.0",
     "@capacitor/app": "^8.1.0",
     "@capacitor/browser": "^8.0.3",

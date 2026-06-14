@@ -186,7 +186,14 @@ co.slidepress.app,co.slidepress.app.auth
 In [Apple Developer](https://developer.apple.com/account/resources/identifiers/list):
 1. **App ID** `co.slidepress.app` — enable Sign in with Apple
 2. **Services ID** `co.slidepress.app.auth` — for web OAuth only (Return URL: `https://<project-ref>.supabase.co/auth/v1/callback`)
-3. After pulling native Apple changes: `npm run cap:sync` then rebuild in Xcode (adds Sign in with Apple entitlement)
+Native iOS uses a built-in Capacitor plugin (`NativeAppleSignInPlugin`) compiled into the App target — no third-party Apple Sign In package. After pulling:
+
+```bash
+npm run cap:sync
+npm run cap:ios
+```
+
+Clean build in Xcode before testing on device.
 
 The iOS app shows **Continue with Apple** only in the native shell (App Store requirement when Google is offered).
 
