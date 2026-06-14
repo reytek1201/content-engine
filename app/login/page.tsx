@@ -195,7 +195,7 @@ function LoginForm() {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <header className="page-shell flex items-center justify-between py-5 md:py-6">
+      <header className="page-shell page-header-safe flex items-center justify-between">
         <BrandLogo href="/" />
       </header>
 
