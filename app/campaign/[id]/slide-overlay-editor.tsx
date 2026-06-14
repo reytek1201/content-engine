@@ -11,6 +11,7 @@ interface SlideOverlayEditorProps {
   value: string;
   disabled?: boolean;
   onSaved: (textOverlay: string) => void;
+  onDraftChange?: (textOverlay: string) => void;
   onError: (message: string) => void;
 }
 
@@ -19,6 +20,7 @@ export default function SlideOverlayEditor({
   value,
   disabled = false,
   onSaved,
+  onDraftChange,
   onError,
 }: SlideOverlayEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -28,8 +30,9 @@ export default function SlideOverlayEditor({
   useEffect(() => {
     if (!isEditing) {
       setDraft(value);
+      onDraftChange?.(value);
     }
-  }, [value, isEditing]);
+  }, [value, isEditing, onDraftChange]);
 
   const wordCount = countWords(draft);
   const isValid = draft.trim().length > 0 && wordCount <= 12;
@@ -108,7 +111,11 @@ export default function SlideOverlayEditor({
           <input
             type="text"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              const next = event.target.value;
+              setDraft(next);
+              onDraftChange?.(next);
+            }}
             disabled={disabled || isSaving}
             className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base font-semibold text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-3 sm:text-lg"
           />

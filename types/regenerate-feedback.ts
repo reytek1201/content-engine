@@ -32,7 +32,8 @@ export const REGENERATE_FEEDBACK_CHIPS = [
   {
     id: "try_again",
     label: "Try again",
-    prompt: "",
+    prompt:
+      "Create a clearly different visual variation with alternative composition, color treatment, and layout while preserving the headline and campaign message.",
   },
 ] as const;
 
@@ -51,10 +52,7 @@ export function resolveRegenerationFeedback(
   chipIds: RegenerateFeedbackChipId[],
   customNotes?: string
 ): string {
-  const prompts = chipIds
-    .filter((id) => id !== "try_again")
-    .map((id) => chipPromptById[id])
-    .filter(Boolean);
+  const prompts = chipIds.map((id) => chipPromptById[id]).filter(Boolean);
 
   const trimmedNotes = customNotes?.trim();
 

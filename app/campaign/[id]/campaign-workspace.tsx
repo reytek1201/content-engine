@@ -69,6 +69,9 @@ export default function CampaignWorkspace({
   const [regenerateNotesBySlide, setRegenerateNotesBySlide] = useState<
     Record<string, string>
   >({});
+  const [headlineDraftBySlide, setHeadlineDraftBySlide] = useState<
+    Record<string, string>
+  >({});
   const [error, setError] = useState<string | null>(null);
   const [isRetryingText, setIsRetryingText] = useState(false);
   const textGenerationStarted = useRef(false);
@@ -458,6 +461,9 @@ export default function CampaignWorkspace({
       const slide = slides.find((entry) => entry.id === slideId);
       const feedback = selectedFeedbackBySlide[slideId] ?? [];
       const notes = regenerateNotesBySlide[slideId]?.trim();
+      const draftHeadline = headlineDraftBySlide[slideId]?.trim();
+      const textOverlay =
+        draftHeadline || slide?.text_overlay?.trim() || undefined;
 
       const response = await fetch("/api/regenerate-slide", {
         method: "POST",
@@ -466,7 +472,7 @@ export default function CampaignWorkspace({
           slideId,
           feedback,
           notes: notes || undefined,
-          text_overlay: slide?.text_overlay ?? undefined,
+          text_overlay: textOverlay,
         }),
       });
 
@@ -483,10 +489,23 @@ export default function CampaignWorkspace({
       setSlides((current) =>
         current.map((slide) =>
           slide.id === slideId
-            ? { ...slide, image_url: null, fal_request_id: null }
+            ? {
+                ...slide,
+                image_url: null,
+                fal_request_id: null,
+                ...(textOverlay ? { text_overlay: textOverlay } : {}),
+              }
             : slide
         )
       );
+
+      if (textOverlay) {
+        setHeadlineDraftBySlide((current) => {
+          const next = { ...current };
+          delete next[slideId];
+          return next;
+        });
+      }
 
       setCampaign((current) => ({
         ...current,
@@ -789,15 +808,26 @@ export default function CampaignWorkspace({
                         regeneratingSlideId === slide.id ||
                         (isAnySlideGenerating && regeneratingSlideId !== slide.id)
                       }
-                      onSaved={(textOverlay) =>
+                      onDraftChange={(textOverlay) =>
+                        setHeadlineDraftBySlide((current) => ({
+                          ...current,
+                          [slide.id]: textOverlay,
+                        }))
+                      }
+                      onSaved={(textOverlay) => {
+                        setHeadlineDraftBySlide((current) => {
+                          const next = { ...current };
+                          delete next[slide.id];
+                          return next;
+                        });
                         setSlides((current) =>
                           current.map((entry) =>
                             entry.id === slide.id
                               ? { ...entry, text_overlay: textOverlay }
                               : entry
                           )
-                        )
-                      }
+                        );
+                      }}
                       onError={setError}
                     />
                     <div>

@@ -12,7 +12,7 @@ import {
 import { buildSlideImagePrompt } from "@/utils/slide-image-prompt";
 import { createClient } from "@/utils/supabase/server";
 import { TextOverlayInputSchema } from "@/utils/campaign-generation";
-import { getReferenceImageUrls } from "@/types/references";
+import { getRegenerationImageUrls } from "@/types/references";
 import {
   REGENERATE_FEEDBACK_CHIP_IDS,
   type RegenerateFeedbackChipId,
@@ -165,7 +165,8 @@ export async function POST(request: Request) {
       typedSlide,
       typedCampaign,
       feedbackChipIds,
-      notes
+      notes,
+      { isRegeneration: true },
     );
 
     if (!prompt) {
@@ -174,6 +175,13 @@ export async function POST(request: Request) {
         { status: 422 }
       );
     }
+
+    const sourceImageUrl = typedSlide.image_url;
+    const regenerationImageUrls = getRegenerationImageUrls(sourceImageUrl, {
+      product: campaign.product_reference_url,
+      style: campaign.style_reference_url,
+      logo: campaign.logo_reference_url,
+    });
 
     const { error: clearError } = await supabase
       .from("slides")
@@ -196,11 +204,7 @@ export async function POST(request: Request) {
       .update({ status: "generating_images", error_message: null })
       .eq("id", typedCampaign.id);
 
-    const referenceUrls = getReferenceImageUrls({
-      product: campaign.product_reference_url,
-      style: campaign.style_reference_url,
-      logo: campaign.logo_reference_url,
-    });
+    const referenceUrls = regenerationImageUrls;
     const appBaseUrl = getAppBaseUrl(request);
     const useLocalSync = isLocalAppUrl(appBaseUrl);
 
@@ -209,7 +213,7 @@ export async function POST(request: Request) {
         const imageUrl = await runNanoBananaSync(
           prompt,
           campaign.aspect_ratio,
-          referenceUrls
+          regenerationImageUrls,
         );
 
         const { error: slideUpdateError } = await supabase

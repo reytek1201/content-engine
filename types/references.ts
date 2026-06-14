@@ -14,6 +14,14 @@ export function getReferenceImageUrls(
   );
 }
 
+/** Slide image first so Fal edit targets the current creative; brand refs follow. */
+export function getRegenerationImageUrls(
+  slideImageUrl: string,
+  references: CampaignReferences,
+): string[] {
+  return [slideImageUrl, ...getReferenceImageUrls(references)];
+}
+
 export function hasReferences(references: CampaignReferences): boolean {
   return getReferenceImageUrls(references).length > 0;
 }
