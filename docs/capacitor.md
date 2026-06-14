@@ -129,7 +129,16 @@ Platform-specific: `npm run cap:assets:ios` or `npm run cap:assets:android`.
 
 ---
 
-## Google sign-in (native app)
+## ### Why Android needs a native rebuild for OAuth
+
+The native auth client stores the PKCE verifier in **localStorage** (survives Chrome Custom Tab). Android also uses a full page navigation after sign-in so session cookies reach the server. Rebuild after pulling:
+
+```bash
+npm run cap:sync
+npm run cap:android
+```
+
+Google sign-in (native app)
 
 Google blocks OAuth inside embedded WebViews. The native app uses the system browser and a deep link back into the app.
 

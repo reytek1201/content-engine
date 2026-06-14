@@ -1,6 +1,9 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
+import {
+  completeNativeOAuthNavigation,
+  exchangeNativeOAuthCode,
+} from "@/utils/native-oauth-session";
 import { isNativeAppRuntime } from "@/utils/is-native-app";
 import { parseNativeOAuthCallback } from "@/utils/native-oauth";
 import { App } from "@capacitor/app";
@@ -31,8 +34,7 @@ async function handleNativeAuthUrl(
     // Browser may already be closed.
   }
 
-  const supabase = createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(callback.code);
+  const { error } = await exchangeNativeOAuthCode(callback.code);
 
   if (error) {
     handledOAuthCodes.delete(callback.code);
@@ -40,8 +42,7 @@ async function handleNativeAuthUrl(
     return;
   }
 
-  await supabase.auth.getSession();
-  navigate(callback.next);
+  completeNativeOAuthNavigation(callback.next, navigate);
 }
 
 export default function NativeAuthListener() {

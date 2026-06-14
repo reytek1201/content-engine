@@ -6,6 +6,7 @@ import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { brandLogoSrc } from "@/utils/site-metadata";
 import { isNativeAppRuntime } from "@/utils/is-native-app";
 import { buildNativeOAuthRedirectUrl } from "@/utils/native-oauth";
+import { createNativeAuthClient } from "@/utils/supabase/native-auth-client";
 import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_REQUIREMENTS_TEXT,
@@ -108,8 +109,9 @@ function LoginForm() {
 
     if (isNativeAppRuntime()) {
       const redirectTo = buildNativeOAuthRedirectUrl(next);
+      const nativeSupabase = createNativeAuthClient();
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await nativeSupabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo,
