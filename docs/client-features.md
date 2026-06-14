@@ -28,9 +28,11 @@ SlidePress is a marketing automation app for creators and small teams who need s
 - **Instant redirect** to the campaign workspace — a waiting screen runs while Gemini writes slide scripts (usually 15–30 seconds)
 - **Retry** if text generation fails, with a clear error message
 
-**Desktop:** full create form at `/` (New campaign in nav) — redirects straight to workspace on submit.
+**Desktop:** full create form at **`/new`** (New campaign in nav) — redirects straight to workspace on submit.
 
 **Mobile:** tap the **+** button to open a native-style **bottom sheet** — slide-up form with scroll, backdrop dismiss, and redirect to workspace on success.
+
+**Public site:** **`/`** is the marketing landing page; **`/login`** for sign in and sign up.
 
 ### App navigation
 
@@ -127,7 +129,7 @@ SlidePress is a marketing automation app for creators and small teams who need s
 ## Typical workflow
 
 ```
-1. Sign in → My campaigns (mobile) or New campaign (desktop)
+1. Visit **slidepress.co** → sign in at **`/login`** → My campaigns (mobile) or **New campaign** at **`/new`** (desktop)
 2. Enter topic + pick format + slide count (+ optional references)
 3. Land on workspace waiting screen → slide scripts appear
 4. Review slide copy → Generate images
@@ -141,29 +143,52 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 ---
 
-## Near future (roadmap)
+## Roadmap
 
-These are planned next — not live yet.
+Phased delivery for SlidePress. **Mobile today = responsive web** in Safari/Chrome (bottom tabs, create sheet, workspace polish). **Phase 5** adds installable **iOS + Android apps** via Capacitor — same Next.js app, no UI rewrite.
 
-### Ship & scale
+### Shipped ✅
 
-- **Marketing landing page** — dedicated `/` hero for SEO and sign-up (app stays behind nav)
-- **Usage tiers & billing** — slide limits and regeneration caps by plan (hooks already in place for slide count)
-- **Beta usage limits** — protect API spend before wider invites
-  - **10 campaigns / month** (create + duplicate)
-  - **30 slide regenerations / month**
-  - Enforced server-side; shown in Settings
-  - Configurable via `BETA_CAMPAIGNS_PER_MONTH` and `BETA_REGENERATIONS_PER_MONTH`
-- **Usage tiers & billing** — paid plans with higher caps (after beta)
+| Phase | Focus |
+|-------|--------|
+| **1** | Workspace clarity — progress strip, next-step bar, inline rename, async text generation, app nav |
+| **2** | Publish handoff — carousel preview, copy voiceover, single-slide download |
+| **3** | Brand library + **Settings** (account, brand assets, usage display) |
+| **4 (partial)** | Beta usage limits, mobile workspace polish, unified page layout, **marketing landing at `/`** |
 
-### Export & publish
+### Phase 4 — Ship & protect (in progress)
 
-- **Video export** — turn slides into a single MP4 for Reels/Shorts/TikTok (Remotion/FFmpeg)
-- **Direct platform posting** — optional upload to TikTok / Instagram / YouTube (later; higher complexity)
+- **Mobile web QA** — manual device testing on prod before wider beta invites
+- **Deploy & migrations** — brand library + usage_events on production Supabase
 
-### Workflow polish
+Already shipped in Phase 4:
 
-- **Mobile workspace polish** — tighter slide cards, compact sticky next-step bar, and denser publish captions on small screens
+- **Marketing landing page** — public **`/`** hero; app at **`/login`**, **`/new`**, **`/campaigns`**, etc.
+- **Beta usage limits** — 10 campaigns / month, 30 slide regenerations / month (env-configurable); enforced server-side
+- **Mobile workspace polish** — compact sticky bar, tighter slide cards, denser publish section
+
+### Phase 5 — Mobile app (Capacitor) 📱
+
+Wrap the existing SlidePress web app for **App Store** and **Google Play** — one codebase on Vercel, native shells on device.
+
+| Step | Deliverable |
+|------|-------------|
+| **5.1 Scaffold** | Capacitor iOS + Android projects loading production (`slidepress.co`) |
+| **5.2 Auth** | Deep links / universal links for Supabase sign-in and password reset in WebView |
+| **5.3 App shell** | Icons, splash screen, status bar (SlidePress dark + orange) |
+| **5.4 Native affordances** | Share sheet, save slide images to camera roll |
+| **5.5 Beta distribution** | TestFlight + Play internal testing before public listing |
+| **5.6 Later** | Push notifications when campaign images finish generating |
+
+**Out of scope for Phase 5:** React Native rewrite, offline-first workspace, in-app Stripe (billing stays web until Phase 6).
+
+**Depends on:** Phase 4 mobile web stable; production deploy current.
+
+### Phase 6 — Scale & publish
+
+- **Usage tiers & billing** — paid plans with higher caps (Stripe)
+- **Video export** — slides → single MP4 for Reels/Shorts/TikTok (Remotion/FFmpeg)
+- **Direct platform posting** — optional upload to TikTok / Instagram / YouTube (higher complexity)
 
 ### Not planned for v1
 
@@ -171,6 +196,7 @@ These are planned next — not live yet.
 - Unlimited free regenerations without metering
 - Programmatic pixel-perfect logo placement (logo is AI-guided today)
 - Delete from the campaigns list (destructive actions stay in workspace only)
+- Separate React Native / Expo app (Capacitor is the mobile app strategy)
 
 ---
 
@@ -179,6 +205,7 @@ These are planned next — not live yet.
 | Layer | Technology |
 |-------|------------|
 | App | Next.js 16, React 19, Tailwind |
+| Mobile (Phase 5) | Capacitor — iOS + Android WebView shell |
 | Hosting | Vercel (SlidePress.co) |
 | Database & auth | Supabase (PostgreSQL + RLS) |
 | Slide copy | Google Gemini 2.5 Flash |

@@ -17,7 +17,7 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/");
+    redirect("/login");
   }
 
   const { data: campaign, error: campaignError } = await supabase

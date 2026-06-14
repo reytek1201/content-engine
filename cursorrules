@@ -12,6 +12,7 @@ You are an expert senior full-stack engineer specializing in Next.js (App Router
 - **AI Text Layer:** Google Gemini API (`@google/genai`) with JSON structured output backed by strict Zod schemas.
 - **AI Image Layer:** Fal.ai `nano-banana-2` (Gemini 3.1 Flash Image) with async webhook callbacks; prompts merge `text_overlay` into quoted headline copy.
 - **Export Pipelines:** Client-side .zip packaging and programmatic video rendering engines (Remotion/FFmpeg).
+- **Mobile (Phase 5):** Capacitor iOS/Android shell wrapping the production web app — not a React Native rewrite.
 
 ## Architectural Guidelines & Coding Rules
 

@@ -16,7 +16,7 @@ export default function NewCampaignButton({
 
   return (
     <>
-      <Link href="/" className={`btn-primary hidden md:inline-flex ${className}`}>
+      <Link href="/new" className={`btn-primary hidden md:inline-flex ${className}`}>
         {label}
       </Link>
       <button

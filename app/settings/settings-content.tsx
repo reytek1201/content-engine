@@ -263,7 +263,7 @@ export default function SettingsContent({ user }: SettingsContentProps) {
             <p className="mt-6 text-xs leading-5 text-muted-foreground">
               Need a new campaign?{" "}
               <Link
-                href="/"
+                href="/new"
                 className="font-medium text-primary underline-offset-2 hover:underline"
               >
                 Create one

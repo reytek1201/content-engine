@@ -1,8 +1,8 @@
-import SettingsContent from "@/app/settings/settings-content";
+import NewCampaignContent from "@/app/new/new-campaign-content";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
-export default async function SettingsPage() {
+export default async function NewCampaignPage() {
   const supabase = await createClient();
 
   const {
@@ -10,8 +10,8 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect("/login?next=/new");
   }
 
-  return <SettingsContent user={user} />;
+  return <NewCampaignContent user={user} />;
 }

@@ -134,7 +134,7 @@ function DesktopNav({
             <Link href="/campaigns" className={navLinkClass(isCampaignsActive)}>
               Campaigns
             </Link>
-            <Link href="/" className={navLinkClass(isNewCampaignActive)}>
+            <Link href="/new" className={navLinkClass(isNewCampaignActive)}>
               New campaign
             </Link>
             <Link href="/settings" className={navLinkClass(isSettingsActive)}>
@@ -245,7 +245,7 @@ function AppNavChrome({ user }: { user: User }) {
 
   const isCampaignsActive =
     pathname === "/campaigns" || pathname.startsWith("/campaign/");
-  const isNewCampaignActive = pathname === "/";
+  const isNewCampaignActive = pathname === "/new";
   const isSettingsActive = pathname === "/settings";
   const isCreateActive = isOpen;
 
