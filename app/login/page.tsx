@@ -67,11 +67,29 @@ function LoginForm() {
   const isNativeApp = useIsNativeApp();
 
   useEffect(() => {
+    let active = true;
+
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
+      if (active && user) {
         router.replace(resolveNextPath());
       }
     });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        session?.user &&
+        (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")
+      ) {
+        router.replace(resolveNextPath());
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, [supabase, router, nextPath]);
 
   useEffect(() => {

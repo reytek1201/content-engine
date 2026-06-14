@@ -11,6 +11,31 @@ export function buildNativeOAuthRedirectUrl(nextPath?: string): string {
   return base;
 }
 
+export function parseNativeOAuthCallback(
+  url: string,
+): { code: string; next: string } | null {
+  if (!isNativeOAuthCallbackUrl(url)) {
+    return null;
+  }
+
+  const remainder = url.slice(`${NATIVE_OAUTH_SCHEME}://`.length);
+  const query = remainder.includes("?")
+    ? remainder.slice(remainder.indexOf("?") + 1)
+    : "";
+  const params = new URLSearchParams(query);
+  const code = params.get("code");
+
+  if (!code) {
+    return null;
+  }
+
+  const next = params.get("next");
+  const nextPath =
+    next?.startsWith("/") && !next.startsWith("//") ? next : "/campaigns";
+
+  return { code, next: nextPath };
+}
+
 export function nativeDeepLinkToWebCallback(
   deepLink: string,
   webOrigin: string,
