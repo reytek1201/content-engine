@@ -49,3 +49,4 @@ android/build/
 android/local.properties
 *.xcuserstate
 **/xcuserdata/
+/icons/

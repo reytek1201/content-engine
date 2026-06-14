@@ -240,13 +240,8 @@ function MobileBottomNav({
 function AppNavChrome({ user }: { user: User }) {
   const pathname = usePathname();
   const isNativeApp = useIsNativeApp();
-  const [mounted, setMounted] = useState(false);
   const { isOpen, openCreateSheet, closeCreateSheet } = useCreateSheet();
   const [formKey, setFormKey] = useState(0);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const isCampaignsActive =
     pathname === "/campaigns" || pathname.startsWith("/campaign/");
@@ -266,7 +261,7 @@ function AppNavChrome({ user }: { user: User }) {
         isNewCampaignActive={isNewCampaignActive}
         isSettingsActive={isSettingsActive}
       />
-      <MobileTopBar hidden={!mounted || isNativeApp} />
+      <MobileTopBar hidden={isNativeApp !== false} />
       <MobileBottomNav
         isCampaignsActive={isCampaignsActive}
         isSettingsActive={isSettingsActive}
@@ -287,13 +282,14 @@ function AppNavLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthUser();
   const isNativeApp = useIsNativeApp();
   const showNav = !loading && Boolean(user);
+  const hideMobileTopBar = isNativeApp !== false;
 
   return (
     <>
       {showNav && <AppNavChrome user={user!} />}
       <div
         className={`flex min-h-0 flex-1 flex-col ${showNav ? MOBILE_NAV_PADDING : ""} ${
-          showNav && isNativeApp ? MOBILE_NATIVE_TOP_PADDING : ""
+          showNav && hideMobileTopBar ? MOBILE_NATIVE_TOP_PADDING : ""
         }`}
       >
         {children}

@@ -1,12 +1,14 @@
 "use client";
 
 import { isNativeAppRuntime } from "@/utils/is-native-app";
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
-export function useIsNativeApp(): boolean {
-  const [isNativeApp, setIsNativeApp] = useState(false);
+export type NativeAppState = boolean | null;
 
-  useEffect(() => {
+export function useIsNativeApp(): NativeAppState {
+  const [isNativeApp, setIsNativeApp] = useState<NativeAppState>(null);
+
+  useLayoutEffect(() => {
     function syncNativeState() {
       setIsNativeApp(isNativeAppRuntime());
     }
@@ -14,11 +16,15 @@ export function useIsNativeApp(): boolean {
     syncNativeState();
 
     const frameId = window.requestAnimationFrame(syncNativeState);
-    const timeoutId = window.setTimeout(syncNativeState, 50);
+    const timeoutIds = [0, 50, 250, 1000].map((delay) =>
+      window.setTimeout(syncNativeState, delay),
+    );
 
     return () => {
       window.cancelAnimationFrame(frameId);
-      window.clearTimeout(timeoutId);
+      for (const timeoutId of timeoutIds) {
+        window.clearTimeout(timeoutId);
+      }
     };
   }, []);
 

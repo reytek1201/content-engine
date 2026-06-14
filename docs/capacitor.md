@@ -26,6 +26,10 @@ The Next.js app stays on Vercel — no static export. Capacitor opens the live s
 
 | Command | Action |
 |---------|--------|
+| `npm run cap:assets` | Build `assets/` from `public/brand/logo.png` and generate iOS + Android icons/splash |
+| `npm run cap:assets:ios` | Generate iOS icons and splash only |
+| `npm run cap:assets:android` | Generate Android icons and splash only |
+| `npm run cap:assets:prepare` | Regenerate source files in `assets/` only (no native output) |
 | `npm run cap:sync` | Copy web assets + config into `ios/` and `android/` |
 | `npm run cap:ios` | Open the iOS project in Xcode |
 | `npm run cap:android` | Open the Android project in Android Studio |
@@ -48,6 +52,8 @@ The app should load SlidePress from production and behave like mobile Safari/Chr
 **Important:** The Capacitor shell loads the **live web app** (default: production). UI changes such as hiding the mobile top bar only appear after that code is deployed, **or** when you point the shell at a local dev server (see below).
 
 After changing `capacitor.config.ts`, run **`npm run cap:sync`**, then rebuild in Xcode/Android Studio so the custom user agent (`SlidePressApp/1`) is applied for native detection.
+
+**Top nav in the native app:** the web app hides the mobile top bar when it detects the Capacitor shell (`SlidePressApp/` user agent or `window.WEBVIEW_SERVER_URL`). Deploying to Vercel alone is not enough — you must **rebuild the native app** after `cap:sync` so the shell sends those signals. If you still see the bar in mobile Safari, that is expected (the hide only applies inside the Capacitor app).
 
 ---
 
@@ -78,13 +84,56 @@ Use your machine’s LAN IP instead of `localhost` for a physical device.
 
 ---
 
+## App icon and splash screen
+
+Uses [`@capacitor/assets`](https://capacitorjs.com/docs/guides/splash-screens-and-icons). The package is installed as a dev dependency; the CLI binary is `capacitor-assets` (not a standalone `capacitor-assets` npm package).
+
+**Do not run** `npx capacitor-assets` without installing `@capacitor/assets` first — that name is not published on npm. Use the npm scripts below or `npx @capacitor/assets generate`.
+
+### One-command workflow
+
+```bash
+npm run cap:assets      # prepare source images + generate for iOS and Android
+npm run cap:sync        # copy config into native projects
+npm run cap:ios         # rebuild in Xcode
+```
+
+`cap:assets` reads `public/brand/logo.png`, writes masters into `assets/`, then generates all platform sizes into `ios/` and `android/`.
+
+### Source image sizes (generated automatically)
+
+| File | Size | Purpose |
+|------|------|---------|
+| `assets/icon-only.png` | 1024×1024 | App icon (logo on `#09090b`) |
+| `assets/icon-foreground.png` | 1024×1024 | Android adaptive icon foreground |
+| `assets/icon-background.png` | 1024×1024 | Android adaptive icon background |
+| `assets/splash.png` | 2732×2732 | Splash screen |
+| `assets/splash-dark.png` | 2732×2732 | Dark-mode splash |
+
+After updating the brand logo, run `npm run cap:assets` again.
+
+### Manual CLI (equivalent)
+
+```bash
+npm run cap:assets:prepare
+npx @capacitor/assets generate --ios --android \
+  --iconBackgroundColor '#09090b' \
+  --iconBackgroundColorDark '#09090b' \
+  --splashBackgroundColor '#09090b' \
+  --splashBackgroundColorDark '#09090b'
+```
+
+Platform-specific: `npm run cap:assets:ios` or `npm run cap:assets:android`.
+
+---
+
 ## Phase 5 roadmap
 
 | Step | Status |
 |------|--------|
 | **5.1 Scaffold** | ✅ This setup |
 | **5.2 Auth** | Deep links, Sign in with Apple |
-| **5.3 App shell** | Splash, status bar, store icons |
+| **5.3 App shell** | Icons + splash (`npm run cap:assets`), status bar |
 | **5.4 Native affordances** | Share sheet, save to camera roll |
 | **5.5 Beta** | TestFlight, Play internal testing |
 

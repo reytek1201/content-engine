@@ -189,7 +189,7 @@ Wrap the existing SlidePress web app for **App Store** and **Google Play** — o
 |------|-------------|
 | **5.1 Scaffold** ✅ | Capacitor iOS + Android loading production (`slidepress.co`) — see `docs/capacitor.md` |
 | **5.2 Auth** | Deep links / universal links for Supabase sign-in (Google, password reset) in WebView; **Sign in with Apple** for iOS App Store |
-| **5.3 App shell** | Icons, splash screen, status bar (SlidePress dark + orange) |
+| **5.3 App shell** | Icons + splash (`npm run cap:assets`), status bar (SlidePress dark + orange) |
 | **5.4 Native affordances** | Share sheet, save slide images to camera roll |
 | **5.5 Beta distribution** | TestFlight + Play internal testing before public listing |
 | **5.6 Later** | Push notifications when campaign images finish generating |

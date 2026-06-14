@@ -11,6 +11,12 @@ const config: CapacitorConfig = {
   server: {
     url: serverUrl,
     androidScheme: "https",
+    allowNavigation: [
+      "slidepress.co",
+      "www.slidepress.co",
+      "*.slidepress.co",
+      "*.supabase.co",
+    ],
   },
 };
 
