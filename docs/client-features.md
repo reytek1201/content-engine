@@ -99,6 +99,8 @@ SlidePress is a marketing automation app for creators and small teams who need s
 ### Account & security
 
 - Email sign-in via Supabase Auth
+- **Google sign-in** on **`/login`**
+- **Strong passwords** on sign up — 8+ characters with uppercase, lowercase, and a number
 - **Forgot password** on the sign-in screen
 - **Settings** — email, password reset email, sign out, **account deletion** (Settings → Account deletion)
 - Your campaigns are private to your account (row-level security)
