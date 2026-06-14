@@ -1,5 +1,6 @@
 import type { UsageSummary } from "@/types/usage";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export class UsageLimitError extends Error {
   readonly code = "LIMIT_EXCEEDED" as const;
@@ -140,10 +141,8 @@ export async function assertRegenerationLimit(
   }
 }
 
-export async function recordSlideRegeneration(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<void> {
+export async function recordSlideRegeneration(userId: string): Promise<void> {
+  const supabase = createAdminClient();
   const { error } = await supabase.from("usage_events").insert({
     user_id: userId,
     event_type: "slide_regenerated",

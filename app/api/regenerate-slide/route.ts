@@ -193,7 +193,7 @@ export async function POST(request: Request) {
       .update({ status: "generating_images", error_message: null })
       .eq("id", typedCampaign.id);
 
-    await recordSlideRegeneration(supabase, user.id);
+    await recordSlideRegeneration(user.id);
 
     const referenceUrls = getReferenceImageUrls({
       product: campaign.product_reference_url,
