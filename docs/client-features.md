@@ -49,6 +49,7 @@ SlidePress is a marketing automation app for creators and small teams who need s
 - **Inline campaign rename** — edit title from the workspace header
 - **Slides before Publish** — review copy and images first, then captions
 - **Scroll-to-top** button when deep in the page (above mobile tab bar)
+- **Mobile workspace** — compact progress strip, sticky next-step bar, tighter slide cards and publish section on small screens
 - View all slides with **text overlay** and **voiceover script**
 - **Edit headlines** inline (up to 12 words per slide)
 - **Copy voiceover** per slide to clipboard
@@ -105,7 +106,15 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 - **Account** — view email, send password reset link, sign out
 - **Brand library** — upload, replace, or clear saved product/style/logo references (same assets used on create)
-- **Usage** — campaigns this month and all-time count; regeneration metering coming soon
+- **Usage** — campaigns and slide regenerations this month with beta limits (default 10 campaigns, 30 regenerations; resets monthly)
+
+### Beta usage limits
+
+- **10 campaigns per month** — enforced on create and duplicate
+- **30 slide regenerations per month** — enforced when regenerating a slide image
+- Limits shown in **Settings**; create form blocks when campaign cap is reached
+- Server returns a clear error if a limit is hit mid-flow
+- Tune limits with env vars `BETA_CAMPAIGNS_PER_MONTH` and `BETA_REGENERATIONS_PER_MONTH`
 
 ### Design & brand
 
@@ -141,6 +150,11 @@ These are planned next — not live yet.
 - **Marketing landing page** — dedicated `/` hero for SEO and sign-up (app stays behind nav)
 - **Usage tiers & billing** — slide limits and regeneration caps by plan (hooks already in place for slide count)
 - **Beta usage limits** — protect API spend before wider invites
+  - **10 campaigns / month** (create + duplicate)
+  - **30 slide regenerations / month**
+  - Enforced server-side; shown in Settings
+  - Configurable via `BETA_CAMPAIGNS_PER_MONTH` and `BETA_REGENERATIONS_PER_MONTH`
+- **Usage tiers & billing** — paid plans with higher caps (after beta)
 
 ### Export & publish
 
@@ -149,7 +163,7 @@ These are planned next — not live yet.
 
 ### Workflow polish
 
-- **Mobile workspace polish** — tighter slide layout on small screens
+- **Mobile workspace polish** — tighter slide cards, compact sticky next-step bar, and denser publish captions on small screens
 
 ### Not planned for v1
 

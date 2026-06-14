@@ -110,7 +110,7 @@ export default function SlideOverlayEditor({
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             disabled={disabled || isSaving}
-            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-lg font-semibold text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base font-semibold text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-3 sm:text-lg"
           />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
             <p
@@ -131,7 +131,7 @@ export default function SlideOverlayEditor({
           </div>
         </div>
       ) : (
-        <p className="mt-2 text-lg font-semibold leading-snug text-foreground">
+        <p className="mt-1.5 text-base font-semibold leading-snug text-foreground sm:mt-2 sm:text-lg">
           {value || "—"}
         </p>
       )}

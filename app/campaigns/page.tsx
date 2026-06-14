@@ -32,7 +32,7 @@ export default async function CampaignsPage() {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <main className="mx-auto w-full max-w-5xl px-6 py-12 sm:px-10">
+      <main className="page-main">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">

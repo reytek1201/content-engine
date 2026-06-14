@@ -118,7 +118,7 @@ function DesktopNav({
 }) {
   return (
     <header className="hidden border-b border-border bg-card/40 md:block">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-4 sm:px-10">
+      <div className="page-shell flex items-center justify-between gap-4 py-4">
         <div className="flex min-w-0 flex-1 items-center gap-8">
           <Link
             href="/campaigns"
@@ -225,7 +225,7 @@ function MobileBottomNav({
         <Link
           href="/settings"
           className={`flex flex-col items-center gap-1 transition active:opacity-80 ${
-            settingsActive ? "text-primary" : "text-primary/80"
+            settingsActive ? "text-primary" : "text-muted-foreground"
           }`}
         >
           <span className="flex h-6 w-6 items-center justify-center">

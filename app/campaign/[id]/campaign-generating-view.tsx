@@ -19,7 +19,8 @@ export default function CampaignGeneratingView({
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <main className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center px-6 py-16 sm:px-10">
+      <main className="page-main flex min-h-[60vh] flex-col items-center justify-center">
+        <div className="page-content">
         {isFailed ? (
           <>
             <div
@@ -73,6 +74,7 @@ export default function CampaignGeneratingView({
             </dl>
           </>
         )}
+        </div>
       </main>
     </div>
   );

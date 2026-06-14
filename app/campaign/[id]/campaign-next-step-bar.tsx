@@ -99,18 +99,18 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
   }
 
   return (
-    <div className="sticky top-0 z-40 -mx-6 border-b border-border bg-background/95 px-6 py-3 backdrop-blur-sm sm:-mx-10 sm:px-10">
-      <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+    <div className="sticky top-0 z-40 -mx-4 border-b border-border bg-background/95 px-4 py-2 backdrop-blur-sm sm:-mx-6 sm:px-6 sm:py-2.5 md:-mx-10 md:px-10 md:py-3">
+      <div className="flex flex-col gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-3 sm:gap-3 sm:rounded-2xl sm:p-4 md:flex-row md:items-center md:justify-between md:p-5">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-xs">
             Next step
           </p>
-          <p className="mt-1 text-sm font-medium text-foreground">
+          <p className="mt-0.5 line-clamp-2 text-xs font-medium leading-snug text-foreground sm:mt-1 sm:line-clamp-none sm:text-sm">
             {nextStep.description}
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-wrap gap-3">
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3 md:justify-end">
           {nextStep.secondary && (
             <button
               type="button"
@@ -119,7 +119,7 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
                 scrollToCampaignSection("section-publish");
                 onCopyAllCaptions();
               }}
-              className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:py-3"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-5 sm:py-2.5 md:py-3"
             >
               {copiedAllCaptions ? "Copied all" : nextStep.secondary.label}
             </button>
@@ -129,7 +129,7 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
             type="button"
             aria-disabled={actionDisabled}
             onClick={handlePrimaryClick}
-            className={`btn-primary py-2.5 sm:py-3 ${
+            className={`btn-primary w-full py-2 text-sm sm:w-auto sm:py-2.5 md:py-3 ${
               actionDisabled ? "cursor-default opacity-70" : ""
             }`}
           >

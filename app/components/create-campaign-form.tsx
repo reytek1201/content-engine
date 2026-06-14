@@ -15,6 +15,8 @@ import {
   referencesToBrandLibraryPayload,
 } from "@/types/brand-library";
 import type { ReferenceType } from "@/types/references";
+import type { UsageSummary } from "@/types/usage";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -76,6 +78,10 @@ export default function CreateCampaignForm({
   const allowedSlideCounts = getAllowedSlideCounts(user.id);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usage, setUsage] = useState<UsageSummary | null>(null);
+  const [usageLoading, setUsageLoading] = useState(true);
+
+  const campaignLimitReached = usage !== null && !usage.canCreateCampaign;
 
   const [brandLibrary, setBrandLibrary] = useState<BrandLibrary | null>(null);
   const [useSavedBrand, setUseSavedBrand] = useState(false);
@@ -115,6 +121,40 @@ export default function CreateCampaignForm({
     }
 
     void loadBrandLibrary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadUsage() {
+      setUsageLoading(true);
+
+      try {
+        const response = await fetch("/api/usage");
+        const data = (await response.json()) as {
+          success: boolean;
+          usage?: UsageSummary;
+        };
+
+        if (cancelled || !response.ok || !data.success || !data.usage) {
+          return;
+        }
+
+        setUsage(data.usage);
+      } catch {
+        // Usage is optional for display; server still enforces limits
+      } finally {
+        if (!cancelled) {
+          setUsageLoading(false);
+        }
+      }
+    }
+
+    void loadUsage();
 
     return () => {
       cancelled = true;
@@ -285,6 +325,12 @@ export default function CreateCampaignForm({
       const data = (await response.json()) as GenerateTextResponse;
 
       if (!response.ok || !data.success) {
+        if (response.status === 429) {
+          setUsage((current) =>
+            current ? { ...current, canCreateCampaign: false, remaining: { ...current.remaining, campaigns: 0 } } : current
+          );
+        }
+
         throw new Error(formatSubmitError(data as GenerateTextFailure));
       }
 
@@ -514,9 +560,27 @@ export default function CreateCampaignForm({
           )}
         </div>
 
+        {campaignLimitReached && usage && (
+          <div
+            role="status"
+            className="mt-6 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100"
+          >
+            You&apos;ve used all {usage.limits.campaignsPerMonth} beta campaigns
+            this month. Limits reset on the 1st — see{" "}
+            <Link href="/settings" className="font-medium underline underline-offset-2">
+              Settings
+            </Link>{" "}
+            for usage.
+          </div>
+        )}
+
         <button
           type="submit"
-          disabled={topic.trim().length === 0}
+          disabled={
+            topic.trim().length === 0 ||
+            campaignLimitReached ||
+            usageLoading
+          }
           className="btn-primary-full mt-8"
         >
           Generate campaign

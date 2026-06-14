@@ -17,6 +17,11 @@ import {
   type RegenerateFeedbackChipId,
 } from "@/types/regenerate-feedback";
 import type { Campaign, Slide } from "@/types/campaign";
+import {
+  assertRegenerationLimit,
+  isUsageLimitError,
+  recordSlideRegeneration,
+} from "@/utils/usage-limits";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -128,6 +133,8 @@ export async function POST(request: Request) {
       );
     }
 
+    await assertRegenerationLimit(supabase, user.id);
+
     const feedbackChipIds = feedback as RegenerateFeedbackChipId[];
 
     if (textOverlay) {
@@ -184,6 +191,8 @@ export async function POST(request: Request) {
       .from("campaigns")
       .update({ status: "generating_images", error_message: null })
       .eq("id", typedCampaign.id);
+
+    await recordSlideRegeneration(supabase, user.id);
 
     const referenceUrls = getReferenceImageUrls({
       product: campaign.product_reference_url,
@@ -275,6 +284,13 @@ export async function POST(request: Request) {
       );
     }
   } catch (error) {
+    if (isUsageLimitError(error)) {
+      return NextResponse.json(
+        { success: false, error: error.message, code: error.code },
+        { status: 429 }
+      );
+    }
+
     const message =
       error instanceof Error ? error.message : "Unexpected server error";
 

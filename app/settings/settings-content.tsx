@@ -2,16 +2,17 @@
 
 import BrandLibraryEditor from "@/app/components/brand-library-editor";
 import { createClient } from "@/utils/supabase/client";
+import type { UsageSummary } from "@/types/usage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
-interface UsageSummary {
-  campaignsThisMonth: number;
-  totalCampaigns: number;
-  slideRegenerationsThisMonth: number | null;
-  planLabel: string;
+function formatResetDate(isoDate: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "long",
+    day: "numeric",
+  }).format(new Date(isoDate));
 }
 
 interface SettingsContentProps {
@@ -129,8 +130,9 @@ export default function SettingsContent({ user }: SettingsContentProps) {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <main className="mx-auto w-full max-w-3xl px-6 py-12 sm:px-10">
-        <div>
+      <main className="page-main">
+        <div className="page-content">
+          <div>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Settings
           </h1>
@@ -203,42 +205,59 @@ export default function SettingsContent({ user }: SettingsContentProps) {
             ) : usageError ? (
               <p className="text-sm text-red-200">{usageError}</p>
             ) : usage ? (
-              <dl className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Campaigns this month
-                  </dt>
-                  <dd className="mt-2 text-2xl font-semibold text-foreground">
-                    {usage.campaignsThisMonth}
-                  </dd>
-                </div>
-                <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Total campaigns
-                  </dt>
-                  <dd className="mt-2 text-2xl font-semibold text-foreground">
-                    {usage.totalCampaigns}
-                  </dd>
-                </div>
-                <div className="rounded-xl border border-border bg-background/40 px-4 py-4 sm:col-span-2">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Slide regenerations
-                  </dt>
-                  <dd className="mt-2 text-sm text-muted-foreground">
-                    {usage.slideRegenerationsThisMonth === null
-                      ? "Coming soon — limits and metering are on the roadmap."
-                      : `${usage.slideRegenerationsThisMonth} this month`}
-                  </dd>
-                </div>
-                <div className="rounded-xl border border-border bg-background/40 px-4 py-4 sm:col-span-2">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Plan
-                  </dt>
-                  <dd className="mt-2 text-sm text-foreground">
-                    {usage.planLabel}
-                  </dd>
-                </div>
-              </dl>
+              <>
+                <dl className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Campaigns this month
+                    </dt>
+                    <dd className="mt-2 text-2xl font-semibold text-foreground">
+                      {usage.campaignsThisMonth}
+                      <span className="text-base font-normal text-muted-foreground">
+                        {" "}
+                        / {usage.limits.campaignsPerMonth}
+                      </span>
+                    </dd>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {usage.remaining.campaigns} remaining
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Slide regenerations
+                    </dt>
+                    <dd className="mt-2 text-2xl font-semibold text-foreground">
+                      {usage.slideRegenerationsThisMonth}
+                      <span className="text-base font-normal text-muted-foreground">
+                        {" "}
+                        / {usage.limits.slideRegenerationsPerMonth}
+                      </span>
+                    </dd>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {usage.remaining.slideRegenerations} remaining
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Total campaigns
+                    </dt>
+                    <dd className="mt-2 text-2xl font-semibold text-foreground">
+                      {usage.totalCampaigns}
+                    </dd>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Plan
+                    </dt>
+                    <dd className="mt-2 text-sm text-foreground">
+                      {usage.planLabel}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-4 text-xs leading-5 text-muted-foreground">
+                  Beta limits reset on {formatResetDate(usage.resetsAt)}.
+                </p>
+              </>
             ) : null}
 
             <p className="mt-6 text-xs leading-5 text-muted-foreground">
@@ -259,6 +278,7 @@ export default function SettingsContent({ user }: SettingsContentProps) {
               .
             </p>
           </SettingsSection>
+        </div>
         </div>
       </main>
     </div>

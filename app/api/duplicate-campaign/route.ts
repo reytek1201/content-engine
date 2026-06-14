@@ -3,6 +3,10 @@ import {
   assertSlideCountAllowed,
   referencesFromCampaign,
 } from "@/utils/campaign-generation";
+import {
+  assertCampaignLimit,
+  isUsageLimitError,
+} from "@/utils/usage-limits";
 import { createClient } from "@/utils/supabase/server";
 import type { Campaign } from "@/types/campaign";
 import {
@@ -94,6 +98,7 @@ export async function POST(request: Request) {
     );
 
     assertSlideCountAllowed(resolvedSlideCount, user.id);
+    await assertCampaignLimit(supabase, user.id);
 
     const references = referencesFromCampaign(typedSource);
 
@@ -162,6 +167,13 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (isUsageLimitError(error)) {
+      return NextResponse.json(
+        { success: false, error: error.message, code: error.code },
+        { status: 429 }
+      );
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {

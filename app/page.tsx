@@ -120,8 +120,9 @@ export default function Home() {
         </div>
 
         <div className="hidden min-h-full bg-background text-foreground md:block">
-          <main className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-6 py-16 sm:px-10">
-            <header className="mb-12">
+          <main className="page-main flex min-h-full flex-col">
+            <div className="page-content">
+              <header className="mb-12">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
                 <p className="brand-kicker">SlidePress</p>
@@ -136,6 +137,7 @@ export default function Home() {
             </header>
 
             <CreateCampaignForm user={user} idPrefix="page-" />
+            </div>
           </main>
         </div>
       </>
@@ -144,8 +146,9 @@ export default function Home() {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <main className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-6 py-16 sm:px-10">
-        <header className="mb-12">
+      <main className="page-main flex min-h-full flex-col">
+        <div className="page-content">
+          <header className="mb-12">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
             <p className="brand-kicker">SlidePress</p>
@@ -236,6 +239,7 @@ export default function Home() {
             </button>
           </form>
         </section>
+        </div>
       </main>
     </div>
   );

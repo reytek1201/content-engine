@@ -108,4 +108,17 @@
   .chip-default {
     @apply border-border text-secondary-foreground hover:border-ring/60 hover:text-foreground;
   }
+
+  .page-shell {
+    @apply mx-auto w-full max-w-5xl px-4 sm:px-6 md:px-10;
+  }
+
+  .page-main {
+    @apply mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12;
+  }
+
+  /* Forms, settings, auth — readable width inside the shell */
+  .page-content {
+    @apply mx-auto w-full max-w-3xl;
+  }
 }

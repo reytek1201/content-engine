@@ -4,6 +4,10 @@ import {
   normalizeReferencesInput,
   RequestSchema,
 } from "@/utils/campaign-generation";
+import {
+  assertCampaignLimit,
+  isUsageLimitError,
+} from "@/utils/usage-limits";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -41,6 +45,7 @@ export async function POST(request: Request) {
     const references = normalizeReferencesInput(referencesInput);
 
     assertSlideCountAllowed(slide_count, user.id);
+    await assertCampaignLimit(supabase, user.id);
 
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
@@ -76,6 +81,13 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (isUsageLimitError(error)) {
+      return NextResponse.json(
+        { success: false, error: error.message, code: error.code },
+        { status: 429 }
+      );
+    }
+
     const message =
       error instanceof Error ? error.message : "Unexpected server error";
 
