@@ -129,24 +129,20 @@ Platform-specific: `npm run cap:assets:ios` or `npm run cap:assets:android`.
 
 ---
 
-## ### Why Android needs a native rebuild for OAuth
-
-The native auth client stores the PKCE verifier in **localStorage** (survives Chrome Custom Tab). Android also uses a full page navigation after sign-in so session cookies reach the server. Rebuild after pulling:
-
-```bash
-npm run cap:sync
-npm run cap:android
-```
-
-Google sign-in (native app)
+## Native auth (Google, Apple, password reset)
 
 Google blocks OAuth inside embedded WebViews. The native app uses the system browser and a deep link back into the app.
 
-**Flow:**
-1. Tap **Continue with Google** → opens Safari / Chrome Custom Tab
-2. After Google + Supabase auth → redirects to `co.slidepress.app://auth/callback?code=...`
-3. App catches the deep link → loads `https://www.slidepress.co/auth/callback?code=...` in the WebView
-4. Session cookies are set → user lands in the app
+The native auth client stores the PKCE verifier in **localStorage** (survives Chrome Custom Tab). Android uses a full page navigation after sign-in so session cookies reach the server.
+
+**Sign-in flow:**
+1. Tap **Continue with Google** or **Continue with Apple** (iOS only) → opens Safari / Chrome Custom Tab
+2. After provider + Supabase auth → redirects to `co.slidepress.app://auth/callback?code=...`
+3. App exchanges the code client-side, syncs the session, and navigates to campaigns
+
+**Password reset flow:**
+1. Forgot password email links to `co.slidepress.app://auth/callback` (native) with session tokens
+2. App applies the session and opens **Settings** with a new-password form (`/settings?reset=1`)
 
 ### Supabase redirect URLs (required)
 
@@ -170,6 +166,18 @@ npm run cap:ios    # clean build in Xcode
 
 Google Cloud Console redirect URI stays **only** the Supabase callback (`https://<project>.supabase.co/auth/v1/callback`) — do not add the app scheme there.
 
+### Sign in with Apple (required for iOS App Store)
+
+Enable the **Apple** provider in **Supabase → Authentication → Providers**.
+
+In [Apple Developer](https://developer.apple.com/account/resources/identifiers/list):
+1. Create a **Services ID** (e.g. `co.slidepress.app.auth`) — enable Sign in with Apple
+2. Configure **Return URL**: `https://<project-ref>.supabase.co/auth/v1/callback`
+3. Create a **Sign in with Apple** key → upload to Supabase Apple provider settings
+4. Add your App ID (`co.slidepress.app`) under the Services ID configuration
+
+The iOS app shows **Continue with Apple** only in the native shell (App Store requirement when Google is offered).
+
 ---
 
 ## Phase 5 roadmap
@@ -177,7 +185,7 @@ Google Cloud Console redirect URI stays **only** the Supabase callback (`https:/
 | Step | Status |
 |------|--------|
 | **5.1 Scaffold** | ✅ This setup |
-| **5.2 Auth** | Google OAuth via deep link + system browser ✅; Sign in with Apple (iOS) |
+| **5.2 Auth** | Google + Apple OAuth via deep link ✅; password reset deep links ✅ |
 | **5.3 App shell** | Icons + splash (`npm run cap:assets`), status bar |
 | **5.4 Native affordances** | Share sheet, save to camera roll |
 | **5.5 Beta** | TestFlight, Play internal testing |

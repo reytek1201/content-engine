@@ -1,32 +1,36 @@
 "use client";
 
 import {
+  completeNativeAuthCallback,
   completeNativeOAuthNavigation,
-  exchangeNativeOAuthCode,
 } from "@/utils/native-oauth-session";
 import { isNativeAppRuntime } from "@/utils/is-native-app";
-import { parseNativeOAuthCallback } from "@/utils/native-oauth";
+import {
+  getNativeAuthCallbackKey,
+  parseNativeAuthCallback,
+} from "@/utils/native-oauth";
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-const handledOAuthCodes = new Set<string>();
+const handledAuthCallbacks = new Set<string>();
 
 async function handleNativeAuthUrl(
   url: string,
   navigate: (path: string) => void,
 ) {
-  const callback = parseNativeOAuthCallback(url);
+  const callback = parseNativeAuthCallback(url);
   if (!callback) {
     return;
   }
 
-  if (handledOAuthCodes.has(callback.code)) {
+  const callbackKey = getNativeAuthCallbackKey(callback);
+  if (handledAuthCallbacks.has(callbackKey)) {
     return;
   }
 
-  handledOAuthCodes.add(callback.code);
+  handledAuthCallbacks.add(callbackKey);
 
   try {
     await Browser.close();
@@ -34,15 +38,15 @@ async function handleNativeAuthUrl(
     // Browser may already be closed.
   }
 
-  const { error } = await exchangeNativeOAuthCode(callback.code);
+  const { error, nextPath } = await completeNativeAuthCallback(callback);
 
   if (error) {
-    handledOAuthCodes.delete(callback.code);
+    handledAuthCallbacks.delete(callbackKey);
     navigate("/login?error=auth_callback_error");
     return;
   }
 
-  completeNativeOAuthNavigation(callback.next, navigate);
+  completeNativeOAuthNavigation(nextPath, navigate);
 }
 
 export default function NativeAuthListener() {

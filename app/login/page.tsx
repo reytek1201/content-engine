@@ -3,10 +3,14 @@
 import { createClient } from "@/utils/supabase/client";
 import BrandLogo from "@/app/components/brand-logo";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
+import { useIsIosNative } from "@/app/hooks/use-is-ios-native";
 import { brandLogoSrc } from "@/utils/site-metadata";
 import { isNativeAppRuntime } from "@/utils/is-native-app";
 import { buildNativeOAuthRedirectUrl } from "@/utils/native-oauth";
-import { createNativeAuthClient } from "@/utils/supabase/native-auth-client";
+import {
+  buildWebOAuthRedirectUrl,
+  startNativeProviderAuth,
+} from "@/utils/native-auth-flow";
 import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_REQUIREMENTS_TEXT,
@@ -16,7 +20,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Browser } from "@capacitor/browser";
 
 function GoogleIcon() {
   return (
@@ -46,6 +49,22 @@ function GoogleIcon() {
   );
 }
 
+function AppleIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      aria-hidden
+    >
+      <path
+        fill="currentColor"
+        d="M17.05 20.28c-.98.95-2.05 1.88-3.71 1.9-1.6.02-2.11-.93-3.94-.93-1.83 0-2.4.9-3.92.95-1.57.06-2.77-1.56-3.75-2.5C1.1 16.54 0 13.5 1.36 10.9c.95-1.84 2.66-3 4.52-3.03 1.58-.03 3.07 1.05 3.94 1.05.87 0 2.81-1.3 4.74-1.11.81.03 3.08.33 4.54 2.48-3.8 2.07-3.18 7.46.95 9.99ZM12.03 3.5c.27-2.03 1.77-3.38 3.32-3.55.2 2.15-1.88 4.2-3.32 4.49Z"
+      />
+    </svg>
+  );
+}
+
 function LoginForm() {
   const supabase = createClient();
   const router = useRouter();
@@ -62,10 +81,12 @@ function LoginForm() {
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authSubmitting, setAuthSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const [appleSubmitting, setAppleSubmitting] = useState(false);
   const [forgotSending, setForgotSending] = useState(false);
   const [forgotMessage, setForgotMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const isNativeApp = useIsNativeApp();
+  const isIosNative = useIsIosNative();
 
   useEffect(() => {
     let active = true;
@@ -95,59 +116,60 @@ function LoginForm() {
 
   useEffect(() => {
     if (searchParams.get("error") === "auth_callback_error") {
-      setAuthError("Google sign-in was cancelled or failed. Try again.");
+      setAuthError("Sign-in was cancelled or failed. Try again.");
     }
   }, [searchParams]);
 
-  async function handleGoogleSignIn() {
+  async function handleProviderSignIn(provider: "google" | "apple") {
     setAuthError(null);
     setAuthMessage(null);
     setForgotMessage(null);
-    setGoogleSubmitting(true);
+
+    if (provider === "google") {
+      setGoogleSubmitting(true);
+    } else {
+      setAppleSubmitting(true);
+    }
 
     const next = resolveNextPath();
 
-    if (isNativeAppRuntime()) {
-      const redirectTo = buildNativeOAuthRedirectUrl(next);
-      const nativeSupabase = createNativeAuthClient();
+    try {
+      if (isNativeAppRuntime()) {
+        const { error } = await startNativeProviderAuth(provider, next);
 
-      const { data, error } = await nativeSupabase.auth.signInWithOAuth({
-        provider: "google",
+        if (error) {
+          setAuthError(error);
+        }
+
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
         options: {
-          redirectTo,
-          skipBrowserRedirect: true,
+          redirectTo: buildWebOAuthRedirectUrl(next),
+          ...(provider === "apple" ? { scopes: "name email" } : {}),
         },
       });
 
       if (error) {
         setAuthError(error.message);
+      }
+    } finally {
+      if (provider === "google") {
         setGoogleSubmitting(false);
-        return;
+      } else {
+        setAppleSubmitting(false);
       }
-
-      if (data?.url) {
-        await Browser.open({ url: data.url });
-      }
-
-      setGoogleSubmitting(false);
-      return;
     }
+  }
 
-    const callbackUrl = `${window.location.origin}/auth/callback${
-      next !== "/campaigns" ? `?next=${encodeURIComponent(next)}` : ""
-    }`;
+  async function handleGoogleSignIn() {
+    await handleProviderSignIn("google");
+  }
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: callbackUrl,
-      },
-    });
-
-    if (error) {
-      setAuthError(error.message);
-      setGoogleSubmitting(false);
-    }
+  async function handleAppleSignIn() {
+    await handleProviderSignIn("apple");
   }
 
   async function handleSignIn(event: React.FormEvent<HTMLFormElement>) {
@@ -227,11 +249,9 @@ function LoginForm() {
     setForgotMessage(null);
     setForgotSending(true);
 
-    const redirectTo = `${window.location.origin}/login${
-      nextPath !== "/campaigns"
-        ? `?next=${encodeURIComponent(nextPath)}`
-        : ""
-    }`;
+    const redirectTo = isNativeAppRuntime()
+      ? buildNativeOAuthRedirectUrl("/settings?reset=1")
+      : `${window.location.origin}/settings?reset=1`;
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email.trim(),
@@ -247,7 +267,7 @@ function LoginForm() {
     setForgotSending(false);
   }
 
-  const authBusy = authSubmitting || googleSubmitting;
+  const authBusy = authSubmitting || googleSubmitting || appleSubmitting;
 
   return (
     <div className="min-h-full bg-background text-foreground">
@@ -280,15 +300,29 @@ function LoginForm() {
           </header>
 
           <section className="rounded-2xl border border-border bg-card/60 p-6 sm:p-8">
-            <button
-              type="button"
-              disabled={authBusy}
-              onClick={() => void handleGoogleSignIn()}
-              className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background px-5 py-3 text-sm font-semibold text-foreground transition hover:border-ring/60 hover:bg-secondary/40 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <GoogleIcon />
-              {googleSubmitting ? "Redirecting…" : "Continue with Google"}
-            </button>
+            <div className="space-y-3">
+              <button
+                type="button"
+                disabled={authBusy}
+                onClick={() => void handleGoogleSignIn()}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background px-5 py-3 text-sm font-semibold text-foreground transition hover:border-ring/60 hover:bg-secondary/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <GoogleIcon />
+                {googleSubmitting ? "Redirecting…" : "Continue with Google"}
+              </button>
+
+              {isIosNative ? (
+                <button
+                  type="button"
+                  disabled={authBusy}
+                  onClick={() => void handleAppleSignIn()}
+                  className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-foreground px-5 py-3 text-sm font-semibold text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <AppleIcon />
+                  {appleSubmitting ? "Redirecting…" : "Continue with Apple"}
+                </button>
+              ) : null}
+            </div>
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center" aria-hidden>

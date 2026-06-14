@@ -2,10 +2,13 @@
 
 import BrandLibraryEditor from "@/app/components/brand-library-editor";
 import DeleteAccountSection from "@/app/components/delete-account-section";
+import PasswordResetForm from "@/app/components/password-reset-form";
 import { createClient } from "@/utils/supabase/client";
+import { isNativeAppRuntime } from "@/utils/is-native-app";
+import { buildNativeOAuthRedirectUrl } from "@/utils/native-oauth";
 import type { UsageSummary } from "@/types/usage";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
@@ -45,6 +48,8 @@ function SettingsSection({
 export default function SettingsContent({ user }: SettingsContentProps) {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const showPasswordReset = searchParams.get("reset") === "1";
 
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
@@ -55,6 +60,35 @@ export default function SettingsContent({ user }: SettingsContentProps) {
   const [resetError, setResetError] = useState<string | null>(null);
 
   const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) {
+      return;
+    }
+
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+
+    if (!accessToken || !refreshToken) {
+      return;
+    }
+
+    void supabase.auth
+      .setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
+      .then(() => {
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}${window.location.search}`,
+        );
+        router.refresh();
+      });
+  }, [supabase, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,8 +143,12 @@ export default function SettingsContent({ user }: SettingsContentProps) {
     setResetMessage(null);
     setResetError(null);
 
+    const redirectTo = isNativeAppRuntime()
+      ? buildNativeOAuthRedirectUrl("/settings?reset=1")
+      : `${window.location.origin}/settings?reset=1`;
+
     const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-      redirectTo: `${window.location.origin}/`,
+      redirectTo,
     });
 
     if (error) {
@@ -143,6 +181,15 @@ export default function SettingsContent({ user }: SettingsContentProps) {
         </div>
 
         <div className="mt-10 space-y-6">
+          {showPasswordReset ? (
+            <SettingsSection
+              title="Set a new password"
+              description="You opened a password reset link. Choose a new password to finish."
+            >
+              <PasswordResetForm />
+            </SettingsSection>
+          ) : null}
+
           <SettingsSection
             title="Account"
             description="Manage your sign-in and session."
