@@ -44,7 +44,14 @@ async function syncBrowserSession(tokens: {
     return { error: setSessionError.message };
   }
 
-  await browserSupabase.auth.getSession();
+  const {
+    data: { user },
+    error: userError,
+  } = await browserSupabase.auth.getUser();
+
+  if (userError || !user) {
+    return { error: userError?.message ?? "Session was not established." };
+  }
 
   return { error: null };
 }
@@ -65,14 +72,24 @@ export async function completeNativeAuthCallback(
   return { error, nextPath: callback.next };
 }
 
-export function completeNativeOAuthNavigation(
+export function navigateAfterAuth(
   nextPath: string,
   navigate: (path: string) => void,
 ) {
-  if (Capacitor.getPlatform() === "android") {
+  // Full page load ensures Supabase auth cookies are sent on the next
+  // server render. Client-side router navigation can race ahead of cookies
+  // being persisted in the Capacitor WebView (seen after Apple sign-in).
+  if (Capacitor.isNativePlatform()) {
     window.location.replace(nextPath);
     return;
   }
 
   navigate(nextPath);
+}
+
+export function completeNativeOAuthNavigation(
+  nextPath: string,
+  navigate: (path: string) => void,
+) {
+  navigateAfterAuth(nextPath, navigate);
 }

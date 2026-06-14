@@ -12,7 +12,7 @@ import {
   startNativeProviderAuth,
 } from "@/utils/native-auth-flow";
 import { startNativeAppleAuth } from "@/utils/native-apple-auth";
-import { completeNativeOAuthNavigation } from "@/utils/native-oauth-session";
+import { completeNativeOAuthNavigation, navigateAfterAuth } from "@/utils/native-oauth-session";
 import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_REQUIREMENTS_TEXT,
@@ -90,12 +90,19 @@ function LoginForm() {
   const isNativeApp = useIsNativeApp();
   const isIosNative = useIsIosNative();
 
+  function authNavigate(path: string) {
+    navigateAfterAuth(path, (target) => {
+      router.replace(target);
+      router.refresh();
+    });
+  }
+
   useEffect(() => {
     let active = true;
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (active && user) {
-        router.replace(resolveNextPath());
+        authNavigate(resolveNextPath());
       }
     });
 
@@ -106,7 +113,7 @@ function LoginForm() {
         session?.user &&
         (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")
       ) {
-        router.replace(resolveNextPath());
+        authNavigate(resolveNextPath());
       }
     });
 
@@ -187,10 +194,7 @@ function LoginForm() {
           return;
         }
 
-        completeNativeOAuthNavigation(next, (path) => {
-          router.replace(path);
-          router.refresh();
-        });
+        completeNativeOAuthNavigation(next, authNavigate);
         return;
       }
 
@@ -218,8 +222,7 @@ function LoginForm() {
       return;
     }
 
-    router.replace(resolveNextPath());
-    router.refresh();
+    authNavigate(resolveNextPath());
     setAuthSubmitting(false);
   }
 
@@ -248,8 +251,7 @@ function LoginForm() {
     }
 
     if (data.session) {
-      router.replace(resolveNextPath());
-      router.refresh();
+      authNavigate(resolveNextPath());
       setAuthSubmitting(false);
       return;
     }
