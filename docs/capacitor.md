@@ -249,3 +249,14 @@ Notify users in the **native app** when every slide image in a campaign is ready
 **Database:** Run migration `20260616000001_push_device_tokens.sql` (table `push_device_tokens`, column `campaigns.images_ready_notified_at`).
 
 Push is **optional** — if FCM env vars are unset, the app still works; notifications are simply skipped server-side.
+
+### Push test (development)
+
+To test push **without generating images**:
+
+1. Set `NEXT_PUBLIC_ALLOW_PUSH_TEST=true` on Vercel (or in `.env.local` for local dev).
+2. Redeploy.
+3. Open the **native app** → **Settings** → **Send test push**.
+4. Background the app to see the notification banner.
+
+Remove or disable `NEXT_PUBLIC_ALLOW_PUSH_TEST` when you are done testing.

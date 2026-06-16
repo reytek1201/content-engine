@@ -3,6 +3,7 @@
 import BrandLibraryEditor from "@/app/components/brand-library-editor";
 import DeleteAccountSection from "@/app/components/delete-account-section";
 import PasswordResetForm from "@/app/components/password-reset-form";
+import PushTestSection from "@/app/components/push-test-section";
 import { createClient } from "@/utils/supabase/client";
 import { isNativeAppRuntime } from "@/utils/is-native-app";
 import { buildNativeOAuthRedirectUrl } from "@/utils/native-oauth";
@@ -240,6 +241,8 @@ export default function SettingsContent({ user }: SettingsContentProps) {
           <SettingsSection title="Brand library">
             <BrandLibraryEditor user={user} />
           </SettingsSection>
+
+          <PushTestSection />
 
           <SettingsSection
             title="Usage"
