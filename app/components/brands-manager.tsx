@@ -28,7 +28,7 @@ export default function BrandsManager() {
       setName("");
       await refreshBrands();
       setActiveBrandId(brand.id);
-      router.refresh();
+      router.push(`/settings/brand?brand=${brand.id}`);
     } catch (createError) {
       setError(
         createError instanceof Error
@@ -124,7 +124,7 @@ export default function BrandsManager() {
             disabled={creating || name.trim().length === 0}
             className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
           >
-            {creating ? "Creating…" : "Create brand"}
+            {creating ? "Creating…" : "Create & set up kit"}
           </button>
         </div>
       </form>
