@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppNavLayout } from "@/app/components/app-nav";
 import NativeAuthListener from "@/app/components/native-auth-listener";
+import NativePushListener from "@/app/components/native-push-listener";
 import NativeShell from "@/app/components/native-shell";
 import {
   brandLogoSrc,
@@ -54,6 +55,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <NativeAuthListener />
+        <NativePushListener />
         <NativeShell />
         <AppNavLayout>{children}</AppNavLayout>
       </body>

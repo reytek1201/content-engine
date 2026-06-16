@@ -2,6 +2,7 @@ import {
   markCampaignFailed,
   refreshCampaignImageStatus,
 } from "@/utils/campaign-image-status";
+import { maybeSendCampaignImagesReadyPush } from "@/utils/send-campaign-push";
 import {
   buildFalWebhookUrl,
   getAppBaseUrl,
@@ -226,6 +227,7 @@ export async function POST(request: Request) {
         }
 
         await refreshCampaignImageStatus(supabase, typedCampaign.id);
+        await maybeSendCampaignImagesReadyPush(typedCampaign.id);
         // Record quota only after the image is successfully saved.
         await recordSlideRegeneration(user.id);
 

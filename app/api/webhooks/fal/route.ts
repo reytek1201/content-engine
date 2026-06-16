@@ -4,29 +4,9 @@ import {
   verifyFalWebhookSecret,
   type FalWebhookPayload,
 } from "@/utils/fal";
+import { refreshCampaignImageStatus } from "@/utils/campaign-image-status";
+import { maybeSendCampaignImagesReadyPush } from "@/utils/send-campaign-push";
 import { NextResponse } from "next/server";
-
-async function refreshCampaignStatus(campaignId: string) {
-  const supabase = createAdminClient();
-
-  const { data: slides } = await supabase
-    .from("slides")
-    .select("image_url")
-    .eq("campaign_id", campaignId);
-
-  const allComplete =
-    slides &&
-    slides.length > 0 &&
-    slides.every((slide) => Boolean(slide.image_url));
-
-  await supabase
-    .from("campaigns")
-    .update({
-      status: allComplete ? "completed" : "generating_images",
-      error_message: null,
-    })
-    .eq("id", campaignId);
-}
 
 export async function POST(request: Request) {
   if (!verifyFalWebhookSecret(request)) {
@@ -110,7 +90,8 @@ export async function POST(request: Request) {
       );
     }
 
-    await refreshCampaignStatus(slide.campaign_id);
+    await refreshCampaignImageStatus(supabase, slide.campaign_id);
+    await maybeSendCampaignImagesReadyPush(slide.campaign_id);
 
     return NextResponse.json({ success: true, handled: "updated" });
   } catch (error) {

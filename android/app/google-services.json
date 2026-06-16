@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "511085123704",
+    "project_id": "slidepress-ea5c3",
+    "storage_bucket": "slidepress-ea5c3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:511085123704:android:7cdd1d92180668b500358d",
+        "android_client_info": {
+          "package_name": "co.slidepress.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPt54VHnkheQ84KNGkBtEV12Kyk_uh9gU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

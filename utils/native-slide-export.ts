@@ -2,7 +2,21 @@ import { Media } from "@capacitor-community/media";
 import { Capacitor } from "@capacitor/core";
 import { Directory, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { slideImageFilename } from "@/utils/download-slide";
 import { isNativeAppRuntime } from "@/utils/is-native-app";
+
+const SLIDEPRESS_ALBUM_NAME = "SlidePress";
+
+export interface SaveAllSlidesResult {
+  savedCount: number;
+  totalCount: number;
+  failedCount: number;
+}
+
+export interface SlideImageRef {
+  image_url: string | null;
+  slide_index: number;
+}
 
 function extensionForMimeType(mimeType: string): string {
   if (mimeType.includes("jpeg") || mimeType.includes("jpg")) {
@@ -82,6 +96,7 @@ export function canUseNativeSlideExport(): boolean {
 export async function saveSlideImageToPhotos(
   imageUrl: string,
   filename: string,
+  albumIdentifier?: string,
 ): Promise<void> {
   if (!canUseNativeSlideExport()) {
     throw new Error("Save to Photos is only available in the mobile app");
@@ -90,7 +105,76 @@ export async function saveSlideImageToPhotos(
   await Media.savePhoto({
     path: imageUrl,
     fileName: filename.replace(/\.[^.]+$/, ""),
+    ...(albumIdentifier ? { albumIdentifier } : {}),
   });
+}
+
+async function getOrCreateSlidePressAlbumIdentifier(): Promise<string | undefined> {
+  try {
+    const { albums } = await Media.getAlbums();
+    const existing = albums.find((album) => album.name === SLIDEPRESS_ALBUM_NAME);
+
+    if (existing?.identifier) {
+      return existing.identifier;
+    }
+
+    await Media.createAlbum({ name: SLIDEPRESS_ALBUM_NAME });
+    const { albums: refreshed } = await Media.getAlbums();
+    return refreshed.find((album) => album.name === SLIDEPRESS_ALBUM_NAME)
+      ?.identifier;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function saveAllSlidesToPhotos(
+  slides: SlideImageRef[],
+  onProgress?: (saved: number, total: number) => void,
+): Promise<SaveAllSlidesResult> {
+  if (!canUseNativeSlideExport()) {
+    throw new Error("Save to Photos is only available in the mobile app");
+  }
+
+  const slidesWithImages = [...slides]
+    .filter((slide) => slide.image_url)
+    .sort((left, right) => left.slide_index - right.slide_index);
+
+  const totalCount = slidesWithImages.length;
+
+  if (totalCount === 0) {
+    throw new Error("No slide images to save");
+  }
+
+  const albumIdentifier = await getOrCreateSlidePressAlbumIdentifier();
+  let savedCount = 0;
+  let failedCount = 0;
+
+  onProgress?.(0, totalCount);
+
+  for (const slide of slidesWithImages) {
+    if (!slide.image_url) {
+      continue;
+    }
+
+    try {
+      await saveSlideImageToPhotos(
+        slide.image_url,
+        slideImageFilename(slide.slide_index),
+        albumIdentifier,
+      );
+      savedCount += 1;
+    } catch {
+      failedCount += 1;
+    }
+
+    onProgress?.(savedCount, totalCount);
+  }
+
+  if (savedCount === 0) {
+    throw new Error("Could not save any slide images to Photos");
+  }
+
+  return { savedCount, totalCount, failedCount };
 }
 
 export async function shareSlideImage(

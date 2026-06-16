@@ -3,6 +3,7 @@ import {
   markCampaignFailed,
   refreshCampaignImageStatus,
 } from "@/utils/campaign-image-status";
+import { maybeSendCampaignImagesReadyPush } from "@/utils/send-campaign-push";
 import {
   buildFalWebhookUrl,
   getAppBaseUrl,
@@ -179,6 +180,7 @@ export async function POST(request: Request) {
       }
 
       await refreshCampaignImageStatus(supabase, campaignId);
+      await maybeSendCampaignImagesReadyPush(campaignId);
 
       return NextResponse.json(
         {

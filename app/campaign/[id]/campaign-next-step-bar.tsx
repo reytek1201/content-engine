@@ -4,6 +4,8 @@ import {
   getCampaignNextStep,
   scrollToCampaignSection,
   type CampaignNextStep,
+  type CampaignNextStepButton,
+  type NextStepAction,
 } from "@/utils/campaign-progress";
 
 interface CampaignNextStepBarProps {
@@ -17,24 +19,28 @@ interface CampaignNextStepBarProps {
   canGenerateCaptions: boolean;
   isGeneratingCaptions: boolean;
   isExporting: boolean;
+  isNativeApp: boolean;
+  isSavingAllPhotos: boolean;
+  saveAllPhotosProgress: { saved: number; total: number } | null;
   copiedAllCaptions: boolean;
   onGenerateImages: () => void;
   onGenerateCaptions: () => void;
   onDownloadZip: () => void;
   onCopyAllCaptions: () => void;
+  onSaveAllToPhotos: () => void;
 }
 
-function runNextStepAction(
-  nextStep: CampaignNextStep,
-  handlers: Pick<
-    CampaignNextStepBarProps,
-    | "onGenerateImages"
-    | "onGenerateCaptions"
-    | "onDownloadZip"
-    | "onCopyAllCaptions"
-  >
-) {
-  switch (nextStep.action) {
+type NextStepHandlers = Pick<
+  CampaignNextStepBarProps,
+  | "onGenerateImages"
+  | "onGenerateCaptions"
+  | "onDownloadZip"
+  | "onCopyAllCaptions"
+  | "onSaveAllToPhotos"
+>;
+
+function runNextStepAction(action: NextStepAction, handlers: NextStepHandlers) {
+  switch (action) {
     case "generate_images":
       handlers.onGenerateImages();
       break;
@@ -47,7 +53,29 @@ function runNextStepAction(
     case "copy_captions":
       handlers.onCopyAllCaptions();
       break;
+    case "save_all_photos":
+      handlers.onSaveAllToPhotos();
+      break;
   }
+}
+
+function secondaryButtonLabel(
+  button: CampaignNextStepButton,
+  copiedAllCaptions: boolean,
+): string {
+  if (button.action === "copy_captions" && copiedAllCaptions) {
+    return "Copied all";
+  }
+
+  return button.label;
+}
+
+function secondaryScrollTarget(action: NextStepAction): string {
+  if (action === "copy_captions") {
+    return "section-publish";
+  }
+
+  return "section-slides";
 }
 
 export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
@@ -62,11 +90,15 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
     canGenerateCaptions,
     isGeneratingCaptions,
     isExporting,
+    isNativeApp,
+    isSavingAllPhotos,
+    saveAllPhotosProgress,
     copiedAllCaptions,
     onGenerateImages,
     onGenerateCaptions,
     onDownloadZip,
     onCopyAllCaptions,
+    onSaveAllToPhotos,
   } = props;
 
   const nextStep = getCampaignNextStep({
@@ -80,23 +112,43 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
     canGenerateCaptions,
     isGeneratingCaptions,
     isExporting,
+    isNativeApp,
+    isSavingAllPhotos,
+    saveAllPhotosProgress,
   });
 
-  const handlers = {
+  const handlers: NextStepHandlers = {
     onGenerateImages,
     onGenerateCaptions,
     onDownloadZip,
     onCopyAllCaptions,
+    onSaveAllToPhotos,
   };
+
+  const secondaryButtons =
+    nextStep.secondaries ??
+    (nextStep.secondary ? [nextStep.secondary] : []);
 
   const actionDisabled = nextStep.disabled || nextStep.loading;
 
   function handlePrimaryClick() {
     scrollToCampaignSection(nextStep.scrollTargetId);
     if (!actionDisabled) {
-      runNextStepAction(nextStep, handlers);
+      runNextStepAction(nextStep.action, handlers);
     }
   }
+
+  function handleSecondaryClick(button: CampaignNextStepButton) {
+    scrollToCampaignSection(secondaryScrollTarget(button.action));
+    if (!button.disabled && !button.loading) {
+      runNextStepAction(button.action, handlers);
+    }
+  }
+
+  const primaryLabel =
+    nextStep.action === "copy_captions" && copiedAllCaptions
+      ? "Copied all"
+      : nextStep.label;
 
   return (
     <div className="sticky top-0 z-40 -mx-4 border-b border-border bg-background/95 px-4 py-2 backdrop-blur-sm sm:-mx-6 sm:px-6 sm:py-2.5 md:top-[4.5rem] md:-mx-10 md:px-10 md:py-3">
@@ -111,19 +163,17 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
         </div>
 
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3 md:justify-end">
-          {nextStep.secondary && (
+          {secondaryButtons.map((button) => (
             <button
+              key={button.action}
               type="button"
-              disabled={nextStep.secondary.disabled || nextStep.secondary.loading}
-              onClick={() => {
-                scrollToCampaignSection("section-publish");
-                onCopyAllCaptions();
-              }}
+              disabled={button.disabled || button.loading}
+              onClick={() => handleSecondaryClick(button)}
               className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-5 sm:py-2.5 md:py-3"
             >
-              {copiedAllCaptions ? "Copied all" : nextStep.secondary.label}
+              {secondaryButtonLabel(button, copiedAllCaptions)}
             </button>
-          )}
+          ))}
 
           <button
             type="button"
@@ -133,7 +183,7 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
               actionDisabled ? "cursor-default opacity-70" : ""
             }`}
           >
-            {nextStep.label}
+            {primaryLabel}
           </button>
         </div>
       </div>

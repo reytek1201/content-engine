@@ -91,7 +91,8 @@ SlidePress is a marketing automation app for creators and small teams who need s
 ### Export
 
 - **Download zip** when all slide images are ready (via Next step bar)
-- **Download individual slide images** from each slide card
+- **Download individual slide images** from each slide card (web)
+- **Native app:** **Save to Photos** and **Share** per slide; **Save all to Photos** in the next step bar (with **Copy all captions** and optional zip)
 - Includes in zip:
   - `slides/` — numbered slide images
   - `captions.txt` — all platform copy in one file (if captions were generated)
@@ -189,10 +190,10 @@ Wrap the existing SlidePress web app for **App Store** and **Google Play** — o
 |------|-------------|
 | **5.1 Scaffold** ✅ | Capacitor iOS + Android loading production (`slidepress.co`) — see `docs/capacitor.md` |
 | **5.2 Auth** ✅ | Google + Apple OAuth (deep link), password reset deep links |
-| **5.3 App shell** | Icons + splash (`npm run cap:assets`), status bar (SlidePress dark + orange) — status bar configured in app; run `npm run cap:assets` before store builds |
-| **5.4 Native affordances** | Share sheet + Save to Photos on slide cards and carousel preview |
+| **5.3 App shell** | Icons + splash (`npm run cap:assets`) ✅, status bar (SlidePress dark + orange) ✅ |
+| **5.4 Native affordances** | Share sheet + Save to Photos (per slide, carousel, and **Save all to Photos** in next step bar) |
 | **5.5 Beta distribution** | TestFlight + Play internal testing before public listing |
-| **5.6 Later** | Push notifications when campaign images finish generating |
+| **5.6 Push notifications** | FCM alert when all campaign images finish (native app, background/closed) ✅ |
 
 **Out of scope for Phase 5:** React Native rewrite, offline-first workspace, in-app Stripe (billing stays web until Phase 6).
 

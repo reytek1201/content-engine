@@ -32,6 +32,7 @@ import ScrollToTopButton from "@/app/components/scroll-to-top-button";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import type { RegenerateFeedbackChipId } from "@/types/regenerate-feedback";
 import {
+  saveAllSlidesToPhotos,
   saveSlideImageToPhotos,
   shareSlideImage,
 } from "@/utils/native-slide-export";
@@ -68,6 +69,11 @@ export default function CampaignWorkspace({
   );
   const [savingSlideId, setSavingSlideId] = useState<string | null>(null);
   const [sharingSlideId, setSharingSlideId] = useState<string | null>(null);
+  const [isSavingAllPhotos, setIsSavingAllPhotos] = useState(false);
+  const [saveAllPhotosProgress, setSaveAllPhotosProgress] = useState<{
+    saved: number;
+    total: number;
+  } | null>(null);
   const isNativeApp = useIsNativeApp();
   const [regeneratingSlideId, setRegeneratingSlideId] = useState<string | null>(
     null
@@ -470,6 +476,38 @@ export default function CampaignWorkspace({
     }
   }
 
+  async function handleSaveAllToPhotos() {
+    setError(null);
+    setExportMessage(null);
+    setIsSavingAllPhotos(true);
+    setSaveAllPhotosProgress(null);
+
+    try {
+      const result = await saveAllSlidesToPhotos(slides, (saved, total) => {
+        setSaveAllPhotosProgress({ saved, total });
+      });
+
+      if (result.failedCount > 0) {
+        setExportMessage(
+          `Saved ${result.savedCount} of ${result.totalCount} slides to Photos`
+        );
+      } else {
+        setExportMessage(
+          `Saved ${result.savedCount} slide${result.savedCount === 1 ? "" : "s"} to Photos`
+        );
+      }
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Could not save slides to Photos"
+      );
+    } finally {
+      setIsSavingAllPhotos(false);
+      setSaveAllPhotosProgress(null);
+    }
+  }
+
   function handleOpenPreview(slideIndex = 0) {
     setPreviewInitialIndex(slideIndex);
     setPreviewOpen(true);
@@ -745,11 +783,15 @@ export default function CampaignWorkspace({
           canGenerateCaptions={canGenerateCaptions}
           isGeneratingCaptions={isGeneratingCaptions}
           isExporting={isExporting}
+          isNativeApp={isNativeApp === true}
+          isSavingAllPhotos={isSavingAllPhotos}
+          saveAllPhotosProgress={saveAllPhotosProgress}
           copiedAllCaptions={copiedPlatform === "all"}
           onGenerateImages={handleGenerateImages}
           onGenerateCaptions={handleGenerateCaptions}
           onDownloadZip={handleDownloadZip}
           onCopyAllCaptions={handleCopyAllCaptions}
+          onSaveAllToPhotos={handleSaveAllToPhotos}
         />
 
         <section id="section-slides" className="mt-8 scroll-mt-32 md:mt-10 md:scroll-mt-48">

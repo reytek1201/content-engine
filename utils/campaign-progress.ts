@@ -21,7 +21,15 @@ export type NextStepAction =
   | "generate_images"
   | "generate_captions"
   | "download_zip"
-  | "copy_captions";
+  | "copy_captions"
+  | "save_all_photos";
+
+export interface CampaignNextStepButton {
+  action: NextStepAction;
+  label: string;
+  disabled: boolean;
+  loading: boolean;
+}
 
 export interface CampaignNextStep {
   action: NextStepAction;
@@ -30,12 +38,9 @@ export interface CampaignNextStep {
   disabled: boolean;
   loading: boolean;
   scrollTargetId: string;
-  secondary?: {
-    action: "copy_captions";
-    label: string;
-    disabled: boolean;
-    loading: boolean;
-  };
+  /** @deprecated Use `secondaries` */
+  secondary?: CampaignNextStepButton;
+  secondaries?: CampaignNextStepButton[];
 }
 
 export function formatImageProgressLabel(
@@ -131,6 +136,9 @@ export function getCampaignNextStep(options: {
   canGenerateCaptions: boolean;
   isGeneratingCaptions: boolean;
   isExporting: boolean;
+  isNativeApp?: boolean;
+  isSavingAllPhotos?: boolean;
+  saveAllPhotosProgress?: { saved: number; total: number } | null;
 }): CampaignNextStep {
   const {
     slideCount,
@@ -143,6 +151,9 @@ export function getCampaignNextStep(options: {
     canGenerateCaptions,
     isGeneratingCaptions,
     isExporting,
+    isNativeApp = false,
+    isSavingAllPhotos = false,
+    saveAllPhotosProgress = null,
   } = options;
 
   const imageProgressLabel = formatImageProgressLabel(
@@ -173,17 +184,67 @@ export function getCampaignNextStep(options: {
   }
 
   if (imagesComplete && captionsCount === 0) {
+    const saveAllLabel = isSavingAllPhotos
+      ? saveAllPhotosProgress
+        ? `Saving… (${saveAllPhotosProgress.saved}/${saveAllPhotosProgress.total})`
+        : "Saving to Photos…"
+      : "Save all to Photos";
+
     return {
       action: "generate_captions",
       label: isGeneratingCaptions ? "Generating captions…" : "Generate captions",
-      description: "Create TikTok, Instagram, and YouTube post copy from your slides.",
+      description: isNativeApp
+        ? "Create post copy, or save all slide images to your camera roll now."
+        : "Create TikTok, Instagram, and YouTube post copy from your slides.",
       disabled: !canGenerateCaptions || isGeneratingCaptions,
       loading: isGeneratingCaptions,
       scrollTargetId: "section-publish",
+      secondaries: isNativeApp
+        ? [
+            {
+              action: "save_all_photos",
+              label: saveAllLabel,
+              disabled: isSavingAllPhotos,
+              loading: isSavingAllPhotos,
+            },
+          ]
+        : undefined,
     };
   }
 
   if (imagesComplete && captionsCount > 0) {
+    if (isNativeApp) {
+      const saveAllLabel = isSavingAllPhotos
+        ? saveAllPhotosProgress
+          ? `Saving… (${saveAllPhotosProgress.saved}/${saveAllPhotosProgress.total})`
+          : "Saving to Photos…"
+        : "Save all to Photos";
+
+      return {
+        action: "save_all_photos",
+        label: saveAllLabel,
+        description:
+          "Slides and captions are ready — save images to Photos and post.",
+        disabled: isSavingAllPhotos,
+        loading: isSavingAllPhotos,
+        scrollTargetId: "section-slides",
+        secondaries: [
+          {
+            action: "copy_captions",
+            label: "Copy all captions",
+            disabled: false,
+            loading: false,
+          },
+          {
+            action: "download_zip",
+            label: isExporting ? "Preparing zip…" : "Download zip",
+            disabled: isExporting,
+            loading: isExporting,
+          },
+        ],
+      };
+    }
+
     return {
       action: "download_zip",
       label: isExporting ? "Preparing zip…" : "Download zip",
@@ -191,12 +252,14 @@ export function getCampaignNextStep(options: {
       disabled: isExporting,
       loading: isExporting,
       scrollTargetId: "section-slides",
-      secondary: {
-        action: "copy_captions",
-        label: "Copy all captions",
-        disabled: false,
-        loading: false,
-      },
+      secondaries: [
+        {
+          action: "copy_captions",
+          label: "Copy all captions",
+          disabled: false,
+          loading: false,
+        },
+      ],
     };
   }
 

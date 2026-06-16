@@ -203,7 +203,7 @@ The iOS app shows **Continue with Apple** only in the native shell (App Store re
 
 **Status bar:** `NativeShell` configures the Capacitor status bar (dark background `#09090b`, light icons) on iOS and Android.
 
-**Save / Share:** In the native app, slide cards and carousel preview show **Save to Photos** and **Share** instead of **Download image**. Uses `@capacitor-community/media` and `@capacitor/share`.
+**Save / Share:** In the native app, slide cards and carousel preview show **Save to Photos** and **Share** instead of **Download image**. The sticky **Next step** bar offers **Save all to Photos** (primary export on mobile), **Copy all captions**, and **Download zip**. Images save to a **SlidePress** album when the OS allows. Uses `@capacitor-community/media` and `@capacitor/share`.
 
 **iOS permission:** `NSPhotoLibraryAddUsageDescription` in `ios/App/App/Info.plist` (required for Save to Photos).
 
@@ -219,8 +219,33 @@ The iOS app shows **Continue with Apple** only in the native shell (App Store re
 |------|--------|
 | **5.1 Scaffold** | ✅ This setup |
 | **5.2 Auth** | Google + Apple OAuth via deep link ✅; password reset deep links ✅ |
-| **5.3 App shell** | Icons + splash (`npm run cap:assets`), status bar (SlidePress dark + orange) — status bar ✅; run `npm run cap:assets` before store builds |
-| **5.4 Native affordances** | Share sheet + Save to Photos on slide cards and carousel preview ✅ |
+| **5.3 App shell** | Icons + splash (`npm run cap:assets`) ✅, status bar (SlidePress dark + orange) ✅ |
+| **5.4 Native affordances** | Share sheet + Save to Photos (per slide, carousel, and **Save all to Photos** in next step bar) ✅ |
 | **5.5 Beta** | TestFlight, Play internal testing |
+| **5.6 Push** | FCM push when all campaign images finish generating ✅ |
 
 See `docs/client-features.md` for full product roadmap.
+
+### Push notifications (Phase 5.6)
+
+Notify users in the **native app** when every slide image in a campaign is ready (app in background or closed).
+
+**Client:** `@capacitor/push-notifications` registers device tokens after sign-in (`NativePushListener`). Tapping the notification opens the campaign workspace.
+
+**Server:** When a campaign transitions to `completed`, `maybeSendCampaignImagesReadyPush` sends one FCM message per registered device (deduped via `campaigns.images_ready_notified_at`).
+
+**Required (production push):**
+
+1. Create a [Firebase](https://console.firebase.google.com/) project.
+2. Add an **Android** app with package `co.slidepress.app` → download `google-services.json` → place in `android/app/`.
+3. Add an **iOS** app with bundle `co.slidepress.app` → upload your **APNs key** in Firebase → Cloud Messaging.
+4. Create a **service account** with Firebase Cloud Messaging API access.
+5. Set `FCM_SERVICE_ACCOUNT_JSON` on Vercel (base64-encoded service account JSON) **or** `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY`.
+
+**iOS Xcode:** Enable **Push Notifications** capability on the App target, then rebuild.
+
+**Android:** Ensure `google-services.json` is present before release builds.
+
+**Database:** Run migration `20260616000001_push_device_tokens.sql` (table `push_device_tokens`, column `campaigns.images_ready_notified_at`).
+
+Push is **optional** — if FCM env vars are unset, the app still works; notifications are simply skipped server-side.
