@@ -1,5 +1,8 @@
-import { Camera } from "@capacitor/camera";
-import { Capacitor } from "@capacitor/core";
+import {
+  Camera,
+  CameraResultType,
+  CameraSource as CapCameraSource,
+} from "@capacitor/camera";
 import { isNativeAppRuntime } from "@/utils/is-native-app";
 
 export type CameraSource = "camera" | "photos";
@@ -10,11 +13,15 @@ export interface NativeCameraResult {
   filename: string;
 }
 
-function webPathToBlob(webPath: string, mimeType: string): Promise<Blob> {
-  return fetch(webPath).then((r) => {
-    if (!r.ok) throw new Error("Could not read camera result");
-    return r.blob();
-  }).then((blob) => new Blob([blob], { type: mimeType }));
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new Blob([bytes], { type: mimeType });
 }
 
 export async function captureReferencePhoto(
@@ -24,43 +31,23 @@ export async function captureReferencePhoto(
     return null;
   }
 
-  if (source === "camera") {
-    const result = await Camera.takePhoto({
-      quality: 90,
-      correctOrientation: true,
-      editable: "in-app",
-    });
-
-    const path =
-      result.webPath ??
-      (result.uri ? Capacitor.convertFileSrc(result.uri) : null);
-
-    if (!path) {
-      return null;
-    }
-
-    const mimeType = "image/jpeg";
-    const blob = await webPathToBlob(path, mimeType);
-    return { blob, mimeType, filename: "photo.jpg" };
-  }
-
-  const result = await Camera.chooseFromGallery({
+  const photo = await Camera.getPhoto({
     quality: 90,
+    resultType: CameraResultType.Base64,
+    source:
+      source === "camera"
+        ? CapCameraSource.Camera
+        : CapCameraSource.Photos,
+    allowEditing: source === "camera",
     correctOrientation: true,
   });
 
-  const first = result.results[0];
-
-  const galleryPath =
-    first?.webPath ??
-    (first?.uri ? Capacitor.convertFileSrc(first.uri) : null);
-
-  if (!galleryPath) {
+  if (!photo.base64String) {
     return null;
   }
 
   const mimeType = "image/jpeg";
-  const blob = await webPathToBlob(galleryPath, mimeType);
+  const blob = base64ToBlob(photo.base64String, mimeType);
   return { blob, mimeType, filename: "photo.jpg" };
 }
 
@@ -72,32 +59,19 @@ export async function captureProductPhotoForVision(): Promise<{
     return null;
   }
 
-  const result = await Camera.takePhoto({
+  const photo = await Camera.getPhoto({
     quality: 85,
+    resultType: CameraResultType.Base64,
+    source: CapCameraSource.Camera,
+    allowEditing: false,
     correctOrientation: true,
   });
 
-  const path =
-    result.webPath ??
-    (result.uri ? Capacitor.convertFileSrc(result.uri) : null);
-
-  if (!path) {
+  if (!photo.base64String) {
     return null;
   }
 
-  const blob = await webPathToBlob(path, "image/jpeg");
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const dataUrl = reader.result as string;
-      const comma = dataUrl.indexOf(",");
-      const base64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
-      resolve({ base64, mimeType: "image/jpeg" });
-    };
-    reader.onerror = () => reject(new Error("Failed to read photo"));
-    reader.readAsDataURL(blob);
-  });
+  return { base64: photo.base64String, mimeType: "image/jpeg" };
 }
 
 export function blobToFile(blob: Blob, filename: string): File {
