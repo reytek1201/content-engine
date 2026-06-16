@@ -541,6 +541,7 @@ export default function CreateCampaignForm({
               id={`${idPrefix}product-reference`}
               label="Product"
               description="Your product, app, or offer to feature."
+              slotType="product"
               previewUrl={getSlotPreview("product")}
               onFileSelect={(file) => handleReferenceSelect("product", file)}
             />
@@ -548,6 +549,7 @@ export default function CreateCampaignForm({
               id={`${idPrefix}style-reference`}
               label="Style"
               description="Mood board or carousel style to match."
+              slotType="style"
               previewUrl={getSlotPreview("style")}
               onFileSelect={(file) => handleReferenceSelect("style", file)}
             />
@@ -555,6 +557,7 @@ export default function CreateCampaignForm({
               id={`${idPrefix}logo-reference`}
               label="Logo"
               description="Brand mark for consistent placement."
+              slotType="logo"
               previewUrl={getSlotPreview("logo")}
               onFileSelect={(file) => handleReferenceSelect("logo", file)}
             />

@@ -271,6 +271,7 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
           label="Product"
           description="Your product, app, or offer to feature."
           hint="Centre on a plain background, good light."
+          slotType="product"
           previewUrl={getSlotPreview("product")}
           disabled={saving || clearing}
           onFileSelect={(file) => handleReferenceSelect("product", file)}
@@ -280,6 +281,7 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
           label="Style"
           description="Mood board or carousel style to match."
           hint="A feed post, printed ad, or anything with the vibe you want."
+          slotType="style"
           previewUrl={getSlotPreview("style")}
           disabled={saving || clearing}
           onFileSelect={(file) => handleReferenceSelect("style", file)}
@@ -289,6 +291,7 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
           label="Logo"
           description="Brand mark for consistent placement."
           hint="Try photographing your packaging or a business card corner."
+          slotType="logo"
           previewUrl={getSlotPreview("logo")}
           disabled={saving || clearing}
           onFileSelect={(file) => handleReferenceSelect("logo", file)}

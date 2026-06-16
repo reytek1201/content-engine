@@ -233,7 +233,8 @@ Native camera integration throughout the app using `@capacitor/camera`.
 
 **Capabilities:**
 
-- **Brand library** — each slot (Product / Style / Logo) has **Camera** + **Library** buttons instead of a plain upload picker on native. Slot-specific photo hints guide the user.
+- **Brand library** — each slot (Product / Style / Logo) has **Camera** + **Library** buttons on native. Tapping **Camera** shows a slot-specific tips sheet (product includes a framing guide), then opens the camera. **Library** picks also open the native crop editor.
+- **Crop anytime** — after a photo is selected, tap **Crop** to re-open the native editor without retaking the shot.
 - **Create form** — **"Snap product → get topic ideas"** button below the topic field. Photo is sent to Gemini vision (`/api/suggest-topic`) which returns 3 campaign topic hooks. User taps one to pre-fill the topic.
 - **Slide regeneration** — **"Snap new product photo"** button in each slide's regenerate controls. Photo is uploaded to Supabase storage and used as an override product reference for that single regen without changing the campaign's saved references.
 

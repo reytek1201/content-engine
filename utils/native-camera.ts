@@ -37,6 +37,27 @@ function isUserCancelledError(error: unknown): boolean {
   );
 }
 
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const dataUrl = reader.result;
+
+      if (typeof dataUrl !== "string") {
+        reject(new Error("Failed to read image data"));
+        return;
+      }
+
+      const comma = dataUrl.indexOf(",");
+      resolve(comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl);
+    };
+
+    reader.onerror = () => reject(new Error("Failed to read image data"));
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function captureBase64FromSource(
   source: CapCameraSource,
   quality: number,
@@ -84,10 +105,7 @@ export async function captureReferencePhoto(
     return null;
   }
 
-  const finalBase64 =
-    source === "camera"
-      ? await openPhotoEditor(capturedBase64)
-      : capturedBase64;
+  const finalBase64 = await openPhotoEditor(capturedBase64);
 
   if (!finalBase64) {
     return null;
@@ -95,6 +113,34 @@ export async function captureReferencePhoto(
 
   const blob = base64ToBlob(finalBase64, JPEG_MIME);
   return { blob, mimeType: JPEG_MIME, filename: "photo.jpg" };
+}
+
+export async function recropReferencePhoto(
+  previewUrl: string,
+): Promise<NativeCameraResult | null> {
+  if (!isNativeAppRuntime()) {
+    return null;
+  }
+
+  const response = await fetch(previewUrl);
+
+  if (!response.ok) {
+    throw new Error("Could not load image for cropping");
+  }
+
+  const blob = await response.blob();
+  const base64 = await blobToBase64(blob);
+  const finalBase64 = await openPhotoEditor(base64);
+
+  if (!finalBase64) {
+    return null;
+  }
+
+  return {
+    blob: base64ToBlob(finalBase64, JPEG_MIME),
+    mimeType: JPEG_MIME,
+    filename: "photo.jpg",
+  };
 }
 
 export async function captureProductPhotoForVision(): Promise<{
