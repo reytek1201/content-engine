@@ -3,6 +3,7 @@
 import AddBrandLink from "@/app/components/add-brand-link";
 import BrandSwitcher from "@/app/components/brand-switcher";
 import NewCampaignButton from "@/app/components/new-campaign-button";
+import { brandDetailHref } from "@/utils/brands-back-target";
 import Link from "next/link";
 
 interface CampaignsPageHeaderProps {
@@ -44,7 +45,7 @@ export default function CampaignsPageHeader({
                 ·
               </span>
               <Link
-                href={`/settings/brands/${activeBrandId}`}
+                href={brandDetailHref(activeBrandId, "campaigns", activeBrandId)}
                 className="whitespace-nowrap font-medium text-primary underline-offset-2 hover:underline"
               >
                 <span className="sm:hidden">Edit brand</span>
@@ -57,6 +58,8 @@ export default function CampaignsPageHeader({
             ·
           </span>
           <AddBrandLink
+            from="campaigns"
+            brandId={activeBrandId}
             label={hasMultipleBrands ? "Add brand" : "Add a brand"}
             className="whitespace-nowrap"
           />

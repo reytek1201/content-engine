@@ -2,15 +2,22 @@
 
 import { useActiveBrand } from "@/app/components/active-brand-provider";
 import {
+  brandDetailHref,
+  parseBrandsBackFrom,
+} from "@/utils/brands-back-target";
+import {
   createBrand,
   deleteBrand,
 } from "@/utils/brands-client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export default function BrandsManager() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = parseBrandsBackFrom(searchParams.get("from") ?? undefined);
+  const returnBrandId = searchParams.get("brand");
   const { brands, activeBrand, refreshBrands, setActiveBrandId } =
     useActiveBrand();
   const [name, setName] = useState("");
@@ -28,7 +35,9 @@ export default function BrandsManager() {
       setName("");
       await refreshBrands();
       setActiveBrandId(brand.id);
-      router.push(`/settings/brands/${brand.id}`);
+      router.push(
+        brandDetailHref(brand.id, from, from === "campaigns" ? brand.id : returnBrandId),
+      );
     } catch (createError) {
       setError(
         createError instanceof Error
@@ -107,7 +116,7 @@ export default function BrandsManager() {
 
             <div className="flex items-center gap-2">
               <Link
-                href={`/settings/brands/${brand.id}`}
+                href={brandDetailHref(brand.id, from, returnBrandId)}
                 className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-secondary-foreground transition hover:bg-secondary/60"
               >
                 Open

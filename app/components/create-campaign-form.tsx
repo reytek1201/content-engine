@@ -5,6 +5,7 @@ import PhotoTopicSuggester from "@/app/components/photo-topic-suggester";
 import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
 import { useActiveBrandOptional } from "@/app/components/active-brand-provider";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
+import { brandDetailHref } from "@/utils/brands-back-target";
 import { createClient } from "@/utils/supabase/client";
 import {
   fetchBrandProducts,
@@ -466,7 +467,11 @@ export default function CreateCampaignForm({
                 {" "}
                 ·{" "}
                 <Link
-                  href={`/settings/brands/${activeBrand.id}`}
+                  href={brandDetailHref(
+                    activeBrand.id,
+                    "campaigns",
+                    activeBrand.id,
+                  )}
                   className="font-medium text-primary underline-offset-2 hover:underline"
                 >
                   Manage brand kit

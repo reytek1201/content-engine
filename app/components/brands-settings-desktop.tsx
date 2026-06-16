@@ -3,6 +3,7 @@
 import BrandLibraryEditor from "@/app/components/brand-library-editor";
 import BrandsManager from "@/app/components/brands-manager";
 import { AddBrandBanner } from "@/app/components/add-brand-link";
+import { brandsListHref } from "@/utils/brands-back-target";
 import { fetchBrands } from "@/utils/brands-client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -63,11 +64,11 @@ export default function BrandsSettingsDesktop({
   if (brands.length === 1) {
     return (
       <div className="space-y-4">
-        <AddBrandBanner />
+        <AddBrandBanner from="settings" />
         <BrandLibraryEditor user={user} brandId={brands[0].id} hideBrandName />
         <p className="text-sm text-muted-foreground">
           <Link
-            href="/settings/brands"
+            href={brandsListHref("settings")}
             className="font-medium text-primary underline-offset-2 hover:underline"
           >
             View all brands

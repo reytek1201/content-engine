@@ -2,6 +2,10 @@
 
 import type { Brand } from "@/types/brand";
 import { brandToReferences, hasBrandAssets } from "@/types/brand";
+import {
+  brandDetailHref,
+  brandsListHref,
+} from "@/utils/brands-back-target";
 import Link from "next/link";
 
 interface BrandLibraryPanelProps {
@@ -35,7 +39,9 @@ export default function BrandLibraryPanel({
         </div>
         <Link
           href={
-            brand ? `/settings/brands/${brand.id}` : "/settings/brands"
+            brand
+              ? brandDetailHref(brand.id, "campaigns", brand.id)
+              : brandsListHref("campaigns")
           }
           className="text-xs font-medium text-primary underline-offset-2 hover:underline"
         >

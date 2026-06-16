@@ -1,6 +1,10 @@
 import BrandLibraryEditor from "@/app/components/brand-library-editor";
 import { AddBrandBanner } from "@/app/components/add-brand-link";
 import SettingsSubpageShell from "@/app/settings/settings-subpage-shell";
+import {
+  parseBrandsBackFrom,
+  resolveBrandDetailBackTarget,
+} from "@/utils/brands-back-target";
 import { listUserBrands } from "@/utils/brands-server";
 import { createClient } from "@/utils/supabase/server";
 import { appRobots } from "@/utils/site-metadata";
@@ -14,10 +18,15 @@ export const metadata: Metadata = {
 
 interface BrandDetailPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string; brand?: string }>;
 }
 
-export default async function BrandDetailPage({ params }: BrandDetailPageProps) {
+export default async function BrandDetailPage({
+  params,
+  searchParams,
+}: BrandDetailPageProps) {
   const { id } = await params;
+  const query = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -35,14 +44,17 @@ export default async function BrandDetailPage({ params }: BrandDetailPageProps) 
     notFound();
   }
 
+  const from = parseBrandsBackFrom(query.from);
+  const back = resolveBrandDetailBackTarget(query.from, query.brand ?? id);
+
   return (
     <SettingsSubpageShell
       title={brand.name}
       description="Reference images and products for this brand."
-      backHref="/settings/brands"
-      backLabel="Brands"
+      backHref={back.href}
+      backLabel={back.label}
     >
-      <AddBrandBanner />
+      <AddBrandBanner from={from} brandId={query.brand ?? id} />
       <BrandLibraryEditor user={user} brandId={brand.id} hideBrandName />
     </SettingsSubpageShell>
   );

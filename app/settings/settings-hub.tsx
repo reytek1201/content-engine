@@ -18,6 +18,7 @@ import {
   biometryLabel,
   isBiometricSupported,
 } from "@/utils/biometric-auth";
+import { brandsListHref } from "@/utils/brands-back-target";
 import {
   clearBiometricSession,
   isBiometricLockEnabled,
@@ -112,7 +113,7 @@ export default function SettingsHub({ user }: SettingsHubProps) {
                   icon={<AccountIcon />}
                 />
                 <SettingsListRow
-                  href="/settings/brands"
+                  href={brandsListHref("settings")}
                   label="Brands"
                   icon={<BrandIcon />}
                 />
