@@ -112,8 +112,13 @@ export default function SettingsHub({ user }: SettingsHubProps) {
                   icon={<AccountIcon />}
                 />
                 <SettingsListRow
+                  href="/settings/brands"
+                  label="Brands"
+                  icon={<BrandIcon />}
+                />
+                <SettingsListRow
                   href="/settings/brand"
-                  label="Brand library"
+                  label="Brand kit"
                   icon={<BrandIcon />}
                 />
               </SettingsListGroup>

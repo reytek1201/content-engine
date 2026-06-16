@@ -1,29 +1,34 @@
 "use client";
 
+import BrandProductsSection from "@/app/components/brand-products-section";
 import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
+import { useActiveBrandOptional } from "@/app/components/active-brand-provider";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { createClient } from "@/utils/supabase/client";
-import {
-  clearBrandLibrary,
-  fetchBrandLibrary,
-  saveBrandLibrary,
-} from "@/utils/brand-library-client";
+import { fetchBrand, updateBrand } from "@/utils/brands-client";
 import { uploadReferenceImage } from "@/utils/upload-reference";
-import type { BrandLibrary } from "@/types/brand-library";
-import { brandLibraryToReferences } from "@/types/brand-library";
+import type { Brand } from "@/types/brand";
+import { brandToReferences } from "@/types/brand";
 import type { ReferenceType } from "@/types/references";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
 interface BrandLibraryEditorProps {
   user: User;
+  brandId?: string;
 }
 
-export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
+export default function BrandLibraryEditor({
+  user,
+  brandId: brandIdProp,
+}: BrandLibraryEditorProps) {
   const supabase = createClient();
   const isNativeApp = useIsNativeApp();
+  const activeBrandContext = useActiveBrandOptional();
+  const resolvedBrandId =
+    brandIdProp ?? activeBrandContext?.activeBrand?.id ?? null;
 
-  const [library, setLibrary] = useState<BrandLibrary | null>(null);
+  const [brand, setBrand] = useState<Brand | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -37,27 +42,32 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
   const [stylePreview, setStylePreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [clearedSlots, setClearedSlots] = useState<Set<ReferenceType>>(
-    new Set()
+    new Set(),
   );
 
-  const savedReferences = brandLibraryToReferences(library);
+  const savedReferences = brandToReferences(brand);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
+      if (!resolvedBrandId) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
       try {
-        const data = await fetchBrandLibrary();
+        const data = await fetchBrand(resolvedBrandId);
 
         if (cancelled) {
           return;
         }
 
-        setLibrary(data);
-        const refs = brandLibraryToReferences(data);
+        setBrand(data);
+        const refs = brandToReferences(data);
         setProductPreview(refs.product ?? null);
         setStylePreview(refs.style ?? null);
         setLogoPreview(refs.logo ?? null);
@@ -66,7 +76,7 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Failed to load brand library"
+              : "Failed to load brand kit",
           );
         }
       } finally {
@@ -81,7 +91,7 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [resolvedBrandId]);
 
   function handleReferenceSelect(type: ReferenceType, file: File | null) {
     const setFile =
@@ -154,7 +164,7 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
 
   async function resolveSlot(
     type: ReferenceType,
-    file: File | null
+    file: File | null,
   ): Promise<string | null> {
     if (clearedSlots.has(type)) {
       return null;
@@ -167,6 +177,18 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
     return savedReferences[type] ?? null;
   }
 
+  async function persistBrand(product: string | null, style: string | null, logo: string | null) {
+    if (!resolvedBrandId) {
+      throw new Error("No brand selected");
+    }
+
+    return updateBrand(resolvedBrandId, {
+      product,
+      style,
+      logo,
+    });
+  }
+
   async function handleSave() {
     setError(null);
     setSuccessMessage(null);
@@ -177,37 +199,24 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
       const style = await resolveSlot("style", styleFile);
       const logo = await resolveSlot("logo", logoFile);
 
-      if (!product && !style && !logo) {
-        await clearBrandLibrary();
-        setLibrary(null);
-        setProductFile(null);
-        setStyleFile(null);
-        setLogoFile(null);
-        setProductPreview(null);
-        setStylePreview(null);
-        setLogoPreview(null);
-        setClearedSlots(new Set());
-        setSuccessMessage("Brand library cleared.");
-        return;
-      }
-
-      const saved = await saveBrandLibrary({ product, style, logo });
-      setLibrary(saved);
+      const saved = await persistBrand(product, style, logo);
+      setBrand(saved);
       setProductFile(null);
       setStyleFile(null);
       setLogoFile(null);
       setClearedSlots(new Set());
 
-      const refs = brandLibraryToReferences(saved);
+      const refs = brandToReferences(saved);
       setProductPreview(refs.product ?? null);
       setStylePreview(refs.style ?? null);
       setLogoPreview(refs.logo ?? null);
-      setSuccessMessage("Brand library saved.");
+      setSuccessMessage("Brand kit saved.");
+      void activeBrandContext?.refreshBrands();
     } catch (saveError) {
       setError(
         saveError instanceof Error
           ? saveError.message
-          : "Failed to save brand library"
+          : "Failed to save brand kit",
       );
     } finally {
       setSaving(false);
@@ -220,8 +229,8 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
     setClearing(true);
 
     try {
-      await clearBrandLibrary();
-      setLibrary(null);
+      const saved = await persistBrand(null, null, null);
+      setBrand(saved);
       setProductFile(null);
       setStyleFile(null);
       setLogoFile(null);
@@ -229,23 +238,32 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
       setStylePreview(null);
       setLogoPreview(null);
       setClearedSlots(new Set());
-      setSuccessMessage("Brand library cleared.");
+      setSuccessMessage("Brand kit cleared.");
+      void activeBrandContext?.refreshBrands();
     } catch (clearError) {
       setError(
         clearError instanceof Error
           ? clearError.message
-          : "Failed to clear brand library"
+          : "Failed to clear brand kit",
       );
     } finally {
       setClearing(false);
     }
   }
 
+  if (!resolvedBrandId) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Select a brand from campaigns or create one in Settings → Brands.
+      </p>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        Loading brand library…
+        Loading brand kit…
       </div>
     );
   }
@@ -257,12 +275,19 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
 
   return (
     <div>
-      <p className="text-sm leading-6 text-muted-foreground">
-        Save product, style, and logo references once — they&apos;ll pre-fill
-        when you create new campaigns.
-        {isNativeApp && (
-          <span> Tap <strong className="text-foreground">Camera</strong> to photograph your product or logo right now.</span>
-        )}
+      {brand ? (
+        <p className="text-sm font-medium text-foreground">{brand.name}</p>
+      ) : null}
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        Save product, style, and logo references for this brand — they&apos;ll
+        pre-fill when you create new campaigns.
+        {isNativeApp ? (
+          <span>
+            {" "}
+            Tap <strong className="text-foreground">Camera</strong> to photograph
+            your product or logo right now.
+          </span>
+        ) : null}
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -305,10 +330,10 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
           onClick={() => void handleSave()}
           className="btn-primary inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {saving ? "Saving…" : "Save brand library"}
+          {saving ? "Saving…" : "Save brand kit"}
         </button>
 
-        {library && (
+        {brand ? (
           <button
             type="button"
             disabled={saving || clearing}
@@ -317,21 +342,23 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
           >
             {clearing ? "Clearing…" : "Clear all"}
           </button>
-        )}
+        ) : null}
       </div>
 
-      {successMessage && (
+      {successMessage ? (
         <p className="mt-4 text-sm text-primary">{successMessage}</p>
-      )}
+      ) : null}
 
-      {error && (
+      {error ? (
         <div
           role="alert"
           className="mt-4 rounded-xl border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-200"
         >
           {error}
         </div>
-      )}
+      ) : null}
+
+      <BrandProductsSection brandId={resolvedBrandId} user={user} />
     </div>
   );
 }

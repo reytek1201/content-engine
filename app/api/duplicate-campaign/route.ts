@@ -117,6 +117,8 @@ export async function POST(request: Request) {
       .from("campaigns")
       .insert({
         user_id: user.id,
+        brand_id: typedSource.brand_id,
+        brand_product_id: typedSource.brand_product_id,
         topic: typedSource.topic,
         title: generated.title,
         target_audience: generated.target_audience,

@@ -4,6 +4,7 @@ import {
   normalizeReferencesInput,
   RequestSchema,
 } from "@/utils/campaign-generation";
+import { ensureDefaultBrand } from "@/utils/brands-server";
 import {
   assertCampaignLimit,
   isUsageLimitError,
@@ -44,17 +45,65 @@ export async function POST(request: Request) {
       );
     }
 
-    const { topic, aspect_ratio, slide_count, references: referencesInput } =
-      parsedInput.data;
+    const {
+      topic,
+      aspect_ratio,
+      slide_count,
+      references: referencesInput,
+      brand_id: brandIdInput,
+      brand_product_id: brandProductIdInput,
+    } = parsedInput.data;
     const references = normalizeReferencesInput(referencesInput);
 
     assertSlideCountAllowed(slide_count, user.id);
     await assertCampaignLimit(supabase, user.id);
 
+    let brandId = brandIdInput;
+
+    if (brandId) {
+      const { data: ownedBrand, error: brandError } = await supabase
+        .from("brands")
+        .select("id")
+        .eq("id", brandId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (brandError || !ownedBrand) {
+        return NextResponse.json(
+          { success: false, error: "Brand not found" },
+          { status: 404 },
+        );
+      }
+    } else {
+      const defaultBrand = await ensureDefaultBrand(supabase, user.id);
+      brandId = defaultBrand.id;
+    }
+
+    if (brandProductIdInput) {
+      const { data: ownedProduct, error: productError } = await supabase
+        .from("brand_products")
+        .select("id, brand_id")
+        .eq("id", brandProductIdInput)
+        .maybeSingle();
+
+      if (
+        productError ||
+        !ownedProduct ||
+        ownedProduct.brand_id !== brandId
+      ) {
+        return NextResponse.json(
+          { success: false, error: "Product not found" },
+          { status: 404 },
+        );
+      }
+    }
+
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
       .insert({
         user_id: user.id,
+        brand_id: brandId,
+        brand_product_id: brandProductIdInput ?? null,
         topic,
         title: null,
         target_audience: null,

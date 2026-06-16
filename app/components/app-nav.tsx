@@ -2,6 +2,8 @@
 
 import CreateCampaignSheet from "@/app/components/create-campaign-sheet";
 import BrandLogo from "@/app/components/brand-logo";
+import BrandSwitcher from "@/app/components/brand-switcher";
+import { ActiveBrandProvider } from "@/app/components/active-brand-provider";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import {
   CreateSheetProvider,
@@ -10,7 +12,7 @@ import {
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
 const MOBILE_NAV_PADDING =
@@ -142,6 +144,8 @@ function DesktopNav({
             </Link>
           </nav>
         </div>
+
+        <BrandSwitcher />
       </div>
     </header>
   );
@@ -310,7 +314,11 @@ function AppNavLayoutInner({ children }: { children: React.ReactNode }) {
 export function AppNavLayout({ children }: { children: React.ReactNode }) {
   return (
     <CreateSheetProvider>
-      <AppNavLayoutInner>{children}</AppNavLayoutInner>
+      <Suspense fallback={null}>
+        <ActiveBrandProvider>
+          <AppNavLayoutInner>{children}</AppNavLayoutInner>
+        </ActiveBrandProvider>
+      </Suspense>
     </CreateSheetProvider>
   );
 }

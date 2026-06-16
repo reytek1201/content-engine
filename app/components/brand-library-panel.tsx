@@ -1,50 +1,50 @@
 "use client";
 
-import type { BrandLibrary } from "@/types/brand-library";
-import { brandLibraryToReferences, hasBrandLibrary } from "@/types/brand-library";
+import type { Brand } from "@/types/brand";
+import { brandToReferences, hasBrandAssets } from "@/types/brand";
 import Link from "next/link";
 
 interface BrandLibraryPanelProps {
-  library: BrandLibrary | null;
+  brand: Brand | null;
   useSavedBrand: boolean;
   onUseSavedBrandChange: (value: boolean) => void;
   isSaving: boolean;
 }
 
 export default function BrandLibraryPanel({
-  library,
+  brand,
   useSavedBrand,
   onUseSavedBrandChange,
   isSaving,
 }: BrandLibraryPanelProps) {
-  const hasSaved = library && hasBrandLibrary(library);
-  const references = hasSaved ? brandLibraryToReferences(library) : {};
+  const hasSaved = brand && hasBrandAssets(brand);
+  const references = hasSaved ? brandToReferences(brand) : {};
 
   return (
     <div className="rounded-xl border border-border bg-card/40 px-4 py-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-secondary-foreground">
-            Brand library
+            {brand ? `${brand.name} kit` : "Brand kit"}
           </p>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
             {hasSaved
               ? "Reuse your saved product, style, and logo references."
-              : "Save references once in Settings and reuse them on every campaign."}
+              : "Save references in Settings and reuse them on every campaign."}
           </p>
         </div>
         <Link
-          href="/settings"
+          href={brand ? `/settings/brand?brand=${brand.id}` : "/settings/brand"}
           className="text-xs font-medium text-primary underline-offset-2 hover:underline"
         >
           Manage in settings
         </Link>
       </div>
 
-      {hasSaved && (
+      {hasSaved ? (
         <>
           <div className="mt-4 grid grid-cols-3 gap-3">
-            {references.product && (
+            {references.product ? (
               <div className="rounded-lg border border-border bg-background p-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Product
@@ -56,8 +56,8 @@ export default function BrandLibraryPanel({
                   className="mt-2 max-h-16 w-full object-contain"
                 />
               </div>
-            )}
-            {references.style && (
+            ) : null}
+            {references.style ? (
               <div className="rounded-lg border border-border bg-background p-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Style
@@ -69,8 +69,8 @@ export default function BrandLibraryPanel({
                   className="mt-2 max-h-16 w-full object-contain"
                 />
               </div>
-            )}
-            {references.logo && (
+            ) : null}
+            {references.logo ? (
               <div className="rounded-lg border border-border bg-background p-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Logo
@@ -82,7 +82,7 @@ export default function BrandLibraryPanel({
                   className="mt-2 max-h-16 w-full object-contain"
                 />
               </div>
-            )}
+            ) : null}
           </div>
 
           <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-background px-3 py-3">
@@ -97,13 +97,11 @@ export default function BrandLibraryPanel({
             </span>
           </label>
         </>
-      )}
+      ) : null}
 
-      {isSaving && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Saving brand library…
-        </p>
-      )}
+      {isSaving ? (
+        <p className="mt-2 text-xs text-muted-foreground">Saving brand kit…</p>
+      ) : null}
     </div>
   );
 }

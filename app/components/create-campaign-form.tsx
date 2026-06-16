@@ -3,19 +3,19 @@
 import BrandLibraryPanel from "@/app/components/brand-library-panel";
 import PhotoTopicSuggester from "@/app/components/photo-topic-suggester";
 import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
+import { useActiveBrandOptional } from "@/app/components/active-brand-provider";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { createClient } from "@/utils/supabase/client";
 import {
-  fetchBrandLibrary,
-  saveBrandLibrary,
-} from "@/utils/brand-library-client";
+  fetchBrandProducts,
+  updateBrand,
+} from "@/utils/brands-client";
 import { uploadReferenceImage } from "@/utils/upload-reference";
-import type { BrandLibrary } from "@/types/brand-library";
+import type { BrandProduct } from "@/types/brand";
 import {
-  brandLibraryToReferences,
-  hasBrandLibrary,
-  referencesToBrandLibraryPayload,
-} from "@/types/brand-library";
+  brandProductToReferences,
+  hasBrandAssets,
+} from "@/types/brand";
 import type { ReferenceType } from "@/types/references";
 import type { UsageSummary } from "@/types/usage";
 import Link from "next/link";
@@ -73,6 +73,8 @@ export default function CreateCampaignForm({
 }: CreateCampaignFormProps) {
   const supabase = createClient();
   const router = useRouter();
+  const activeBrandContext = useActiveBrandOptional();
+  const activeBrand = activeBrandContext?.activeBrand ?? null;
 
   const [topic, setTopic] = useState("");
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("4:5");
@@ -86,7 +88,8 @@ export default function CreateCampaignForm({
   const campaignLimitReached = usage !== null && !usage.canCreateCampaign;
   const isNativeApp = useIsNativeApp();
 
-  const [brandLibrary, setBrandLibrary] = useState<BrandLibrary | null>(null);
+  const [brandProducts, setBrandProducts] = useState<BrandProduct[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [useSavedBrand, setUseSavedBrand] = useState(false);
   const [isSavingBrand, setIsSavingBrand] = useState(false);
   const [clearedLibrarySlots, setClearedLibrarySlots] = useState<
@@ -100,35 +103,54 @@ export default function CreateCampaignForm({
   const [stylePreview, setStylePreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  const savedReferences = brandLibraryToReferences(brandLibrary);
+  const selectedProduct =
+    brandProducts.find((product) => product.id === selectedProductId) ?? null;
+  const savedReferences = brandProductToReferences(
+    selectedProduct,
+    activeBrand,
+  );
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadBrandLibrary() {
+    async function loadBrandData() {
+      if (!activeBrand) {
+        return;
+      }
+
       try {
-        const data = await fetchBrandLibrary();
+        const products = await fetchBrandProducts(activeBrand.id);
 
         if (cancelled) {
           return;
         }
 
-        setBrandLibrary(data);
+        setBrandProducts(products);
 
-        if (data && hasBrandLibrary(data)) {
+        if (hasBrandAssets(activeBrand) || products.length > 0) {
           setUseSavedBrand(true);
         }
       } catch {
-        // Brand library is optional on create
+        // Brand kit is optional on create
       }
     }
 
-    void loadBrandLibrary();
+    void loadBrandData();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [activeBrand]);
+
+  useEffect(() => {
+    if (!useSavedBrand || productFile) {
+      return;
+    }
+
+    if (savedReferences.product) {
+      setProductPreview(savedReferences.product);
+    }
+  }, [productFile, savedReferences.product, useSavedBrand]);
 
   useEffect(() => {
     let cancelled = false;
@@ -320,6 +342,8 @@ export default function CreateCampaignForm({
           topic,
           aspect_ratio: aspectRatio,
           slide_count: slideCount,
+          brand_id: activeBrand?.id,
+          brand_product_id: selectedProductId || undefined,
           references:
             Object.keys(references).length > 0 ? references : undefined,
         }),
@@ -337,13 +361,13 @@ export default function CreateCampaignForm({
         throw new Error(formatSubmitError(data as GenerateTextFailure));
       }
 
-      if (Object.keys(references).length > 0) {
+      if (Object.keys(references).length > 0 && activeBrand) {
         setIsSavingBrand(true);
         try {
-          const saved = await saveBrandLibrary(references);
+          const saved = await updateBrand(activeBrand.id, references);
+          void activeBrandContext?.refreshBrands();
 
           if (saved) {
-            setBrandLibrary(saved);
             setUseSavedBrand(true);
           }
         } catch {
@@ -370,32 +394,31 @@ export default function CreateCampaignForm({
     }
   }
 
-  async function handleSaveBrandLibraryOnly() {
+  async function handleSaveBrandKitOnly() {
+    if (!activeBrand) {
+      setError("Select a brand before saving references.");
+      return;
+    }
+
     setError(null);
     setIsSavingBrand(true);
 
     try {
       const references = await resolveReferencesForSubmit();
-      const payload = referencesToBrandLibraryPayload(references);
 
-      if (Object.keys(payload).length === 0) {
+      if (Object.keys(references).length === 0) {
         throw new Error("Upload or enable saved references before saving");
       }
 
-      const saved = await saveBrandLibrary(payload);
-
-      if (!saved) {
-        throw new Error("Failed to save brand library");
-      }
-
-      setBrandLibrary(saved);
+      await updateBrand(activeBrand.id, references);
+      void activeBrandContext?.refreshBrands();
       setUseSavedBrand(true);
       setClearedLibrarySlots(new Set());
     } catch (saveError) {
       setError(
         saveError instanceof Error
           ? saveError.message
-          : "Failed to save brand library"
+          : "Failed to save brand kit",
       );
     } finally {
       setIsSavingBrand(false);
@@ -523,11 +546,35 @@ export default function CreateCampaignForm({
 
         <div className={compact ? "space-y-3" : "mt-8"}>
           <BrandLibraryPanel
-            library={brandLibrary}
+            brand={activeBrand}
             useSavedBrand={useSavedBrand}
             onUseSavedBrandChange={handleUseSavedBrandChange}
             isSaving={isSavingBrand}
           />
+
+          {brandProducts.length > 0 ? (
+            <div className="mt-4">
+              <label
+                htmlFor={`${idPrefix}brand-product`}
+                className="block text-sm font-medium text-secondary-foreground"
+              >
+                Product (optional)
+              </label>
+              <select
+                id={`${idPrefix}brand-product`}
+                value={selectedProductId}
+                onChange={(event) => setSelectedProductId(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
+              >
+                <option value="">Default brand product image</option>
+                {brandProducts.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
           <p className="mt-4 text-sm font-medium text-secondary-foreground">
             References (optional)
@@ -567,10 +614,10 @@ export default function CreateCampaignForm({
             <button
               type="button"
               disabled={isSavingBrand}
-              onClick={() => void handleSaveBrandLibraryOnly()}
+              onClick={() => void handleSaveBrandKitOnly()}
               className="mt-4 inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSavingBrand ? "Saving…" : "Save to brand library"}
+              {isSavingBrand ? "Saving…" : "Save to brand kit"}
             </button>
           )}
         </div>

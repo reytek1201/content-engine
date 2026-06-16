@@ -19,6 +19,30 @@ export const BrandLibraryPutSchema = z.object({
   logo: z.string().url().nullable().optional(),
 });
 
+export const CreateBrandSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+});
+
+export const BrandPatchSchema = z.object({
+  name: z.string().trim().min(1).max(80).optional(),
+  product: z.string().url().nullable().optional(),
+  style: z.string().url().nullable().optional(),
+  logo: z.string().url().nullable().optional(),
+  voice_notes: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const CreateBrandProductSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  product_reference_url: z.string().url().nullable().optional(),
+  description: z.string().trim().max(500).nullable().optional(),
+});
+
+export const BrandProductPatchSchema = z.object({
+  name: z.string().trim().min(1).max(80).optional(),
+  product_reference_url: z.string().url().nullable().optional(),
+  description: z.string().trim().max(500).nullable().optional(),
+});
+
 export const RequestSchema = z.object({
   topic: z.string().trim().min(1, "Topic is required"),
   aspect_ratio: z.enum(["4:5", "9:16"]),
@@ -28,6 +52,8 @@ export const RequestSchema = z.object({
     .refine(isSlideCount, "slide_count must be 3, 5, or 7")
     .default(DEFAULT_SLIDE_COUNT),
   references: ReferencesInputSchema.optional(),
+  brand_id: z.string().uuid().optional(),
+  brand_product_id: z.string().uuid().optional(),
 });
 
 const SlideGenerationFieldsSchema = z.object({

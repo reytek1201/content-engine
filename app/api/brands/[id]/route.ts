@@ -1,22 +1,34 @@
-import type { BrandLibrary } from "@/types/brand-library";
 import type { Brand } from "@/types/brand";
-import { BrandLibraryPutSchema } from "@/utils/campaign-generation";
-import { ensureDefaultBrand } from "@/utils/brands-server";
+import { BrandPatchSchema } from "@/utils/campaign-generation";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
-function brandToLibrary(brand: Brand): BrandLibrary {
-  return {
-    user_id: brand.user_id,
-    product_reference_url: brand.product_reference_url,
-    style_reference_url: brand.style_reference_url,
-    logo_reference_url: brand.logo_reference_url,
-    updated_at: brand.updated_at,
-  };
+interface RouteContext {
+  params: Promise<{ id: string }>;
 }
 
-export async function GET() {
+async function getOwnedBrand(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  brandId: string,
+): Promise<Brand | null> {
+  const { data, error } = await supabase
+    .from("brands")
+    .select("*")
+    .eq("id", brandId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data as Brand | null) ?? null;
+}
+
+export async function GET(_request: Request, context: RouteContext) {
   try {
+    const { id } = await context.params;
     const supabase = await createClient();
 
     const {
@@ -31,12 +43,16 @@ export async function GET() {
       );
     }
 
-    const brand = await ensureDefaultBrand(supabase, user.id);
+    const brand = await getOwnedBrand(supabase, user.id, id);
 
-    return NextResponse.json({
-      success: true,
-      library: brandToLibrary(brand),
-    });
+    if (!brand) {
+      return NextResponse.json(
+        { success: false, error: "Brand not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ success: true, brand });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unexpected server error";
@@ -48,8 +64,9 @@ export async function GET() {
   }
 }
 
-export async function PUT(request: Request) {
+export async function PATCH(request: Request, context: RouteContext) {
   try {
+    const { id } = await context.params;
     const supabase = await createClient();
 
     const {
@@ -64,8 +81,17 @@ export async function PUT(request: Request) {
       );
     }
 
+    const existing = await getOwnedBrand(supabase, user.id, id);
+
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: "Brand not found" },
+        { status: 404 },
+      );
+    }
+
     const body = await request.json();
-    const parsedInput = BrandLibraryPutSchema.safeParse(body);
+    const parsedInput = BrandPatchSchema.safeParse(body);
 
     if (!parsedInput.success) {
       return NextResponse.json(
@@ -78,9 +104,11 @@ export async function PUT(request: Request) {
       );
     }
 
-    const brand = await ensureDefaultBrand(supabase, user.id);
-
     const payload: Record<string, string | null> = {};
+
+    if (parsedInput.data.name !== undefined) {
+      payload.name = parsedInput.data.name;
+    }
 
     if (parsedInput.data.product !== undefined) {
       payload.product_reference_url = parsedInput.data.product;
@@ -94,32 +122,30 @@ export async function PUT(request: Request) {
       payload.logo_reference_url = parsedInput.data.logo;
     }
 
-    if (Object.keys(payload).length === 0) {
-      return NextResponse.json({
-        success: true,
-        library: brandToLibrary(brand),
-      });
+    if (parsedInput.data.voice_notes !== undefined) {
+      payload.voice_notes = parsedInput.data.voice_notes;
     }
 
-    const { data: updated, error } = await supabase
+    if (Object.keys(payload).length === 0) {
+      return NextResponse.json({ success: true, brand: existing });
+    }
+
+    const { data: brand, error } = await supabase
       .from("brands")
       .update(payload)
-      .eq("id", brand.id)
+      .eq("id", id)
       .eq("user_id", user.id)
       .select("*")
       .single();
 
-    if (error || !updated) {
+    if (error || !brand) {
       return NextResponse.json(
-        { success: false, error: "Failed to save brand library" },
+        { success: false, error: "Failed to update brand" },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      library: brandToLibrary(updated as Brand),
-    });
+    return NextResponse.json({ success: true, brand: brand as Brand });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unexpected server error";
@@ -131,8 +157,9 @@ export async function PUT(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(_request: Request, context: RouteContext) {
   try {
+    const { id } = await context.params;
     const supabase = await createClient();
 
     const {
@@ -147,23 +174,31 @@ export async function DELETE() {
       );
     }
 
-    const brand = await ensureDefaultBrand(supabase, user.id);
+    const existing = await getOwnedBrand(supabase, user.id, id);
 
-    const { data: updated, error } = await supabase
-      .from("brands")
-      .update({
-        product_reference_url: null,
-        style_reference_url: null,
-        logo_reference_url: null,
-      })
-      .eq("id", brand.id)
-      .eq("user_id", user.id)
-      .select("*")
-      .single();
-
-    if (error || !updated) {
+    if (!existing) {
       return NextResponse.json(
-        { success: false, error: "Failed to clear brand library" },
+        { success: false, error: "Brand not found" },
+        { status: 404 },
+      );
+    }
+
+    if (existing.is_default) {
+      return NextResponse.json(
+        { success: false, error: "Cannot delete your default brand" },
+        { status: 400 },
+      );
+    }
+
+    const { error } = await supabase
+      .from("brands")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: "Failed to delete brand" },
         { status: 500 },
       );
     }

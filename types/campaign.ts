@@ -10,6 +10,8 @@ export type CampaignStatus =
 export interface Campaign {
   id: string;
   user_id: string;
+  brand_id: string | null;
+  brand_product_id: string | null;
   topic: string;
   title: string | null;
   target_audience: string | null;
