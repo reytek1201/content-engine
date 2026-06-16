@@ -12,7 +12,9 @@ import {
 import {
   isBiometricLockEnabled,
   lockSession,
+  pauseSupabaseAutoRefresh,
   restoreSessionFromKeychain,
+  resumeSupabaseAutoRefresh,
 } from "@/utils/biometric-session";
 import { storeRefreshToken } from "@/utils/secure-token-store";
 import { createClient } from "@/utils/supabase/client";
@@ -22,9 +24,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 /**
  * How long (ms) the app can be in the background before we re-lock it.
- * 30 s matches most banking / authentication apps.
+ * Short switches (messages, camera) should not force a full unlock cycle.
  */
-const BACKGROUND_GRACE_MS = 30_000;
+const BACKGROUND_GRACE_MS = 120_000;
 
 type GateStatus =
   | "checking"    // client not yet determined
@@ -219,14 +221,21 @@ export default function BiometricGate() {
         // Biometric passed — restore the Supabase session from Keychain.
         setState((s) => ({ ...s, status: "restoring" }));
 
-        const { error: restoreError } =
-          await restoreSessionFromKeychain(supabase);
+        const restoreResult = await restoreSessionFromKeychain(supabase);
 
-        if (restoreError) {
-          // Token expired or missing — force the user back to login.
-          setState((s) => ({ ...s, status: "idle" }));
-          setFadingOut(false);
-          router.replace("/login?reason=session_expired");
+        if (restoreResult.error) {
+          if (restoreResult.fatal) {
+            setState((s) => ({ ...s, status: "idle" }));
+            setFadingOut(false);
+            router.replace("/login?reason=session_expired");
+            return;
+          }
+
+          setState((s) => ({
+            ...s,
+            status: "error",
+            errorMessage: restoreResult.error,
+          }));
           return;
         }
 
@@ -255,12 +264,15 @@ export default function BiometricGate() {
     let cancelled = false;
 
     async function init() {
+      await pauseSupabaseAutoRefresh(supabase);
+
       const info = await checkBiometry();
 
       if (cancelled) return;
 
       if (!info.isAvailable) {
         // Enrolled setting is on but hardware unavailable — fall through.
+        await resumeSupabaseAutoRefresh(supabase);
         setState((s) => ({ ...s, status: "idle" }));
         return;
       }
@@ -300,6 +312,7 @@ export default function BiometricGate() {
       ({ isActive }) => {
         if (!isActive) {
           backgroundedAtRef.current = Date.now();
+          void pauseSupabaseAutoRefresh(supabase);
           return;
         }
 
@@ -309,7 +322,12 @@ export default function BiometricGate() {
         if (backgroundedAt === null) return;
 
         const elapsed = Date.now() - backgroundedAt;
-        if (elapsed < BACKGROUND_GRACE_MS) return;
+
+        if (elapsed < BACKGROUND_GRACE_MS) {
+          void syncKeychainFromSession();
+          void resumeSupabaseAutoRefresh(supabase);
+          return;
+        }
 
         if (resumeHandlingRef.current) return;
 

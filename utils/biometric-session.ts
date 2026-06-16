@@ -16,7 +16,7 @@
  *   sign-out  → Keychain cleared; supabase.auth.signOut() called by caller.
  */
 
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AuthError, SupabaseClient } from "@supabase/supabase-js";
 import {
   storeRefreshToken,
   readRefreshToken,
@@ -24,6 +24,15 @@ import {
 } from "@/utils/secure-token-store";
 
 const BIOMETRIC_ENABLED_KEY = "slidepress-biometric-enabled";
+
+const REFRESH_RETRY_DELAYS_MS = [0, 1_000, 3_000];
+const MAX_REFRESH_ATTEMPTS = REFRESH_RETRY_DELAYS_MS.length;
+
+export interface RestoreSessionResult {
+  error: string | null;
+  /** When true the stored refresh token is invalid and the user must sign in again. */
+  fatal: boolean;
+}
 
 // ---------------------------------------------------------------------------
 // Preference helpers (synchronous, localStorage)
@@ -65,6 +74,121 @@ export async function clearBiometricSession(): Promise<void> {
 // Session vault operations (async, Keychain-backed)
 // ---------------------------------------------------------------------------
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+/** Exported for unit tests. */
+export function isFatalRefreshError(error: AuthError | null): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  const status = error.status ?? 0;
+
+  if (
+    status === 0 ||
+    status === 408 ||
+    status === 429 ||
+    status >= 500 ||
+    message.includes("fetch") ||
+    message.includes("network") ||
+    message.includes("timeout") ||
+    message.includes("failed to fetch") ||
+    message.includes("load failed")
+  ) {
+    return false;
+  }
+
+  if (
+    status === 400 ||
+    status === 401 ||
+    status === 403 ||
+    message.includes("invalid refresh token") ||
+    message.includes("refresh token not found") ||
+    message.includes("invalid_grant") ||
+    message.includes("session not found") ||
+    message.includes("already been used") ||
+    message.includes("revoked")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+async function syncKeychainFromActiveSession(
+  supabase: SupabaseClient,
+): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session?.refresh_token) {
+    await storeRefreshToken(session.refresh_token);
+  }
+}
+
+async function refreshSessionFromStoredToken(
+  supabase: SupabaseClient,
+  storedToken: string,
+): Promise<RestoreSessionResult> {
+  let lastError: AuthError | null = null;
+
+  for (let attempt = 0; attempt < MAX_REFRESH_ATTEMPTS; attempt++) {
+    if (attempt > 0) {
+      await delay(REFRESH_RETRY_DELAYS_MS[attempt] ?? 3_000);
+    }
+
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token: storedToken,
+    });
+
+    if (!error && data.session) {
+      await storeRefreshToken(data.session.refresh_token);
+      return { error: null, fatal: false };
+    }
+
+    lastError = error;
+
+    if (error && isFatalRefreshError(error)) {
+      await clearStoredTokens();
+      return {
+        error: error.message,
+        fatal: true,
+      };
+    }
+  }
+
+  return {
+    error:
+      lastError?.message ??
+      "Could not reach SlidePress. Check your connection and try again.",
+    fatal: false,
+  };
+}
+
+/**
+ * Pause Supabase background token refresh while the app is inactive or locked.
+ */
+export async function pauseSupabaseAutoRefresh(
+  supabase: SupabaseClient,
+): Promise<void> {
+  await supabase.auth.stopAutoRefresh();
+}
+
+/**
+ * Resume Supabase background token refresh after a successful unlock.
+ */
+export async function resumeSupabaseAutoRefresh(
+  supabase: SupabaseClient,
+): Promise<void> {
+  await supabase.auth.startAutoRefresh();
+}
+
 /**
  * Called when the user enables biometric lock.
  * Saves the current refresh token to the Keychain. The session cookie/
@@ -95,6 +219,8 @@ export async function enableBiometricLock(
 export async function lockSession(
   supabase: SupabaseClient,
 ): Promise<void> {
+  await pauseSupabaseAutoRefresh(supabase);
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -114,42 +240,39 @@ export async function lockSession(
  * Reads the stored refresh token from the Keychain, exchanges it for a
  * fresh session, and persists the new token back to the Keychain.
  *
- * Returns { session } on success, or { error } if the token is expired /
- * missing (the caller should redirect the user to /login).
+ * Returns a fatal error when the refresh token is invalid. Transient network
+ * failures are retryable and keep the Keychain token intact.
  */
 export async function restoreSessionFromKeychain(
   supabase: SupabaseClient,
-): Promise<{ error: string | null }> {
-  // Fast path: if the session is already active (e.g., app killed within the
-  // grace period so we never called lockSession), nothing to do.
+): Promise<RestoreSessionResult> {
   const {
-    data: { session: existingSession },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (existingSession) {
-    return { error: null };
+  if (!userError && user) {
+    await syncKeychainFromActiveSession(supabase);
+    await resumeSupabaseAutoRefresh(supabase);
+    return { error: null, fatal: false };
   }
 
   const storedToken = await readRefreshToken();
 
   if (!storedToken) {
-    return { error: "No stored token — please sign in again." };
+    return {
+      error: "No stored token — please sign in again.",
+      fatal: true,
+    };
   }
 
-  const { data, error } = await supabase.auth.refreshSession({
-    refresh_token: storedToken,
-  });
+  const result = await refreshSessionFromStoredToken(supabase, storedToken);
 
-  if (error || !data.session) {
-    // Token expired or revoked — clear the stale Keychain entry.
-    await clearStoredTokens();
-    return { error: error?.message ?? "Session expired — please sign in again." };
+  if (!result.error) {
+    await resumeSupabaseAutoRefresh(supabase);
   }
 
-  // Persist the rotated refresh token back to the Keychain.
-  await storeRefreshToken(data.session.refresh_token);
-
-  return { error: null };
+  return result;
 }
 
 /**
@@ -162,30 +285,31 @@ export async function disableBiometricLock(
   supabase: SupabaseClient,
 ): Promise<{ error: string | null }> {
   const {
-    data: { session: existingSession },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (!existingSession) {
-    const storedToken = await readRefreshToken();
+  if (!userError && user) {
+    await clearStoredTokens();
+    setBiometricLockEnabled(false);
+    await resumeSupabaseAutoRefresh(supabase);
+    return { error: null };
+  }
 
-    if (storedToken) {
-      const { data, error } = await supabase.auth.refreshSession({
-        refresh_token: storedToken,
-      });
+  const storedToken = await readRefreshToken();
 
-      if (error || !data.session) {
-        await clearStoredTokens();
-        setBiometricLockEnabled(false);
-        return {
-          error:
-            error?.message ?? "Could not restore session — please sign in again.",
-        };
-      }
+  if (storedToken) {
+    const result = await refreshSessionFromStoredToken(supabase, storedToken);
+
+    if (result.error) {
+      setBiometricLockEnabled(false);
+      return { error: result.error };
     }
   }
 
   await clearStoredTokens();
   setBiometricLockEnabled(false);
+  await resumeSupabaseAutoRefresh(supabase);
 
   return { error: null };
 }
