@@ -8,6 +8,7 @@ import {
 
 interface CampaignPublishPanelProps {
   sortedCaptions: PlatformCaption[];
+  imagesComplete: boolean;
   canGenerateCaptions: boolean;
   isGeneratingCaptions: boolean;
   captionsMessage: string | null;
@@ -18,6 +19,7 @@ interface CampaignPublishPanelProps {
 
 export default function CampaignPublishPanel({
   sortedCaptions,
+  imagesComplete,
   canGenerateCaptions,
   isGeneratingCaptions,
   captionsMessage,
@@ -62,9 +64,20 @@ export default function CampaignPublishPanel({
         {sortedCaptions.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-background/40 px-4 py-6 text-center">
             <p className="text-xs leading-5 text-muted-foreground">
-              Use the action bar below to generate hooks, post copy, and
-              hashtags tailored to each platform.
+              {imagesComplete
+                ? "Generate hooks, post copy, and hashtags tailored to each platform."
+                : "Finish generating slide images on the Slides tab first."}
             </p>
+            {imagesComplete && (
+              <button
+                type="button"
+                onClick={onGenerateCaptions}
+                disabled={!canGenerateCaptions}
+                className="btn-primary mt-4 w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isGeneratingCaptions ? "Generating captions…" : "Generate captions"}
+              </button>
+            )}
           </div>
         ) : (
           <article className="overflow-hidden rounded-lg border border-border bg-card/50">

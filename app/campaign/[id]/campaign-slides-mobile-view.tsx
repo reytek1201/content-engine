@@ -1,6 +1,8 @@
 "use client";
 
 import type { AspectRatio, Slide } from "@/types/campaign";
+import type { CampaignNextStepInput } from "@/app/campaign/[id]/campaign-next-step-controls";
+import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspace-tab";
 import SlideCard from "@/app/campaign/[id]/slide-card";
 import CampaignGenerationPanel from "@/app/campaign/[id]/campaign-generation-panel";
 import CampaignSlidesFilmstrip from "@/app/campaign/[id]/campaign-slides-filmstrip";
@@ -15,14 +17,10 @@ interface CampaignSlidesMobileViewProps {
   slides: Slide[];
   activeSlideIndex: number;
   aspectRatio: AspectRatio;
-  slideCount: number;
-  imagesReadyCount: number;
-  imagesComplete: boolean;
-  isGeneratingImages: boolean;
-  isStartingImages: boolean;
-  captionsCount: number;
-  isGeneratingCaptions: boolean;
   justFinishedSlide: JustFinishedSlide | null;
+  nextStepProps: CampaignNextStepInput;
+  onOpenMoreActions: () => void;
+  onTabChange: (tab: CampaignWorkspaceTab) => void;
   isNativeApp: boolean;
   isAnySlideGenerating: boolean;
   regeneratingSlideId: string | null;
@@ -39,14 +37,10 @@ export default function CampaignSlidesMobileView({
   slides,
   activeSlideIndex,
   aspectRatio,
-  slideCount,
-  imagesReadyCount,
-  imagesComplete,
-  isGeneratingImages,
-  isStartingImages,
-  captionsCount,
-  isGeneratingCaptions,
   justFinishedSlide,
+  nextStepProps,
+  onOpenMoreActions,
+  onTabChange,
   isNativeApp,
   isAnySlideGenerating,
   regeneratingSlideId,
@@ -112,14 +106,11 @@ export default function CampaignSlidesMobileView({
   return (
     <div className="mt-4 space-y-4">
       <CampaignGenerationPanel
-        slideCount={slideCount}
-        imagesReadyCount={imagesReadyCount}
-        imagesComplete={imagesComplete}
-        isGeneratingImages={isGeneratingImages}
-        isStartingImages={isStartingImages}
-        captionsCount={captionsCount}
-        isGeneratingCaptions={isGeneratingCaptions}
+        {...nextStepProps}
         justFinishedSlide={justFinishedSlide}
+        inlineActions
+        onOpenMoreActions={onOpenMoreActions}
+        onTabChange={onTabChange}
         variant="slides"
       />
 
@@ -127,7 +118,7 @@ export default function CampaignSlidesMobileView({
         slides={slides}
         activeSlideIndex={activeSlideIndex}
         aspectRatio={aspectRatio}
-        isGeneratingImages={isGeneratingImages}
+        isGeneratingImages={nextStepProps.isGeneratingImages}
         onSelect={onActiveSlideIndexChange}
       />
 

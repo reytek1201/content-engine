@@ -1,5 +1,8 @@
 "use client";
 
+import CampaignInlineNextStepActions from "@/app/campaign/[id]/campaign-inline-next-step-actions";
+import type { CampaignNextStepInput } from "@/app/campaign/[id]/campaign-next-step-controls";
+import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspace-tab";
 import {
   formatImageProgressLabel,
   formatSlidesImageStatus,
@@ -10,16 +13,12 @@ interface JustFinishedSlide {
   imageUrl: string;
 }
 
-interface CampaignGenerationPanelProps {
-  slideCount: number;
-  imagesReadyCount: number;
-  imagesComplete: boolean;
-  isGeneratingImages: boolean;
-  isStartingImages?: boolean;
-  captionsCount: number;
-  isGeneratingCaptions: boolean;
+interface CampaignGenerationPanelProps extends CampaignNextStepInput {
   justFinishedSlide?: JustFinishedSlide | null;
   variant?: "slides" | "publish";
+  inlineActions?: boolean;
+  onOpenMoreActions?: () => void;
+  onTabChange?: (tab: CampaignWorkspaceTab) => void;
 }
 
 function progressPercent(imagesReadyCount: number, slideCount: number): number {
@@ -31,30 +30,52 @@ function progressPercent(imagesReadyCount: number, slideCount: number): number {
 }
 
 export default function CampaignGenerationPanel({
-  slideCount,
-  imagesReadyCount,
-  imagesComplete,
-  isGeneratingImages,
-  isStartingImages = false,
-  captionsCount,
-  isGeneratingCaptions,
   justFinishedSlide = null,
   variant = "slides",
+  inlineActions = false,
+  onOpenMoreActions,
+  onTabChange,
+  ...nextStepInput
 }: CampaignGenerationPanelProps) {
+  const {
+    slideCount,
+    imagesReadyCount,
+    imagesComplete,
+    isGeneratingImages,
+    isStartingImages,
+    captionsCount,
+    isGeneratingCaptions,
+    canGenerateImages,
+  } = nextStepInput;
+
   const percent = progressPercent(imagesReadyCount, slideCount);
   const showImageProgress =
     variant === "slides" &&
     slideCount > 0 &&
     (isGeneratingImages || isStartingImages || imagesReadyCount > 0);
 
+  const showReadyToGenerate =
+    variant === "slides" &&
+    slideCount > 0 &&
+    !imagesComplete &&
+    !isGeneratingImages &&
+    !isStartingImages &&
+    canGenerateImages;
+
   if (variant === "publish" && captionsCount > 0 && !isGeneratingCaptions) {
     return (
       <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3">
         <p className="text-sm font-semibold text-emerald-200">Captions ready</p>
         <p className="mt-1 text-sm leading-6 text-emerald-200/90">
-          Copy platform copy below, or use the action bar to save slides to
-          Photos or share a zip.
+          Copy platform copy below, or export your slides.
         </p>
+        {inlineActions && (
+          <CampaignInlineNextStepActions
+            {...nextStepInput}
+            onOpenMoreActions={onOpenMoreActions}
+            onTabChange={onTabChange}
+          />
+        )}
       </div>
     );
   }
@@ -77,8 +98,35 @@ export default function CampaignGenerationPanel({
       <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3">
         <p className="text-sm font-semibold text-emerald-200">All slides ready</p>
         <p className="mt-1 text-sm leading-6 text-emerald-200/90">
-          Generate captions or save to Photos using the action bar below.
+          Generate captions or save slides to Photos.
         </p>
+        {inlineActions && (
+          <CampaignInlineNextStepActions
+            {...nextStepInput}
+            onOpenMoreActions={onOpenMoreActions}
+            onTabChange={onTabChange}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (showReadyToGenerate) {
+    return (
+      <div className="rounded-xl border border-border bg-card/40 px-4 py-3">
+        <p className="text-sm font-semibold text-foreground">
+          Ready for image generation
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Review slide copy, then generate visuals for every slide.
+        </p>
+        {inlineActions && (
+          <CampaignInlineNextStepActions
+            {...nextStepInput}
+            onOpenMoreActions={onOpenMoreActions}
+            onTabChange={onTabChange}
+          />
+        )}
       </div>
     );
   }

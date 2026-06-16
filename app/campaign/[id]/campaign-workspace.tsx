@@ -25,6 +25,9 @@ import CampaignGeneratingView from "@/app/campaign/[id]/campaign-generating-view
 import CampaignGenerationPanel from "@/app/campaign/[id]/campaign-generation-panel";
 import CampaignMobileTabs from "@/app/campaign/[id]/campaign-mobile-tabs";
 import CampaignNextStepBar from "@/app/campaign/[id]/campaign-next-step-bar";
+import {
+  CampaignActionsSheet,
+} from "@/app/campaign/[id]/campaign-actions-sheet";
 import CampaignPublishPanel from "@/app/campaign/[id]/campaign-publish-panel";
 import CampaignProgressStrip from "@/app/campaign/[id]/campaign-progress-strip";
 import CampaignSlidesMobileView from "@/app/campaign/[id]/campaign-slides-mobile-view";
@@ -88,6 +91,7 @@ export default function CampaignWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<CampaignWorkspaceTab>("slides");
   const [mobileActiveSlideIndex, setMobileActiveSlideIndex] = useState(0);
+  const [actionsSheetOpen, setActionsSheetOpen] = useState(false);
   const [isRetryingText, setIsRetryingText] = useState(false);
   const textGenerationStarted = useRef(false);
   const prevSlidesRef = useRef(initialSlides);
@@ -194,6 +198,7 @@ export default function CampaignWorkspace({
     if (imagesComplete && !prevImagesCompleteRef.current) {
       if (isMobileWorkspaceLayout()) {
         setMobileTab("slides");
+        setActionsSheetOpen(true);
       } else {
         requestAnimationFrame(() => scrollToCampaignNextStep());
       }
@@ -683,6 +688,35 @@ export default function CampaignWorkspace({
     );
   }, []);
 
+  const nextStepProps = {
+    slideCount,
+    imagesReadyCount,
+    imagesComplete,
+    isGeneratingImages,
+    canGenerateImages,
+    isStartingImages: isGenerating,
+    captionsCount: captions.length,
+    canGenerateCaptions,
+    isGeneratingCaptions,
+    isExporting,
+    isNativeApp: isNativeApp === true,
+    isSavingAllPhotos,
+    saveAllPhotosProgress,
+    savedAllPhotos,
+    copiedAllCaptions: copiedPlatform === "all",
+    onGenerateImages: handleGenerateImages,
+    onGenerateCaptions: handleGenerateCaptions,
+    onDownloadZip: handleDownloadZip,
+    onCopyAllCaptions: handleCopyAllCaptions,
+    onSaveAllToPhotos: handleSaveAllToPhotos,
+  };
+
+  useEffect(() => {
+    if (previewOpen) {
+      setActionsSheetOpen(false);
+    }
+  }, [previewOpen]);
+
   if (isAwaitingTextGeneration) {
     return (
       <CampaignGeneratingView
@@ -697,7 +731,7 @@ export default function CampaignWorkspace({
     <div className="min-h-full bg-background text-foreground">
       <main
         id="campaign-workspace-top"
-        className="page-main scroll-mt-0 max-md:pb-[calc(9.5rem+env(safe-area-inset-bottom,0px))]"
+        className="page-main scroll-mt-0"
       >
         <div className="md:hidden">
           <CampaignBackLink className="mb-3" />
@@ -849,28 +883,7 @@ export default function CampaignWorkspace({
         </header>
 
         <div className="hidden md:block">
-          <CampaignNextStepBar
-            slideCount={slideCount}
-            imagesReadyCount={imagesReadyCount}
-            imagesComplete={imagesComplete}
-            isGeneratingImages={isGeneratingImages}
-            canGenerateImages={canGenerateImages}
-            isStartingImages={isGenerating}
-            captionsCount={captions.length}
-            canGenerateCaptions={canGenerateCaptions}
-            isGeneratingCaptions={isGeneratingCaptions}
-            isExporting={isExporting}
-            isNativeApp={isNativeApp === true}
-            isSavingAllPhotos={isSavingAllPhotos}
-            saveAllPhotosProgress={saveAllPhotosProgress}
-            savedAllPhotos={savedAllPhotos}
-            copiedAllCaptions={copiedPlatform === "all"}
-            onGenerateImages={handleGenerateImages}
-            onGenerateCaptions={handleGenerateCaptions}
-            onDownloadZip={handleDownloadZip}
-            onCopyAllCaptions={handleCopyAllCaptions}
-            onSaveAllToPhotos={handleSaveAllToPhotos}
-          />
+          <CampaignNextStepBar {...nextStepProps} />
         </div>
 
         <section
@@ -905,13 +918,7 @@ export default function CampaignWorkspace({
 
           <div className="mb-4 hidden md:block">
             <CampaignGenerationPanel
-              slideCount={slideCount}
-              imagesReadyCount={imagesReadyCount}
-              imagesComplete={imagesComplete}
-              isGeneratingImages={isGeneratingImages}
-              isStartingImages={isGenerating}
-              captionsCount={captions.length}
-              isGeneratingCaptions={isGeneratingCaptions}
+              {...nextStepProps}
               justFinishedSlide={justFinishedSlide}
               variant="slides"
             />
@@ -928,14 +935,10 @@ export default function CampaignWorkspace({
               slides={slides}
               activeSlideIndex={mobileActiveSlideIndex}
               aspectRatio={campaign.aspect_ratio}
-              slideCount={slideCount}
-              imagesReadyCount={imagesReadyCount}
-              imagesComplete={imagesComplete}
-              isGeneratingImages={isGeneratingImages}
-              isStartingImages={isGenerating}
-              captionsCount={captions.length}
-              isGeneratingCaptions={isGeneratingCaptions}
               justFinishedSlide={justFinishedSlide}
+              nextStepProps={nextStepProps}
+              onOpenMoreActions={() => setActionsSheetOpen(true)}
+              onTabChange={setMobileTab}
               isNativeApp={isNativeApp === true}
               isAnySlideGenerating={isAnySlideGenerating}
               regeneratingSlideId={regeneratingSlideId}
@@ -970,17 +973,15 @@ export default function CampaignWorkspace({
         >
           <div className="md:hidden space-y-4">
             <CampaignGenerationPanel
-              slideCount={slideCount}
-              imagesReadyCount={imagesReadyCount}
-              imagesComplete={imagesComplete}
-              isGeneratingImages={isGeneratingImages}
-              isStartingImages={isGenerating}
-              captionsCount={captions.length}
-              isGeneratingCaptions={isGeneratingCaptions}
+              {...nextStepProps}
+              inlineActions
+              onOpenMoreActions={() => setActionsSheetOpen(true)}
+              onTabChange={setMobileTab}
               variant="publish"
             />
             <CampaignPublishPanel
               sortedCaptions={sortedCaptions}
+              imagesComplete={imagesComplete}
               canGenerateCaptions={canGenerateCaptions}
               isGeneratingCaptions={isGeneratingCaptions}
               captionsMessage={captionsMessage}
@@ -995,13 +996,7 @@ export default function CampaignWorkspace({
             className="mt-8 hidden scroll-mt-28 rounded-xl border border-border bg-card/30 p-4 sm:mt-10 sm:scroll-mt-36 sm:rounded-2xl sm:p-6 md:block md:scroll-mt-40 md:p-8"
           >
           <CampaignGenerationPanel
-            slideCount={slideCount}
-            imagesReadyCount={imagesReadyCount}
-            imagesComplete={imagesComplete}
-            isGeneratingImages={isGeneratingImages}
-            isStartingImages={isGenerating}
-            captionsCount={captions.length}
-            isGeneratingCaptions={isGeneratingCaptions}
+            {...nextStepProps}
             variant="publish"
           />
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
@@ -1146,33 +1141,13 @@ export default function CampaignWorkspace({
           />
         </section>
 
-        <div className="md:hidden">
-          <CampaignNextStepBar
-            variant="fixed-bottom"
-            slideCount={slideCount}
-            imagesReadyCount={imagesReadyCount}
-            imagesComplete={imagesComplete}
-            isGeneratingImages={isGeneratingImages}
-            canGenerateImages={canGenerateImages}
-            isStartingImages={isGenerating}
-            captionsCount={captions.length}
-            canGenerateCaptions={canGenerateCaptions}
-            isGeneratingCaptions={isGeneratingCaptions}
-            isExporting={isExporting}
-            isNativeApp={isNativeApp === true}
-            isSavingAllPhotos={isSavingAllPhotos}
-            saveAllPhotosProgress={saveAllPhotosProgress}
-            savedAllPhotos={savedAllPhotos}
-            copiedAllCaptions={copiedPlatform === "all"}
-            onGenerateImages={handleGenerateImages}
-            onGenerateCaptions={handleGenerateCaptions}
-            onDownloadZip={handleDownloadZip}
-            onCopyAllCaptions={handleCopyAllCaptions}
-            onSaveAllToPhotos={handleSaveAllToPhotos}
-            onTabChange={setMobileTab}
-          />
-        </div>
       </main>
+      <CampaignActionsSheet
+        open={actionsSheetOpen}
+        onClose={() => setActionsSheetOpen(false)}
+        onTabChange={setMobileTab}
+        {...nextStepProps}
+      />
       <div className="hidden md:block">
         <ScrollToTopButton />
       </div>
