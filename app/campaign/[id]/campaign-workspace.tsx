@@ -68,8 +68,10 @@ export default function CampaignWorkspace({
     null
   );
   const [savingSlideId, setSavingSlideId] = useState<string | null>(null);
+  const [savedSlideId, setSavedSlideId] = useState<string | null>(null);
   const [sharingSlideId, setSharingSlideId] = useState<string | null>(null);
   const [isSavingAllPhotos, setIsSavingAllPhotos] = useState(false);
+  const [savedAllPhotos, setSavedAllPhotos] = useState(false);
   const [saveAllPhotosProgress, setSaveAllPhotosProgress] = useState<{
     saved: number;
     total: number;
@@ -448,6 +450,8 @@ export default function CampaignWorkspace({
         slide.image_url,
         slideImageFilename(slide.slide_index)
       );
+      setSavedSlideId(slide.id);
+      window.setTimeout(() => setSavedSlideId(null), 2500);
     } catch {
       setError("Could not save slide to Photos");
     } finally {
@@ -492,8 +496,12 @@ export default function CampaignWorkspace({
           `Saved ${result.savedCount} of ${result.totalCount} slides to Photos`
         );
       } else {
+        setSavedAllPhotos(true);
+        window.setTimeout(() => setSavedAllPhotos(false), 3000);
         setExportMessage(
-          `Saved ${result.savedCount} slide${result.savedCount === 1 ? "" : "s"} to Photos`
+          result.savedCount === 1
+            ? "Your slide is in Photos — open the Photos app to post."
+            : "Your slides are in Photos — open the Photos app to post."
         );
       }
     } catch (saveError) {
@@ -786,6 +794,7 @@ export default function CampaignWorkspace({
           isNativeApp={isNativeApp === true}
           isSavingAllPhotos={isSavingAllPhotos}
           saveAllPhotosProgress={saveAllPhotosProgress}
+          savedAllPhotos={savedAllPhotos}
           copiedAllCaptions={copiedPlatform === "all"}
           onGenerateImages={handleGenerateImages}
           onGenerateCaptions={handleGenerateCaptions}
@@ -962,7 +971,9 @@ export default function CampaignWorkspace({
                             >
                               {savingSlideId === slide.id
                                 ? "Saving…"
-                                : "Save to Photos"}
+                                : savedSlideId === slide.id
+                                  ? "Saved"
+                                  : "Save to Photos"}
                             </button>
                             <button
                               type="button"

@@ -49,6 +49,8 @@
 	<true/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>SlidePress saves slide images to your photo library when you tap Save to Photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SlidePress needs access to your photo library to save your campaign slides.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

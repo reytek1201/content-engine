@@ -22,6 +22,7 @@ interface CampaignNextStepBarProps {
   isNativeApp: boolean;
   isSavingAllPhotos: boolean;
   saveAllPhotosProgress: { saved: number; total: number } | null;
+  savedAllPhotos: boolean;
   copiedAllCaptions: boolean;
   onGenerateImages: () => void;
   onGenerateCaptions: () => void;
@@ -62,9 +63,14 @@ function runNextStepAction(action: NextStepAction, handlers: NextStepHandlers) {
 function secondaryButtonLabel(
   button: CampaignNextStepButton,
   copiedAllCaptions: boolean,
+  savedAllPhotos: boolean,
 ): string {
   if (button.action === "copy_captions" && copiedAllCaptions) {
     return "Copied all";
+  }
+
+  if (button.action === "save_all_photos" && savedAllPhotos) {
+    return "Saved to Photos";
   }
 
   return button.label;
@@ -93,6 +99,7 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
     isNativeApp,
     isSavingAllPhotos,
     saveAllPhotosProgress,
+    savedAllPhotos,
     copiedAllCaptions,
     onGenerateImages,
     onGenerateCaptions,
@@ -148,7 +155,13 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
   const primaryLabel =
     nextStep.action === "copy_captions" && copiedAllCaptions
       ? "Copied all"
-      : nextStep.label;
+      : nextStep.action === "save_all_photos" && savedAllPhotos
+        ? "Saved to Photos"
+        : nextStep.label;
+
+  const stepDescription = savedAllPhotos
+    ? "Your slides are in Photos — open the Photos app to post."
+    : nextStep.description;
 
   return (
     <div className="sticky top-0 z-40 -mx-4 border-b border-border bg-background/95 px-4 py-2 backdrop-blur-sm sm:-mx-6 sm:px-6 sm:py-2.5 md:top-[4.5rem] md:-mx-10 md:px-10 md:py-3">
@@ -158,7 +171,7 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
             Next step
           </p>
           <p className="mt-0.5 line-clamp-2 text-xs font-medium leading-snug text-foreground sm:mt-1 sm:line-clamp-none sm:text-sm">
-            {nextStep.description}
+            {stepDescription}
           </p>
         </div>
 
@@ -171,7 +184,7 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
               onClick={() => handleSecondaryClick(button)}
               className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-5 sm:py-2.5 md:py-3"
             >
-              {secondaryButtonLabel(button, copiedAllCaptions)}
+              {secondaryButtonLabel(button, copiedAllCaptions, savedAllPhotos)}
             </button>
           ))}
 

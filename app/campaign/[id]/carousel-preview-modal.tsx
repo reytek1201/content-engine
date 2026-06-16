@@ -34,6 +34,7 @@ export default function CarouselPreviewModal({
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [savedActiveSlide, setSavedActiveSlide] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const touchStartX = useRef<number | null>(null);
@@ -94,6 +95,11 @@ export default function CarouselPreviewModal({
     };
   }, [open, onClose, goTo, activeIndex]);
 
+  useEffect(() => {
+    setSavedActiveSlide(false);
+    setActionError(null);
+  }, [activeIndex]);
+
   if (!open) {
     return null;
   }
@@ -113,6 +119,8 @@ export default function CarouselPreviewModal({
         activeSlide.image_url,
         slideImageFilename(activeSlide.slide_index)
       );
+      setSavedActiveSlide(true);
+      window.setTimeout(() => setSavedActiveSlide(false), 2500);
     } catch {
       setActionError("Could not save slide to Photos");
     } finally {
@@ -178,7 +186,7 @@ export default function CarouselPreviewModal({
                   onClick={handleSaveActiveSlide}
                   className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSaving ? "Saving…" : "Save"}
+                  {isSaving ? "Saving…" : savedActiveSlide ? "Saved" : "Save"}
                 </button>
                 <button
                   type="button"
@@ -203,6 +211,10 @@ export default function CarouselPreviewModal({
         {actionError ? (
           <p className="mb-3 text-center text-xs text-red-300" role="alert">
             {actionError}
+          </p>
+        ) : savedActiveSlide ? (
+          <p className="mb-3 text-center text-xs text-emerald-300" role="status">
+            Saved to Photos
           </p>
         ) : null}
 
