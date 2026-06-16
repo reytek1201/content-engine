@@ -18,18 +18,6 @@ export interface SlideImageRef {
   slide_index: number;
 }
 
-function extensionForMimeType(mimeType: string): string {
-  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) {
-    return "jpg";
-  }
-
-  if (mimeType.includes("webp")) {
-    return "webp";
-  }
-
-  return "png";
-}
-
 async function fetchImageBlob(imageUrl: string): Promise<Blob> {
   const response = await fetch(imageUrl);
 
@@ -38,6 +26,27 @@ async function fetchImageBlob(imageUrl: string): Promise<Blob> {
   }
 
   return response.blob();
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const result = reader.result;
+
+      if (typeof result !== "string") {
+        reject(new Error("Failed to read image data"));
+        return;
+      }
+
+      const commaIndex = result.indexOf(",");
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+
+    reader.onerror = () => reject(new Error("Failed to read image data"));
+    reader.readAsDataURL(blob);
+  });
 }
 
 async function writeImageToCache(
@@ -67,25 +76,18 @@ async function writeImageToCache(
   return written.uri;
 }
 
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+async function writeBlobToCache(blob: Blob, filename: string): Promise<string> {
+  const base64 = await blobToBase64(blob);
+  const safeName = filename.replace(/\.[^.]+$/, "") || "campaign";
+  const path = `${safeName}.zip`;
 
-    reader.onloadend = () => {
-      const result = reader.result;
-
-      if (typeof result !== "string") {
-        reject(new Error("Failed to read image data"));
-        return;
-      }
-
-      const commaIndex = result.indexOf(",");
-      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
-    };
-
-    reader.onerror = () => reject(new Error("Failed to read image data"));
-    reader.readAsDataURL(blob);
+  const written = await Filesystem.writeFile({
+    path,
+    data: base64,
+    directory: Directory.Cache,
   });
+
+  return written.uri;
 }
 
 export function canUseNativeSlideExport(): boolean {
@@ -211,6 +213,23 @@ export async function shareSlideImage(
   await Share.share({
     title,
     dialogTitle: title,
+    files: [fileUri],
+  });
+}
+
+export async function shareCampaignZip(
+  zipBlob: Blob,
+  filename: string,
+): Promise<void> {
+  if (!canUseNativeSlideExport()) {
+    throw new Error("Share is only available in the mobile app");
+  }
+
+  const fileUri = await writeBlobToCache(zipBlob, filename);
+
+  await Share.share({
+    title: "SlidePress campaign",
+    dialogTitle: "Save campaign zip",
     files: [fileUri],
   });
 }

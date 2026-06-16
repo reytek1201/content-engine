@@ -237,7 +237,7 @@ export function getCampaignNextStep(options: {
           },
           {
             action: "download_zip",
-            label: isExporting ? "Preparing zip…" : "Download zip",
+            label: isExporting ? "Preparing zip…" : "Share zip",
             disabled: isExporting,
             loading: isExporting,
           },

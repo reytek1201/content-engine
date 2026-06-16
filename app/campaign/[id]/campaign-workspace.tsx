@@ -26,7 +26,9 @@ import DuplicateCampaignButton from "@/app/components/duplicate-campaign-button"
 import ScrollToTopButton from "@/app/components/scroll-to-top-button";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import {
+  canUseNativeSlideExport,
   saveAllSlidesToPhotos,
+  shareCampaignZip,
 } from "@/utils/native-slide-export";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -301,16 +303,23 @@ export default function CampaignWorkspace({
       const filenameMatch = disposition?.match(/filename="(.+)"/);
       const filename = filenameMatch?.[1] ?? "campaign.zip";
 
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
+      if (canUseNativeSlideExport()) {
+        await shareCampaignZip(blob, filename);
+        setExportMessage(
+          "Use the share sheet to save the zip to Files or send it elsewhere."
+        );
+      } else {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
 
-      setExportMessage("Campaign zip downloaded");
+        setExportMessage("Campaign zip downloaded");
+      }
     } catch (exportError) {
       setError(
         exportError instanceof Error
