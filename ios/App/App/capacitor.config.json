@@ -13,8 +13,19 @@
 			"*.supabase.co"
 		]
 	},
+	"plugins": {
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#09090b"
+		}
+	},
 	"packageClassList": [
+		"MediaPlugin",
 		"AppPlugin",
-		"CAPBrowserPlugin"
+		"CAPBrowserPlugin",
+		"FilesystemPlugin",
+		"SharePlugin",
+		"StatusBarPlugin",
+		"NativeAppleSignInPlugin"
 	]
 }

@@ -47,6 +47,8 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>SlidePress saves slide images to your photo library when you tap Save to Photos.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

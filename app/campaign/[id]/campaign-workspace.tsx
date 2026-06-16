@@ -29,7 +29,12 @@ import CampaignBackLink from "@/app/components/campaign-back-link";
 import DeleteCampaignButton from "@/app/components/delete-campaign-button";
 import DuplicateCampaignButton from "@/app/components/duplicate-campaign-button";
 import ScrollToTopButton from "@/app/components/scroll-to-top-button";
+import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import type { RegenerateFeedbackChipId } from "@/types/regenerate-feedback";
+import {
+  saveSlideImageToPhotos,
+  shareSlideImage,
+} from "@/utils/native-slide-export";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface CampaignWorkspaceProps {
@@ -61,6 +66,9 @@ export default function CampaignWorkspace({
   const [downloadingSlideId, setDownloadingSlideId] = useState<string | null>(
     null
   );
+  const [savingSlideId, setSavingSlideId] = useState<string | null>(null);
+  const [sharingSlideId, setSharingSlideId] = useState<string | null>(null);
+  const isNativeApp = useIsNativeApp();
   const [regeneratingSlideId, setRegeneratingSlideId] = useState<string | null>(
     null
   );
@@ -418,6 +426,47 @@ export default function CampaignWorkspace({
       setError("Could not download slide image");
     } finally {
       setDownloadingSlideId(null);
+    }
+  }
+
+  async function handleSaveSlideToPhotos(slide: Slide) {
+    if (!slide.image_url) {
+      return;
+    }
+
+    setError(null);
+    setSavingSlideId(slide.id);
+
+    try {
+      await saveSlideImageToPhotos(
+        slide.image_url,
+        slideImageFilename(slide.slide_index)
+      );
+    } catch {
+      setError("Could not save slide to Photos");
+    } finally {
+      setSavingSlideId(null);
+    }
+  }
+
+  async function handleShareSlide(slide: Slide) {
+    if (!slide.image_url) {
+      return;
+    }
+
+    setError(null);
+    setSharingSlideId(slide.id);
+
+    try {
+      await shareSlideImage(
+        slide.image_url,
+        slideImageFilename(slide.slide_index),
+        `Slide ${slide.slide_index + 1}`
+      );
+    } catch {
+      setError("Could not share slide image");
+    } finally {
+      setSharingSlideId(null);
     }
   }
 
@@ -860,16 +909,41 @@ export default function CampaignWorkspace({
                     </div>
 
                     {slide.image_url && (
-                      <button
-                        type="button"
-                        disabled={downloadingSlideId === slide.id}
-                        onClick={() => handleDownloadSlide(slide)}
-                        className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:py-2.5"
-                      >
-                        {downloadingSlideId === slide.id
-                          ? "Downloading…"
-                          : "Download image"}
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        {isNativeApp === true ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={savingSlideId === slide.id}
+                              onClick={() => handleSaveSlideToPhotos(slide)}
+                              className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:py-2.5"
+                            >
+                              {savingSlideId === slide.id
+                                ? "Saving…"
+                                : "Save to Photos"}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={sharingSlideId === slide.id}
+                              onClick={() => handleShareSlide(slide)}
+                              className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:py-2.5"
+                            >
+                              {sharingSlideId === slide.id ? "Sharing…" : "Share"}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={downloadingSlideId === slide.id}
+                            onClick={() => handleDownloadSlide(slide)}
+                            className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:py-2.5"
+                          >
+                            {downloadingSlideId === slide.id
+                              ? "Downloading…"
+                              : "Download image"}
+                          </button>
+                        )}
+                      </div>
                     )}
 
                     {slide.image_url && (

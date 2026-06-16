@@ -18,6 +18,12 @@ const config: CapacitorConfig = {
       "*.supabase.co",
     ],
   },
+  plugins: {
+    StatusBar: {
+      style: "DARK",
+      backgroundColor: "#09090b",
+    },
+  },
 };
 
 export default config;

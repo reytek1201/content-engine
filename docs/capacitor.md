@@ -199,14 +199,28 @@ The iOS app shows **Continue with Apple** only in the native shell (App Store re
 
 ---
 
+## Native shell & slide export (Phase 5.3–5.4)
+
+**Status bar:** `NativeShell` configures the Capacitor status bar (dark background `#09090b`, light icons) on iOS and Android.
+
+**Save / Share:** In the native app, slide cards and carousel preview show **Save to Photos** and **Share** instead of **Download image**. Uses `@capacitor-community/media` and `@capacitor/share`.
+
+**iOS permission:** `NSPhotoLibraryAddUsageDescription` in `ios/App/App/Info.plist` (required for Save to Photos).
+
+**Deploy note:** The shell loads the live web app. Deploy web changes to Vercel, then rebuild the native app after `npm run cap:sync` when adding new Capacitor plugins.
+
+**Icons & splash:** Run `npm run cap:assets` before App Store / Play Store builds.
+
+---
+
 ## Phase 5 roadmap
 
 | Step | Status |
 |------|--------|
 | **5.1 Scaffold** | ✅ This setup |
 | **5.2 Auth** | Google + Apple OAuth via deep link ✅; password reset deep links ✅ |
-| **5.3 App shell** | Icons + splash (`npm run cap:assets`), status bar |
-| **5.4 Native affordances** | Share sheet, save to camera roll |
+| **5.3 App shell** | Icons + splash (`npm run cap:assets`), status bar (SlidePress dark + orange) — status bar ✅; run `npm run cap:assets` before store builds |
+| **5.4 Native affordances** | Share sheet + Save to Photos on slide cards and carousel preview ✅ |
 | **5.5 Beta** | TestFlight, Play internal testing |
 
 See `docs/client-features.md` for full product roadmap.

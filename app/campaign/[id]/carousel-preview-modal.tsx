@@ -1,6 +1,12 @@
 "use client";
 
+import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import type { Campaign, Slide } from "@/types/campaign";
+import { slideImageFilename } from "@/utils/download-slide";
+import {
+  saveSlideImageToPhotos,
+  shareSlideImage,
+} from "@/utils/native-slide-export";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface CarouselPreviewModalProps {
@@ -27,7 +33,11 @@ export default function CarouselPreviewModal({
   );
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const touchStartX = useRef<number | null>(null);
+  const isNativeApp = useIsNativeApp();
 
   useEffect(() => {
     if (!open) {
@@ -90,6 +100,47 @@ export default function CarouselPreviewModal({
 
   const activeSlide = previewSlides[activeIndex];
 
+  async function handleSaveActiveSlide() {
+    if (!activeSlide?.image_url) {
+      return;
+    }
+
+    setActionError(null);
+    setIsSaving(true);
+
+    try {
+      await saveSlideImageToPhotos(
+        activeSlide.image_url,
+        slideImageFilename(activeSlide.slide_index)
+      );
+    } catch {
+      setActionError("Could not save slide to Photos");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleShareActiveSlide() {
+    if (!activeSlide?.image_url) {
+      return;
+    }
+
+    setActionError(null);
+    setIsSharing(true);
+
+    try {
+      await shareSlideImage(
+        activeSlide.image_url,
+        slideImageFilename(activeSlide.slide_index),
+        `Slide ${activeSlide.slide_index + 1}`
+      );
+    } catch {
+      setActionError("Could not share slide");
+    } finally {
+      setIsSharing(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-8">
       <button
@@ -118,14 +169,42 @@ export default function CarouselPreviewModal({
               of {previewSlides.length}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground"
-          >
-            Close
-          </button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {isNativeApp === true && activeSlide?.image_url ? (
+              <>
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={handleSaveActiveSlide}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSaving ? "Saving…" : "Save"}
+                </button>
+                <button
+                  type="button"
+                  disabled={isSharing}
+                  onClick={handleShareActiveSlide}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSharing ? "Sharing…" : "Share"}
+                </button>
+              </>
+            ) : null}
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground"
+            >
+              Close
+            </button>
+          </div>
         </div>
+
+        {actionError ? (
+          <p className="mb-3 text-center text-xs text-red-300" role="alert">
+            {actionError}
+          </p>
+        ) : null}
 
         <div
           className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
