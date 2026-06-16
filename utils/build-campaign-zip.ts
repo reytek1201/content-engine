@@ -49,22 +49,34 @@ export async function buildCampaignZip(
 
   const zip = new JSZip();
 
-  for (const slide of sortedSlides) {
-    const imageUrl = slide.image_url!;
-    const response = await safeFetch(imageUrl);
+  const imageResults = await Promise.allSettled(
+    sortedSlides.map(async (slide) => {
+      const imageUrl = slide.image_url!;
+      const response = await safeFetch(imageUrl);
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch slide ${slide.slide_index + 1} image`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch slide ${slide.slide_index + 1} image`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      const extension = getImageExtension(imageUrl, response.headers.get("content-type"));
+
+      return { slideIndex: slide.slide_index, buffer, extension };
+    })
+  );
+
+  for (const result of imageResults) {
+    if (result.status === "rejected") {
+      throw result.reason instanceof Error
+        ? result.reason
+        : new Error(String(result.reason));
     }
 
-    const buffer = await response.arrayBuffer();
-    const extension = getImageExtension(
-      imageUrl,
-      response.headers.get("content-type")
+    const { slideIndex, buffer, extension } = result.value;
+    zip.file(
+      `slides/slide-${String(slideIndex + 1).padStart(2, "0")}.${extension}`,
+      buffer
     );
-    const filename = `slides/slide-${String(slide.slide_index + 1).padStart(2, "0")}.${extension}`;
-
-    zip.file(filename, buffer);
   }
 
   if (captions.length > 0) {

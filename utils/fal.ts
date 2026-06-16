@@ -96,7 +96,7 @@ function buildRequestBody(
   const body: Record<string, unknown> = {
     prompt,
     aspect_ratio: getNanoBananaAspectRatio(aspectRatio),
-    output_format: "png",
+    output_format: "jpeg",
     resolution: "1K",
     num_images: 1,
   };

@@ -44,11 +44,19 @@ async function writeImageToCache(
   imageUrl: string,
   filename: string,
 ): Promise<string> {
-  const blob = await fetchImageBlob(imageUrl);
-  const mimeType = blob.type || "image/png";
+  const rawBlob = await fetchImageBlob(imageUrl);
+
+  let blob: Blob;
+  try {
+    const { compressImageBlob } = await import("@/utils/compress-image");
+    blob = await compressImageBlob(rawBlob);
+  } catch {
+    blob = rawBlob;
+  }
+
   const base64 = await blobToBase64(blob);
   const safeName = filename.replace(/\.[^.]+$/, "");
-  const path = `${safeName}.${extensionForMimeType(mimeType)}`;
+  const path = `${safeName}.jpg`;
 
   const written = await Filesystem.writeFile({
     path,
@@ -102,8 +110,10 @@ export async function saveSlideImageToPhotos(
     throw new Error("Save to Photos is only available in the mobile app");
   }
 
+  const localUri = await writeImageToCache(imageUrl, filename);
+
   await Media.savePhoto({
-    path: imageUrl,
+    path: localUri,
     fileName: filename.replace(/\.[^.]+$/, ""),
     ...(albumIdentifier ? { albumIdentifier } : {}),
   });

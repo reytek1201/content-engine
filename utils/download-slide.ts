@@ -10,7 +10,10 @@ export async function downloadSlideImage(
     }
 
     const blob = await response.blob();
-    triggerBlobDownload(blob, filename);
+    const { compressImageBlob } = await import("@/utils/compress-image");
+    const compressed = await compressImageBlob(blob);
+    const jpgFilename = filename.replace(/\.[^.]+$/, ".jpg");
+    triggerBlobDownload(compressed, jpgFilename);
   } catch {
     const anchor = document.createElement("a");
     anchor.href = imageUrl;
@@ -35,5 +38,5 @@ function triggerBlobDownload(blob: Blob, filename: string) {
 }
 
 export function slideImageFilename(slideIndex: number): string {
-  return `slide-${String(slideIndex + 1).padStart(2, "0")}.png`;
+  return `slide-${String(slideIndex + 1).padStart(2, "0")}.jpg`;
 }
