@@ -10,3 +10,7 @@ capacitor-cordova-ios-plugins
 
 # Generated Config files
 App/App/config.xml
+
+# Firebase (client config — download from Firebase Console)
+GoogleService-Info.plist
+App/GoogleService-Info.plist

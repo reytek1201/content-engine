@@ -238,7 +238,7 @@ Notify users in the **native app** when every slide image in a campaign is ready
 
 1. Create a [Firebase](https://console.firebase.google.com/) project.
 2. Add an **Android** app with package `co.slidepress.app` → download `google-services.json` → place in `android/app/` (gitignored; see `google-services.json.example`).
-3. Add an **iOS** app with bundle `co.slidepress.app` → upload your **APNs key** in Firebase → Cloud Messaging.
+3. Add an **iOS** app with bundle `co.slidepress.app` → download `GoogleService-Info.plist` → place in `ios/App/` (gitignored; see `GoogleService-Info.plist.example`) → upload **APNs key**.
 4. Create a **service account** with Firebase Cloud Messaging API access.
 5. Set `FCM_SERVICE_ACCOUNT_JSON` on Vercel (base64-encoded service account JSON) **or** `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY`.
 
