@@ -12,7 +12,7 @@
  *   lock      → latest token saved to Keychain; local Supabase session cleared.
  *   unlock    → refresh token read from Keychain; session restored via
  *               supabase.auth.refreshSession(); new token stored back.
- *   disable   → token read from Keychain; session restored; Keychain cleared.
+ *   disable   → clear Keychain; restore session only if not already active.
  *   sign-out  → Keychain cleared; supabase.auth.signOut() called by caller.
  */
 
@@ -154,24 +154,33 @@ export async function restoreSessionFromKeychain(
 
 /**
  * Called when the user disables biometric lock from settings.
- * Restores the session from the Keychain so the user stays logged in,
- * then removes the Keychain entry.
+ * If the session is already active (typical while browsing Settings), only
+ * clears the Keychain vault. Otherwise restores from the stored refresh token
+ * so the user stays logged in after a prior lock.
  */
 export async function disableBiometricLock(
   supabase: SupabaseClient,
 ): Promise<{ error: string | null }> {
-  const storedToken = await readRefreshToken();
+  const {
+    data: { session: existingSession },
+  } = await supabase.auth.getSession();
 
-  if (storedToken) {
-    const { data, error } = await supabase.auth.refreshSession({
-      refresh_token: storedToken,
-    });
+  if (!existingSession) {
+    const storedToken = await readRefreshToken();
 
-    if (error || !data.session) {
-      // Couldn't restore — clear the preference anyway.
-      await clearStoredTokens();
-      setBiometricLockEnabled(false);
-      return { error: error?.message ?? "Could not restore session — please sign in again." };
+    if (storedToken) {
+      const { data, error } = await supabase.auth.refreshSession({
+        refresh_token: storedToken,
+      });
+
+      if (error || !data.session) {
+        await clearStoredTokens();
+        setBiometricLockEnabled(false);
+        return {
+          error:
+            error?.message ?? "Could not restore session — please sign in again.",
+        };
+      }
     }
   }
 
