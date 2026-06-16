@@ -1,5 +1,7 @@
 "use client";
 
+import { tabForNextStepAction } from "@/app/campaign/[id]/campaign-workspace-tab";
+import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspace-tab";
 import {
   CAMPAIGN_NEXT_STEP_BAR_ID,
   getCampaignNextStep,
@@ -29,6 +31,8 @@ interface CampaignNextStepBarProps {
   onDownloadZip: () => void;
   onCopyAllCaptions: () => void;
   onSaveAllToPhotos: () => void;
+  variant?: "sticky" | "fixed-bottom";
+  onTabChange?: (tab: CampaignWorkspaceTab) => void;
 }
 
 type NextStepHandlers = Pick<
@@ -76,14 +80,6 @@ function secondaryButtonLabel(
   return button.label;
 }
 
-function secondaryScrollTarget(action: NextStepAction): string {
-  if (action === "copy_captions") {
-    return "section-publish";
-  }
-
-  return "section-slides";
-}
-
 export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
   const {
     slideCount,
@@ -106,6 +102,8 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
     onDownloadZip,
     onCopyAllCaptions,
     onSaveAllToPhotos,
+    variant = "sticky",
+    onTabChange,
   } = props;
 
   const nextStep = getCampaignNextStep({
@@ -137,13 +135,28 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
     (nextStep.secondary ? [nextStep.secondary] : []);
 
   const actionDisabled = nextStep.disabled || nextStep.loading;
+  const isFixedBottom = variant === "fixed-bottom";
+
+  function handleNavigate(action: NextStepAction) {
+    if (isFixedBottom && onTabChange) {
+      onTabChange(tabForNextStepAction(action));
+      return;
+    }
+
+    const scrollTarget =
+      action === "copy_captions" || action === "generate_captions"
+        ? "section-publish"
+        : "section-slides";
+
+    scrollToCampaignSection(scrollTarget);
+  }
 
   function handlePrimaryClick() {
     if (actionDisabled) {
       return;
     }
 
-    scrollToCampaignSection(nextStep.scrollTargetId);
+    handleNavigate(nextStep.action);
     runNextStepAction(nextStep.action, handlers);
   }
 
@@ -152,7 +165,7 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
       return;
     }
 
-    scrollToCampaignSection(secondaryScrollTarget(button.action));
+    handleNavigate(button.action);
     runNextStepAction(button.action, handlers);
   }
 
@@ -167,29 +180,48 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
     ? "Your slides are in Photos — open the Photos app to post."
     : nextStep.description;
 
+  const wrapperClassName = isFixedBottom
+    ? "fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] z-40 border-t border-border bg-background px-4 py-2"
+    : "sticky top-0 z-40 -mx-4 border-b border-border bg-background px-4 py-2 sm:-mx-6 sm:px-6 sm:py-2.5 md:top-[4.5rem] md:-mx-10 md:px-10 md:py-3";
+
+  const panelClassName = isFixedBottom
+    ? "flex flex-col gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3"
+    : "flex flex-col gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-3 sm:gap-3 sm:rounded-2xl sm:p-4 md:flex-row md:items-center md:justify-between md:p-5";
+
   return (
-    <div
-      id={CAMPAIGN_NEXT_STEP_BAR_ID}
-      className="sticky top-0 z-40 -mx-4 border-b border-border bg-background px-4 py-2 sm:-mx-6 sm:px-6 sm:py-2.5 md:top-[4.5rem] md:-mx-10 md:px-10 md:py-3"
-    >
-      <div className="flex flex-col gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-3 sm:gap-3 sm:rounded-2xl sm:p-4 md:flex-row md:items-center md:justify-between md:p-5">
+    <div id={CAMPAIGN_NEXT_STEP_BAR_ID} className={wrapperClassName}>
+      <div className={panelClassName}>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-xs">
             Next step
           </p>
-          <p className="mt-0.5 line-clamp-2 text-xs font-medium leading-snug text-foreground sm:mt-1 sm:line-clamp-none sm:text-sm">
+          <p
+            className={`mt-0.5 font-medium leading-snug text-foreground ${
+              isFixedBottom
+                ? "line-clamp-1 text-xs"
+                : "line-clamp-2 text-xs sm:mt-1 sm:line-clamp-none sm:text-sm"
+            }`}
+          >
             {stepDescription}
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3 md:justify-end">
+        <div
+          className={`flex shrink-0 gap-2 ${
+            isFixedBottom
+              ? "flex-row flex-wrap"
+              : "flex-col sm:flex-row sm:flex-wrap sm:gap-3 md:justify-end"
+          }`}
+        >
           {secondaryButtons.map((button) => (
             <button
               key={button.action}
               type="button"
               disabled={button.disabled || button.loading}
               onClick={() => handleSecondaryClick(button)}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-5 sm:py-2.5 md:py-3"
+              className={`inline-flex items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 ${
+                isFixedBottom ? "flex-1" : "w-full sm:w-auto sm:px-5 sm:py-2.5 md:py-3"
+              }`}
             >
               {secondaryButtonLabel(button, copiedAllCaptions, savedAllPhotos)}
             </button>
@@ -199,9 +231,9 @@ export default function CampaignNextStepBar(props: CampaignNextStepBarProps) {
             type="button"
             aria-disabled={actionDisabled}
             onClick={handlePrimaryClick}
-            className={`btn-primary w-full py-2 text-sm sm:w-auto sm:py-2.5 md:py-3 ${
-              actionDisabled ? "cursor-default opacity-70" : ""
-            }`}
+            className={`btn-primary py-2 text-sm ${
+              isFixedBottom ? "flex-1" : "w-full sm:w-auto sm:py-2.5 md:py-3"
+            } ${actionDisabled ? "cursor-default opacity-70" : ""}`}
           >
             {primaryLabel}
           </button>

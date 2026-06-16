@@ -20,10 +20,19 @@ import {
 } from "@/utils/campaign-progress";
 import SlideCard from "@/app/campaign/[id]/slide-card";
 import CarouselPreviewModal from "@/app/campaign/[id]/carousel-preview-modal";
+import CampaignDetailsPanel from "@/app/campaign/[id]/campaign-details-panel";
 import CampaignGeneratingView from "@/app/campaign/[id]/campaign-generating-view";
+import CampaignGenerationPanel from "@/app/campaign/[id]/campaign-generation-panel";
+import CampaignMobileTabs from "@/app/campaign/[id]/campaign-mobile-tabs";
 import CampaignNextStepBar from "@/app/campaign/[id]/campaign-next-step-bar";
+import CampaignPublishPanel from "@/app/campaign/[id]/campaign-publish-panel";
 import CampaignProgressStrip from "@/app/campaign/[id]/campaign-progress-strip";
+import CampaignSlidesMobileView from "@/app/campaign/[id]/campaign-slides-mobile-view";
 import CampaignTitleEditor from "@/app/campaign/[id]/campaign-title-editor";
+import {
+  isMobileWorkspaceLayout,
+  type CampaignWorkspaceTab,
+} from "@/app/campaign/[id]/campaign-workspace-tab";
 import CampaignBackLink from "@/app/components/campaign-back-link";
 import DeleteCampaignButton from "@/app/components/delete-campaign-button";
 import DuplicateCampaignButton from "@/app/components/duplicate-campaign-button";
@@ -58,10 +67,11 @@ export default function CampaignWorkspace({
   const [isGeneratingCaptions, setIsGeneratingCaptions] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
-  const [imagesCompleteMessage, setImagesCompleteMessage] = useState<string | null>(
-    null
-  );
   const [captionsMessage, setCaptionsMessage] = useState<string | null>(null);
+  const [justFinishedSlide, setJustFinishedSlide] = useState<{
+    slideIndex: number;
+    imageUrl: string;
+  } | null>(null);
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
@@ -76,6 +86,8 @@ export default function CampaignWorkspace({
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<CampaignWorkspaceTab>("slides");
+  const [mobileActiveSlideIndex, setMobileActiveSlideIndex] = useState(0);
   const [isRetryingText, setIsRetryingText] = useState(false);
   const textGenerationStarted = useRef(false);
   const prevSlidesRef = useRef(initialSlides);
@@ -86,6 +98,7 @@ export default function CampaignWorkspace({
   const isGeneratingImagesRef = useRef(false);
   const pendingSlideUpdatesRef = useRef<Map<string, Slide>>(new Map());
   const slideFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const justFinishedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isAwaitingTextGeneration =
     slides.length === 0 &&
@@ -140,6 +153,22 @@ export default function CampaignWorkspace({
     }
 
     if (newestReadySlide && isGeneratingImages) {
+      if (newestReadySlide.image_url) {
+        setJustFinishedSlide({
+          slideIndex: newestReadySlide.slide_index,
+          imageUrl: newestReadySlide.image_url,
+        });
+
+        if (justFinishedTimerRef.current !== null) {
+          clearTimeout(justFinishedTimerRef.current);
+        }
+
+        justFinishedTimerRef.current = setTimeout(() => {
+          setJustFinishedSlide(null);
+          justFinishedTimerRef.current = null;
+        }, 4000);
+      }
+
       const allCompleteNow = slides.every((slide) => slide.image_url);
 
       if (!allCompleteNow) {
@@ -147,7 +176,15 @@ export default function CampaignWorkspace({
           Date.now() - lastUserScrollAtRef.current < USER_SCROLL_COOLDOWN_MS;
 
         if (!userScrolledRecently) {
-          requestAnimationFrame(() => scrollToSlideCard(newestReadySlide!.id));
+          requestAnimationFrame(() => {
+            if (isMobileWorkspaceLayout()) {
+              setMobileTab("slides");
+              setMobileActiveSlideIndex(newestReadySlide!.slide_index);
+              return;
+            }
+
+            scrollToSlideCard(newestReadySlide!.id);
+          });
         }
       }
     }
@@ -155,18 +192,23 @@ export default function CampaignWorkspace({
 
   useEffect(() => {
     if (imagesComplete && !prevImagesCompleteRef.current) {
-      setImagesCompleteMessage(
-        "All slides are ready — generate captions or save to Photos."
-      );
-      requestAnimationFrame(() => scrollToCampaignNextStep());
-    }
-
-    if (!imagesComplete) {
-      setImagesCompleteMessage(null);
+      if (isMobileWorkspaceLayout()) {
+        setMobileTab("slides");
+      } else {
+        requestAnimationFrame(() => scrollToCampaignNextStep());
+      }
     }
 
     prevImagesCompleteRef.current = imagesComplete;
   }, [imagesComplete]);
+
+  useEffect(() => {
+    return () => {
+      if (justFinishedTimerRef.current !== null) {
+        clearTimeout(justFinishedTimerRef.current);
+      }
+    };
+  }, []);
 
   const refreshSlides = useCallback(async () => {
     const { data: refreshedSlides } = await supabase
@@ -478,6 +520,10 @@ export default function CampaignWorkspace({
           ? "Captions regenerated — slide images unchanged"
           : "Platform captions generated"
       );
+
+      if (isMobileWorkspaceLayout()) {
+        setMobileTab("publish");
+      }
     } catch (generateError) {
       setError(
         generateError instanceof Error
@@ -651,9 +697,35 @@ export default function CampaignWorkspace({
     <div className="min-h-full bg-background text-foreground">
       <main
         id="campaign-workspace-top"
-        className="page-main scroll-mt-0"
+        className="page-main scroll-mt-0 max-md:pb-[calc(9.5rem+env(safe-area-inset-bottom,0px))]"
       >
-        <header className="border-b border-border pb-6 md:pb-8">
+        <div className="md:hidden">
+          <CampaignBackLink className="mb-3" />
+          <CampaignMobileTabs active={mobileTab} onChange={setMobileTab} />
+
+          {(campaign.error_message || error) && (
+            <div className="mt-4 space-y-3">
+              {campaign.error_message && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-200"
+                >
+                  {campaign.error_message}
+                </div>
+              )}
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-200"
+                >
+                  {error}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <header className="hidden border-b border-border pb-6 md:block md:pb-8">
           <CampaignBackLink className="mb-4" />
           <div className="flex flex-wrap items-start justify-between gap-3 md:gap-4">
             <div>
@@ -776,31 +848,38 @@ export default function CampaignWorkspace({
           )}
         </header>
 
-        <CampaignNextStepBar
-          slideCount={slideCount}
-          imagesReadyCount={imagesReadyCount}
-          imagesComplete={imagesComplete}
-          isGeneratingImages={isGeneratingImages}
-          canGenerateImages={canGenerateImages}
-          isStartingImages={isGenerating}
-          captionsCount={captions.length}
-          canGenerateCaptions={canGenerateCaptions}
-          isGeneratingCaptions={isGeneratingCaptions}
-          isExporting={isExporting}
-          isNativeApp={isNativeApp === true}
-          isSavingAllPhotos={isSavingAllPhotos}
-          saveAllPhotosProgress={saveAllPhotosProgress}
-          savedAllPhotos={savedAllPhotos}
-          copiedAllCaptions={copiedPlatform === "all"}
-          onGenerateImages={handleGenerateImages}
-          onGenerateCaptions={handleGenerateCaptions}
-          onDownloadZip={handleDownloadZip}
-          onCopyAllCaptions={handleCopyAllCaptions}
-          onSaveAllToPhotos={handleSaveAllToPhotos}
-        />
+        <div className="hidden md:block">
+          <CampaignNextStepBar
+            slideCount={slideCount}
+            imagesReadyCount={imagesReadyCount}
+            imagesComplete={imagesComplete}
+            isGeneratingImages={isGeneratingImages}
+            canGenerateImages={canGenerateImages}
+            isStartingImages={isGenerating}
+            captionsCount={captions.length}
+            canGenerateCaptions={canGenerateCaptions}
+            isGeneratingCaptions={isGeneratingCaptions}
+            isExporting={isExporting}
+            isNativeApp={isNativeApp === true}
+            isSavingAllPhotos={isSavingAllPhotos}
+            saveAllPhotosProgress={saveAllPhotosProgress}
+            savedAllPhotos={savedAllPhotos}
+            copiedAllCaptions={copiedPlatform === "all"}
+            onGenerateImages={handleGenerateImages}
+            onGenerateCaptions={handleGenerateCaptions}
+            onDownloadZip={handleDownloadZip}
+            onCopyAllCaptions={handleCopyAllCaptions}
+            onSaveAllToPhotos={handleSaveAllToPhotos}
+          />
+        </div>
 
-        <section id="section-slides" className="mt-8 scroll-mt-28 md:mt-10 md:scroll-mt-40">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3 md:mb-6 md:gap-4">
+        <section
+          id="section-slides"
+          className={`mt-4 scroll-mt-28 md:mt-10 md:scroll-mt-40 ${
+            mobileTab !== "slides" ? "max-md:hidden" : ""
+          }`}
+        >
+          <div className="mb-4 hidden flex-wrap items-end justify-between gap-3 md:mb-6 md:flex md:gap-4">
             <div>
               <h2 className="text-lg font-semibold text-foreground md:text-xl">Slides</h2>
               <p className="mt-0.5 text-xs text-muted-foreground md:mt-1 md:text-sm">
@@ -824,11 +903,19 @@ export default function CampaignWorkspace({
             )}
           </div>
 
-          {imagesCompleteMessage && (
-            <div className="mb-6 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">
-              {imagesCompleteMessage}
-            </div>
-          )}
+          <div className="mb-4 hidden md:block">
+            <CampaignGenerationPanel
+              slideCount={slideCount}
+              imagesReadyCount={imagesReadyCount}
+              imagesComplete={imagesComplete}
+              isGeneratingImages={isGeneratingImages}
+              isStartingImages={isGenerating}
+              captionsCount={captions.length}
+              isGeneratingCaptions={isGeneratingCaptions}
+              justFinishedSlide={justFinishedSlide}
+              variant="slides"
+            />
+          </div>
 
           {exportMessage && (
             <div className="mb-6 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">
@@ -836,7 +923,31 @@ export default function CampaignWorkspace({
             </div>
           )}
 
-          <div className="grid gap-4 md:gap-6">
+          <div className="md:hidden">
+            <CampaignSlidesMobileView
+              slides={slides}
+              activeSlideIndex={mobileActiveSlideIndex}
+              aspectRatio={campaign.aspect_ratio}
+              slideCount={slideCount}
+              imagesReadyCount={imagesReadyCount}
+              imagesComplete={imagesComplete}
+              isGeneratingImages={isGeneratingImages}
+              isStartingImages={isGenerating}
+              captionsCount={captions.length}
+              isGeneratingCaptions={isGeneratingCaptions}
+              justFinishedSlide={justFinishedSlide}
+              isNativeApp={isNativeApp === true}
+              isAnySlideGenerating={isAnySlideGenerating}
+              regeneratingSlideId={regeneratingSlideId}
+              onActiveSlideIndexChange={setMobileActiveSlideIndex}
+              onOpenPreview={handleOpenPreview}
+              onSlideUpdated={handleSlideUpdated}
+              onRegenerate={handleRegenerateSlide}
+              onError={setError}
+            />
+          </div>
+
+          <div className="hidden grid-cols-1 gap-4 md:grid md:gap-6">
             {slides.map((slide) => (
               <SlideCard
                 key={slide.id}
@@ -854,11 +965,46 @@ export default function CampaignWorkspace({
           </div>
         </section>
 
-        <section
-          id="section-publish"
-          className="mt-8 scroll-mt-28 rounded-xl border border-border bg-card/30 p-4 sm:mt-10 sm:scroll-mt-36 sm:rounded-2xl sm:p-6 md:scroll-mt-40 md:p-8"
+        <div
+          className={mobileTab !== "publish" ? "max-md:hidden" : ""}
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+          <div className="md:hidden space-y-4">
+            <CampaignGenerationPanel
+              slideCount={slideCount}
+              imagesReadyCount={imagesReadyCount}
+              imagesComplete={imagesComplete}
+              isGeneratingImages={isGeneratingImages}
+              isStartingImages={isGenerating}
+              captionsCount={captions.length}
+              isGeneratingCaptions={isGeneratingCaptions}
+              variant="publish"
+            />
+            <CampaignPublishPanel
+              sortedCaptions={sortedCaptions}
+              canGenerateCaptions={canGenerateCaptions}
+              isGeneratingCaptions={isGeneratingCaptions}
+              captionsMessage={captionsMessage}
+              copiedPlatform={copiedPlatform}
+              onGenerateCaptions={handleGenerateCaptions}
+              onCopyCaption={handleCopyCaption}
+            />
+          </div>
+
+          <section
+            id="section-publish"
+            className="mt-8 hidden scroll-mt-28 rounded-xl border border-border bg-card/30 p-4 sm:mt-10 sm:scroll-mt-36 sm:rounded-2xl sm:p-6 md:block md:scroll-mt-40 md:p-8"
+          >
+          <CampaignGenerationPanel
+            slideCount={slideCount}
+            imagesReadyCount={imagesReadyCount}
+            imagesComplete={imagesComplete}
+            isGeneratingImages={isGeneratingImages}
+            isStartingImages={isGenerating}
+            captionsCount={captions.length}
+            isGeneratingCaptions={isGeneratingCaptions}
+            variant="publish"
+          />
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
             <div>
               <h2 className="text-lg font-semibold text-foreground md:text-xl">Publish</h2>
               <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6 md:max-w-2xl">
@@ -968,8 +1114,26 @@ export default function CampaignWorkspace({
             )}
           </div>
         </section>
+        </div>
 
-        <section className="mt-12 border-t border-border pt-6 md:mt-16 md:pt-8">
+        {mobileTab === "details" && (
+          <div className="md:hidden">
+            <CampaignDetailsPanel
+              campaign={campaign}
+              slideCount={slideCount}
+              imagesReadyCount={imagesReadyCount}
+              imagesComplete={imagesComplete}
+              isGeneratingImages={isGeneratingImages}
+              captionsCount={captions.length}
+              onTitleSaved={(title) =>
+                setCampaign((current) => ({ ...current, title }))
+              }
+              onError={setError}
+            />
+          </div>
+        )}
+
+        <section className="mt-12 hidden border-t border-border pt-6 md:mt-16 md:block md:pt-8">
           <h2 className="text-sm font-semibold text-foreground">Danger zone</h2>
           <p className="mt-1 max-w-lg text-sm text-muted-foreground">
             Permanently delete this campaign and all of its slides. This cannot
@@ -981,8 +1145,37 @@ export default function CampaignWorkspace({
             className="mt-4"
           />
         </section>
+
+        <div className="md:hidden">
+          <CampaignNextStepBar
+            variant="fixed-bottom"
+            slideCount={slideCount}
+            imagesReadyCount={imagesReadyCount}
+            imagesComplete={imagesComplete}
+            isGeneratingImages={isGeneratingImages}
+            canGenerateImages={canGenerateImages}
+            isStartingImages={isGenerating}
+            captionsCount={captions.length}
+            canGenerateCaptions={canGenerateCaptions}
+            isGeneratingCaptions={isGeneratingCaptions}
+            isExporting={isExporting}
+            isNativeApp={isNativeApp === true}
+            isSavingAllPhotos={isSavingAllPhotos}
+            saveAllPhotosProgress={saveAllPhotosProgress}
+            savedAllPhotos={savedAllPhotos}
+            copiedAllCaptions={copiedPlatform === "all"}
+            onGenerateImages={handleGenerateImages}
+            onGenerateCaptions={handleGenerateCaptions}
+            onDownloadZip={handleDownloadZip}
+            onCopyAllCaptions={handleCopyAllCaptions}
+            onSaveAllToPhotos={handleSaveAllToPhotos}
+            onTabChange={setMobileTab}
+          />
+        </div>
       </main>
-      <ScrollToTopButton />
+      <div className="hidden md:block">
+        <ScrollToTopButton />
+      </div>
       {previewOpen && (
         <CarouselPreviewModal
           open={previewOpen}
