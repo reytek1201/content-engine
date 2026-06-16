@@ -7,10 +7,16 @@ import {
   slideImageFilename,
 } from "@/utils/download-slide";
 import {
+  blobToFile,
+  captureReferencePhoto,
+} from "@/utils/native-camera";
+import {
   saveSlideImageToPhotos,
   shareSlideImage,
 } from "@/utils/native-slide-export";
-import { memo, useCallback, useState } from "react";
+import { uploadReferenceImage } from "@/utils/upload-reference";
+import { createClient } from "@/utils/supabase/client";
+import { memo, useCallback, useRef, useState } from "react";
 import SlideOverlayEditor from "./slide-overlay-editor";
 import SlideRegenerateControls from "./slide-regenerate-controls";
 
@@ -20,9 +26,13 @@ interface SlideCardProps {
   isNativeApp: boolean;
   isAnySlideGenerating: boolean;
   isRegenerating: boolean;
+  userId: string;
   onOpenPreview: (slideIndex: number) => void;
   onSlideUpdated: (slideId: string, patch: Partial<Slide>) => void;
-  onRegenerate: (slideId: string) => void;
+  onRegenerate: (
+    slideId: string,
+    options?: { snapProductUrl?: string; feedback?: RegenerateFeedbackChipId[]; notes?: string },
+  ) => void;
   onError: (message: string) => void;
 }
 
@@ -32,11 +42,13 @@ const SlideCard = memo(function SlideCard({
   isNativeApp,
   isAnySlideGenerating,
   isRegenerating,
+  userId,
   onOpenPreview,
   onSlideUpdated,
   onRegenerate,
   onError,
 }: SlideCardProps) {
+  const supabase = createClient();
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -44,6 +56,10 @@ const SlideCard = memo(function SlideCard({
   const [isCopiedVoiceover, setIsCopiedVoiceover] = useState(false);
   const [selectedFeedbackChips, setSelectedFeedbackChips] = useState<RegenerateFeedbackChipId[]>([]);
   const [regenerateNotes, setRegenerateNotes] = useState("");
+  const [snapPhotoUrl, setSnapPhotoUrl] = useState<string | null>(null);
+  const [snapUploadedUrl, setSnapUploadedUrl] = useState<string | null>(null);
+  const [isSnapping, setIsSnapping] = useState(false);
+  const snapBlobRef = useRef<Blob | null>(null);
 
   const handleSaveToPhotos = useCallback(async () => {
     if (!slide.image_url) return;
@@ -112,11 +128,46 @@ const SlideCard = memo(function SlideCard({
     );
   }, []);
 
+  const handleSnapPhoto = useCallback(async () => {
+    if (isSnapping) return;
+    setIsSnapping(true);
+    try {
+      const result = await captureReferencePhoto("camera");
+      if (!result) return;
+
+      snapBlobRef.current = result.blob;
+      const objectUrl = URL.createObjectURL(result.blob);
+      setSnapPhotoUrl(objectUrl);
+
+      const file = blobToFile(result.blob, result.filename);
+      const uploadedUrl = await uploadReferenceImage(supabase, file, userId, "product");
+      setSnapUploadedUrl(uploadedUrl);
+    } catch {
+      onError("Could not capture photo");
+    } finally {
+      setIsSnapping(false);
+    }
+  }, [isSnapping, supabase, userId, onError]);
+
+  const handleClearSnapPhoto = useCallback(() => {
+    if (snapPhotoUrl) {
+      URL.revokeObjectURL(snapPhotoUrl);
+    }
+    setSnapPhotoUrl(null);
+    setSnapUploadedUrl(null);
+    snapBlobRef.current = null;
+  }, [snapPhotoUrl]);
+
   const handleRegenerate = useCallback(() => {
-    onRegenerate(slide.id);
+    onRegenerate(slide.id, {
+      snapProductUrl: snapUploadedUrl ?? undefined,
+      feedback: selectedFeedbackChips.length > 0 ? selectedFeedbackChips : undefined,
+      notes: regenerateNotes.trim() || undefined,
+    });
     setSelectedFeedbackChips([]);
     setRegenerateNotes("");
-  }, [slide.id, onRegenerate]);
+    handleClearSnapPhoto();
+  }, [slide.id, snapUploadedUrl, selectedFeedbackChips, regenerateNotes, onRegenerate, handleClearSnapPhoto]);
 
   const handleOpenPreview = useCallback(() => {
     onOpenPreview(slide.slide_index);
@@ -285,6 +336,11 @@ const SlideCard = memo(function SlideCard({
               onNotesChange={setRegenerateNotes}
               onToggleChip={handleToggleChip}
               onRegenerate={handleRegenerate}
+              isNativeApp={isNativeApp}
+              snapPhotoUrl={snapPhotoUrl}
+              isSnapping={isSnapping}
+              onSnapPhoto={() => void handleSnapPhoto()}
+              onClearSnapPhoto={handleClearSnapPhoto}
             />
           )}
         </div>

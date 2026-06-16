@@ -5,6 +5,25 @@ import {
   type RegenerateFeedbackChipId,
 } from "@/types/regenerate-feedback";
 
+function CameraIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-3.5 w-3.5"
+      aria-hidden
+    >
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+      <circle cx="12" cy="13" r="3" />
+    </svg>
+  );
+}
+
 interface SlideRegenerateControlsProps {
   disabled: boolean;
   isRegenerating: boolean;
@@ -13,6 +32,11 @@ interface SlideRegenerateControlsProps {
   onNotesChange: (value: string) => void;
   onToggleChip: (chipId: RegenerateFeedbackChipId) => void;
   onRegenerate: () => void;
+  isNativeApp?: boolean;
+  snapPhotoUrl?: string | null;
+  isSnapping?: boolean;
+  onSnapPhoto?: () => void;
+  onClearSnapPhoto?: () => void;
 }
 
 export default function SlideRegenerateControls({
@@ -23,6 +47,11 @@ export default function SlideRegenerateControls({
   onNotesChange,
   onToggleChip,
   onRegenerate,
+  isNativeApp = false,
+  snapPhotoUrl = null,
+  isSnapping = false,
+  onSnapPhoto,
+  onClearSnapPhoto,
 }: SlideRegenerateControlsProps) {
   return (
     <div className="border-t border-border pt-4 md:pt-5">
@@ -33,6 +62,47 @@ export default function SlideRegenerateControls({
         Edit the headline if needed, then pick chips or add a note before
         regenerating.
       </p>
+
+      {isNativeApp && onSnapPhoto && (
+        <div className="mt-3">
+          {snapPhotoUrl ? (
+            <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={snapPhotoUrl}
+                alt="New product reference"
+                className="h-10 w-10 shrink-0 rounded-md object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-foreground">
+                  New product photo
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Used for this regen only
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={disabled || isRegenerating}
+                onClick={onClearSnapPhoto}
+                className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-60"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={disabled || isRegenerating || isSnapping}
+              onClick={onSnapPhoto}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-xs font-medium text-muted-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <CameraIcon />
+              {isSnapping ? "Opening camera…" : "Snap new product photo"}
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap gap-1.5 sm:mt-4 sm:gap-2">
         {REGENERATE_FEEDBACK_CHIPS.map((chip) => {

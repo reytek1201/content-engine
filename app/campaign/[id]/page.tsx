@@ -62,6 +62,7 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
       initialCampaign={campaign as Campaign}
       initialSlides={(slides ?? []) as Slide[]}
       initialCaptions={(captions ?? []) as PlatformCaption[]}
+      userId={user.id}
     />
   );
 }

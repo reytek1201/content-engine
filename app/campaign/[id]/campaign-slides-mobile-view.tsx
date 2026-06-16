@@ -27,8 +27,9 @@ interface CampaignSlidesMobileViewProps {
   onActiveSlideIndexChange: (slideIndex: number) => void;
   onOpenPreview: (slideIndex: number) => void;
   onSlideUpdated: (slideId: string, patch: Partial<Slide>) => void;
-  onRegenerate: (slideId: string) => void;
+  onRegenerate: (slideId: string, options?: { snapProductUrl?: string; feedback?: string[]; notes?: string }) => void;
   onError: (message: string) => void;
+  userId: string;
 }
 
 const SWIPE_THRESHOLD_PX = 48;
@@ -49,6 +50,7 @@ export default function CampaignSlidesMobileView({
   onSlideUpdated,
   onRegenerate,
   onError,
+  userId,
 }: CampaignSlidesMobileViewProps) {
   const touchStartXRef = useRef<number | null>(null);
   const activeSlide =
@@ -197,6 +199,7 @@ export default function CampaignSlidesMobileView({
           onSlideUpdated={onSlideUpdated}
           onRegenerate={onRegenerate}
           onError={onError}
+          userId={userId}
         />
       </div>
     </div>

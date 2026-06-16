@@ -1,7 +1,9 @@
 "use client";
 
 import BrandLibraryPanel from "@/app/components/brand-library-panel";
+import PhotoTopicSuggester from "@/app/components/photo-topic-suggester";
 import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
+import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { createClient } from "@/utils/supabase/client";
 import {
   fetchBrandLibrary,
@@ -82,6 +84,7 @@ export default function CreateCampaignForm({
   const [usageLoading, setUsageLoading] = useState(true);
 
   const campaignLimitReached = usage !== null && !usage.canCreateCampaign;
+  const isNativeApp = useIsNativeApp();
 
   const [brandLibrary, setBrandLibrary] = useState<BrandLibrary | null>(null);
   const [useSavedBrand, setUseSavedBrand] = useState(false);
@@ -444,6 +447,15 @@ export default function CreateCampaignForm({
           required
           className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
         />
+
+        {isNativeApp === true && (
+          <div className="mt-3">
+            <PhotoTopicSuggester
+              onSelectTopic={(t) => setTopic(t)}
+              disabled={isLoading}
+            />
+          </div>
+        )}
 
         <div className={compact ? "space-y-3" : "mt-8"}>
           <p className="text-sm font-medium text-secondary-foreground">

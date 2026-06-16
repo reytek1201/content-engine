@@ -1,6 +1,7 @@
 "use client";
 
 import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
+import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { createClient } from "@/utils/supabase/client";
 import {
   clearBrandLibrary,
@@ -20,6 +21,7 @@ interface BrandLibraryEditorProps {
 
 export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
   const supabase = createClient();
+  const isNativeApp = useIsNativeApp();
 
   const [library, setLibrary] = useState<BrandLibrary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -258,6 +260,9 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
       <p className="text-sm leading-6 text-muted-foreground">
         Save product, style, and logo references once — they&apos;ll pre-fill
         when you create new campaigns.
+        {isNativeApp && (
+          <span> Tap <strong className="text-foreground">Camera</strong> to photograph your product or logo right now.</span>
+        )}
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -265,6 +270,7 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
           id="settings-product-reference"
           label="Product"
           description="Your product, app, or offer to feature."
+          hint="Centre on a plain background, good light."
           previewUrl={getSlotPreview("product")}
           disabled={saving || clearing}
           onFileSelect={(file) => handleReferenceSelect("product", file)}
@@ -273,6 +279,7 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
           id="settings-style-reference"
           label="Style"
           description="Mood board or carousel style to match."
+          hint="A feed post, printed ad, or anything with the vibe you want."
           previewUrl={getSlotPreview("style")}
           disabled={saving || clearing}
           onFileSelect={(file) => handleReferenceSelect("style", file)}
@@ -281,6 +288,7 @@ export default function BrandLibraryEditor({ user }: BrandLibraryEditorProps) {
           id="settings-logo-reference"
           label="Logo"
           description="Brand mark for consistent placement."
+          hint="Try photographing your packaging or a business card corner."
           previewUrl={getSlotPreview("logo")}
           disabled={saving || clearing}
           onFileSelect={(file) => handleReferenceSelect("logo", file)}

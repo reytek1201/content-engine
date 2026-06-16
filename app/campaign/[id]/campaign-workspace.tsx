@@ -55,12 +55,14 @@ interface CampaignWorkspaceProps {
   initialCampaign: Campaign;
   initialSlides: Slide[];
   initialCaptions: PlatformCaption[];
+  userId: string;
 }
 
 export default function CampaignWorkspace({
   initialCampaign,
   initialSlides,
   initialCaptions,
+  userId,
 }: CampaignWorkspaceProps) {
   const supabase = createClient();
   const [campaign, setCampaign] = useState(initialCampaign);
@@ -603,7 +605,10 @@ export default function CampaignWorkspace({
 
   const slidesWithImages = slides.filter((slide) => slide.image_url);
 
-  const handleRegenerateSlide = useCallback(async (slideId: string) => {
+  const handleRegenerateSlide = useCallback(async (
+    slideId: string,
+    options?: { snapProductUrl?: string; feedback?: string[]; notes?: string },
+  ) => {
     setError(null);
     setRegeneratingSlideId(slideId);
 
@@ -617,6 +622,9 @@ export default function CampaignWorkspace({
         body: JSON.stringify({
           slideId,
           text_overlay: textOverlay,
+          ...(options?.feedback?.length ? { feedback: options.feedback } : {}),
+          ...(options?.notes ? { notes: options.notes } : {}),
+          ...(options?.snapProductUrl ? { snapProductUrl: options.snapProductUrl } : {}),
         }),
       });
 
@@ -947,6 +955,7 @@ export default function CampaignWorkspace({
               onSlideUpdated={handleSlideUpdated}
               onRegenerate={handleRegenerateSlide}
               onError={setError}
+              userId={userId}
             />
           </div>
 
@@ -963,6 +972,7 @@ export default function CampaignWorkspace({
                 onSlideUpdated={handleSlideUpdated}
                 onRegenerate={handleRegenerateSlide}
                 onError={setError}
+                userId={userId}
               />
             ))}
           </div>

@@ -223,8 +223,32 @@ The iOS app shows **Continue with Apple** only in the native shell (App Store re
 | **5.4 Native affordances** | Share sheet + Save to Photos (per slide, carousel, and **Save all to Photos** in next step bar) ✅ |
 | **5.5 Beta** | TestFlight, Play internal testing — see `docs/beta-release.md` |
 | **5.6 Push** | FCM push when all campaign images finish generating ✅ |
+| **5.7 Camera** | Native camera for brand library, create form, and workspace regen ✅ |
 
 See `docs/client-features.md` for full product roadmap.
+
+### Camera (Phase 5.7)
+
+Native camera integration throughout the app using `@capacitor/camera`.
+
+**Capabilities:**
+
+- **Brand library** — each slot (Product / Style / Logo) has **Camera** + **Library** buttons instead of a plain upload picker on native. Slot-specific photo hints guide the user.
+- **Create form** — **"Snap product → get topic ideas"** button below the topic field. Photo is sent to Gemini vision (`/api/suggest-topic`) which returns 3 campaign topic hooks. User taps one to pre-fill the topic.
+- **Slide regeneration** — **"Snap new product photo"** button in each slide's regenerate controls. Photo is uploaded to Supabase storage and used as an override product reference for that single regen without changing the campaign's saved references.
+
+**Feedback/notes now forwarded:** The slide-level `feedback` chips and `notes` field are now properly forwarded to `/api/regenerate-slide` (was previously unused).
+
+**iOS permissions added to `Info.plist`:**
+- `NSCameraUsageDescription`
+- Updated `NSPhotoLibraryUsageDescription` (now covers reference image picking)
+
+**Android permissions added to `AndroidManifest.xml`:**
+- `CAMERA`
+- `READ_MEDIA_IMAGES` (API 33+)
+- `READ_EXTERNAL_STORAGE` (API ≤ 32 fallback)
+
+**After adding permissions:** run `npm run cap:sync` and rebuild the native app targets.
 
 ### Push notifications (Phase 5.6)
 

@@ -35,6 +35,7 @@ const RequestSchema = z.object({
   feedback: z.array(z.enum(REGENERATE_FEEDBACK_CHIP_IDS)).max(4).default([]),
   notes: z.string().trim().max(300).optional(),
   text_overlay: TextOverlayInputSchema.optional(),
+  snapProductUrl: z.string().url().optional(),
 });
 
 export async function POST(request: Request) {
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { slideId, feedback, notes, text_overlay: textOverlay } =
+    const { slideId, feedback, notes, text_overlay: textOverlay, snapProductUrl } =
       parsedInput.data;
 
     const { data: slide, error: slideError } = await supabase
@@ -179,7 +180,7 @@ export async function POST(request: Request) {
 
     const sourceImageUrl = typedSlide.image_url;
     const regenerationImageUrls = getRegenerationImageUrls(sourceImageUrl, {
-      product: campaign.product_reference_url,
+      product: snapProductUrl ?? campaign.product_reference_url,
       style: campaign.style_reference_url,
       logo: campaign.logo_reference_url,
     });
