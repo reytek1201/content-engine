@@ -1,12 +1,13 @@
 import { createAdminClient } from "@/utils/supabase/admin";
-import { buildFalWebhookUrl } from "@/utils/fal";
 import {
   extractVideoUrlFromWebhook,
   parseVideoExportMetadata,
-  submitMergeAudioVideoQueue,
   type FalVideoWebhookPayload,
-  type VideoExportMetadata,
 } from "@/utils/fal-video";
+import {
+  handleImagesToVideoComplete,
+  handleMergeAudioComplete,
+} from "@/utils/advance-video-export";
 
 export async function handleVideoExportWebhook(
   body: FalVideoWebhookPayload,
@@ -70,51 +71,19 @@ export async function handleVideoExportWebhook(
   }
 
   if (metadata.stage === "images_to_video") {
-    if (!metadata.audioUrl) {
-      await supabase
-        .from("exports")
-        .update({
-          status: "failed",
-          error_message: "Missing narration audio URL for video merge",
-        })
-        .eq("id", exportRow.id);
-
-      return { handled: "missing_audio_url", status: 422 };
-    }
-
-    const webhookUrl = buildFalWebhookUrl(appBaseUrl);
-    const mergeRequestId = await submitMergeAudioVideoQueue(
+    await handleImagesToVideoComplete(
+      exportRow.id,
+      metadata,
       videoUrl,
-      metadata.audioUrl,
-      webhookUrl,
+      appBaseUrl,
+      true,
     );
-
-    const nextMetadata: VideoExportMetadata = {
-      ...metadata,
-      stage: "merge_audio",
-      silentVideoUrl: videoUrl,
-    };
-
-    await supabase
-      .from("exports")
-      .update({
-        fal_request_id: mergeRequestId,
-        metadata: nextMetadata,
-      })
-      .eq("id", exportRow.id);
 
     return { handled: "merge_queued", status: 200 };
   }
 
   if (metadata.stage === "merge_audio") {
-    await supabase
-      .from("exports")
-      .update({
-        status: "completed",
-        output_url: videoUrl,
-        error_message: null,
-      })
-      .eq("id", exportRow.id);
+    await handleMergeAudioComplete(exportRow.id, metadata, videoUrl, true);
 
     return { handled: "completed", status: 200 };
   }

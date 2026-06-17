@@ -1,23 +1,36 @@
 import type { Slide } from "@/types/campaign";
 import {
+  buildCaptionSegmentsFromDurations,
+  estimateSlideDurationSeconds,
+  type CaptionSegment,
+} from "@/utils/build-caption-srt";
+import {
   framesForAudioDuration,
   uploadFalMedia,
   type FalVideoImageFrame,
 } from "@/utils/fal-video";
 import { concatMp3Buffers, getMp3DurationSeconds } from "@/utils/merge-mp3-buffers";
 import { synthesizeCampaignNarration } from "@/utils/tts/synthesize-campaign-narration";
+import { resolveTtsModelId, type VoiceQuality } from "@/utils/tts/types";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
 import type { TtsUsageContext } from "@/utils/tts/types";
+import {
+  presetIncludesNarration,
+  type VideoExportPreset,
+} from "@/utils/video-export-presets";
 
 export interface PrepareCampaignVideoInput {
   slides: Slide[];
   persona: VoicePersona;
+  preset: VideoExportPreset;
+  voiceQuality?: VoiceQuality;
   usage: TtsUsageContext;
 }
 
 export interface PrepareCampaignVideoResult {
   imageFrames: FalVideoImageFrame[];
-  audioUrl: string;
+  audioUrl?: string;
+  captionSegments: CaptionSegment[];
   slideCount: number;
   totalChars: number;
 }
@@ -53,65 +66,85 @@ export async function prepareCampaignVideo(
 
   assertVideoExportPreconditions(sortedSlides);
 
-  const narrationSlides = await synthesizeCampaignNarration({
-    slides: sortedSlides,
-    persona: input.persona,
-    usage: input.usage,
-  });
-
-  const narrationByIndex = new Map(
-    narrationSlides.map((slide) => [slide.slideIndex, slide]),
-  );
+  const scripts = sortedSlides.map((slide) => slide.voiceover_script!.trim());
+  const includeNarration = presetIncludesNarration(input.preset);
+  const modelId = resolveTtsModelId(input.voiceQuality);
 
   const imageFrames: FalVideoImageFrame[] = [];
-  const audioBuffers: Buffer[] = [];
+  let totalChars = 0;
 
-  for (const slide of sortedSlides) {
-    const narration = narrationByIndex.get(slide.slide_index);
+  if (includeNarration) {
+    const narrationSlides = await synthesizeCampaignNarration({
+      slides: sortedSlides,
+      persona: input.persona,
+      modelId,
+      usage: input.usage,
+    });
 
-    if (!narration) {
-      throw new Error(`Missing narration for slide ${slide.slide_index + 1}`);
+    const narrationByIndex = new Map(
+      narrationSlides.map((slide) => [slide.slideIndex, slide]),
+    );
+
+    const audioBuffers: Buffer[] = [];
+    const durationsSeconds: number[] = [];
+
+    for (const slide of sortedSlides) {
+      const narration = narrationByIndex.get(slide.slide_index);
+
+      if (!narration) {
+        throw new Error(`Missing narration for slide ${slide.slide_index + 1}`);
+      }
+
+      const durationSeconds = await getMp3DurationSeconds(narration.audio);
+      durationsSeconds.push(durationSeconds);
+      imageFrames.push({
+        url: slide.image_url!,
+        frames: framesForAudioDuration(durationSeconds),
+      });
+      audioBuffers.push(narration.audio);
+      totalChars += narration.charCount;
     }
 
-    const durationSeconds = await getMp3DurationSeconds(narration.audio);
+    const mergedAudio = await concatMp3Buffers(audioBuffers);
+    const audioUrl = await uploadFalMedia(
+      mergedAudio,
+      "audio/mpeg",
+      "campaign-narration.mp3",
+    );
+
+    return {
+      imageFrames,
+      audioUrl,
+      captionSegments: buildCaptionSegmentsFromDurations(
+        scripts,
+        durationsSeconds,
+      ),
+      slideCount: sortedSlides.length,
+      totalChars,
+    };
+  }
+
+  const durationsSeconds = scripts.map((script) =>
+    estimateSlideDurationSeconds(script),
+  );
+
+  for (let index = 0; index < sortedSlides.length; index++) {
+    const slide = sortedSlides[index]!;
+    const durationSeconds = durationsSeconds[index]!;
     imageFrames.push({
       url: slide.image_url!,
       frames: framesForAudioDuration(durationSeconds),
     });
-    audioBuffers.push(narration.audio);
+    totalChars += scripts[index]!.length;
   }
-
-  const mergedAudio = await concatMp3Buffers(audioBuffers);
-  const audioUrl = await uploadFalMedia(
-    mergedAudio,
-    "audio/mpeg",
-    "campaign-narration.mp3",
-  );
-
-  const totalChars = narrationSlides.reduce(
-    (sum, slide) => sum + slide.charCount,
-    0,
-  );
 
   return {
     imageFrames,
-    audioUrl,
+    captionSegments: buildCaptionSegmentsFromDurations(
+      scripts,
+      durationsSeconds,
+    ),
     slideCount: sortedSlides.length,
     totalChars,
   };
-}
-
-export function getVideoExportFilename(
-  campaignTitle: string | null,
-  campaignId: string,
-): string {
-  const base =
-    campaignTitle
-      ?.trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || `campaign-${campaignId.slice(0, 8)}`;
-
-  return `${base}-video.mp4`;
 }

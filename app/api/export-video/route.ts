@@ -26,6 +26,9 @@ export const maxDuration = 300;
 const RequestSchema = z.object({
   campaignId: z.string().uuid(),
   persona: z.enum(["warm", "energetic", "professional"]).optional(),
+  preset: z.enum(["quick_reel", "silent_captions"]).optional(),
+  includeCaptions: z.boolean().optional(),
+  voiceQuality: z.enum(["standard", "studio"]).optional(),
 });
 
 export async function POST(request: Request) {
@@ -62,7 +65,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const { campaignId, persona: personaOverride } = parsedInput.data;
+    const {
+      campaignId,
+      persona: personaOverride,
+      preset: presetInput,
+      includeCaptions: includeCaptionsInput,
+      voiceQuality: voiceQualityInput,
+    } = parsedInput.data;
+
+    const preset = presetInput ?? "quick_reel";
+    const includeCaptions = includeCaptionsInput ?? false;
+    const voiceQuality = voiceQualityInput ?? "standard";
 
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
@@ -86,11 +99,14 @@ export async function POST(request: Request) {
       );
     }
 
-    if (typedCampaign.aspect_ratio !== "9:16") {
+    if (
+      typedCampaign.aspect_ratio !== "9:16" &&
+      typedCampaign.aspect_ratio !== "4:5"
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "Video export is only available for 9:16 campaigns",
+          error: "Video export is only available for 4:5 and 9:16 campaigns",
         },
         { status: 422 },
       );
@@ -140,6 +156,9 @@ export async function POST(request: Request) {
 
     const metadata: VideoExportMetadata = {
       stage: "images_to_video",
+      preset,
+      includeCaptions,
+      voiceQuality,
       persona,
     };
 
@@ -170,6 +189,8 @@ export async function POST(request: Request) {
     const prepared = await prepareCampaignVideo({
       slides: slides as Slide[],
       persona,
+      preset,
+      voiceQuality,
       usage: {
         userId: user.id,
         campaignId,
@@ -184,8 +205,12 @@ export async function POST(request: Request) {
 
     const nextMetadata: VideoExportMetadata = {
       stage: "images_to_video",
+      preset,
+      includeCaptions,
+      voiceQuality,
       persona,
       audioUrl: prepared.audioUrl,
+      captionSegments: prepared.captionSegments,
     };
 
     const { error: exportUpdateError } = await supabase

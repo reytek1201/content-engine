@@ -9,6 +9,8 @@ export {
   type TtsProvider,
   type TtsUsageContext,
   type TtsUsageMetadata,
+  type VoiceQuality,
+  resolveTtsModelId,
 } from "@/utils/tts/types";
 
 export { mapElevenLabsError } from "@/utils/tts/map-elevenlabs-error";

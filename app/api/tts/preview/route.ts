@@ -1,5 +1,5 @@
 import { getVoiceIdForPersona } from "@/utils/tts/voice-catalog";
-import { isTtsError } from "@/utils/tts/types";
+import { isTtsError, resolveTtsModelId } from "@/utils/tts/types";
 import { normalizeVoiceoverScript } from "@/utils/tts/normalize-script";
 import { getTtsProvider } from "@/utils/tts/provider";
 import { resolveCampaignVoicePersona } from "@/utils/tts/resolve-campaign-persona";
@@ -34,6 +34,7 @@ const RequestSchema = z.object({
   campaignId: z.string().uuid(),
   slideId: z.string().uuid(),
   persona: z.enum(["warm", "energetic", "professional"]).optional(),
+  voiceQuality: z.enum(["standard", "studio"]).optional(),
 });
 
 export async function POST(request: Request) {
@@ -68,7 +69,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { campaignId, slideId, persona: personaOverride } = parsedInput.data;
+    const { campaignId, slideId, persona: personaOverride, voiceQuality: voiceQualityInput } =
+      parsedInput.data;
+    const voiceQuality = voiceQualityInput ?? "standard";
+    const modelId = resolveTtsModelId(voiceQuality);
 
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
@@ -134,7 +138,7 @@ export async function POST(request: Request) {
       user.id,
       campaignId,
       slideId,
-      buildNarrationCacheKey(voiceId, normalizedText),
+      buildNarrationCacheKey(voiceId, normalizedText, modelId),
     );
 
     if (cachedAudio) {
@@ -170,6 +174,7 @@ export async function POST(request: Request) {
     const result = await getTtsProvider().synthesize({
       text: normalizedText,
       voiceId,
+      modelId,
       usage: {
         userId: user.id,
         campaignId,

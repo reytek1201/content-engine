@@ -7,7 +7,14 @@ export const FAL_MERGE_AUDIO_VIDEO_MODEL =
 export const VIDEO_EXPORT_FPS = 24;
 export const VIDEO_MIN_FRAMES_PER_SLIDE = 12;
 
-export type VideoExportPipelineStage = "images_to_video" | "merge_audio";
+import type { CaptionSegment } from "@/utils/build-caption-srt";
+import type { VoiceQuality } from "@/utils/tts/types";
+import type { VideoExportPreset } from "@/utils/video-export-presets";
+
+export type VideoExportPipelineStage =
+  | "images_to_video"
+  | "merge_audio"
+  | "burn_captions";
 
 export interface FalVideoImageFrame {
   url: string;
@@ -16,9 +23,14 @@ export interface FalVideoImageFrame {
 
 export interface VideoExportMetadata {
   stage: VideoExportPipelineStage;
+  preset?: VideoExportPreset;
+  includeCaptions?: boolean;
+  voiceQuality?: VoiceQuality;
   persona?: string;
   audioUrl?: string;
   silentVideoUrl?: string;
+  pendingVideoUrl?: string;
+  captionSegments?: CaptionSegment[];
 }
 
 interface FalQueueResponse {
@@ -193,17 +205,43 @@ export function parseVideoExportMetadata(
   const record = value as Record<string, unknown>;
   const stage = record.stage;
 
-  if (stage !== "images_to_video" && stage !== "merge_audio") {
+  if (
+    stage !== "images_to_video" &&
+    stage !== "merge_audio" &&
+    stage !== "burn_captions"
+  ) {
     return null;
   }
 
+  const preset = record.preset;
+  const voiceQuality = record.voiceQuality;
+
   return {
     stage,
+    preset:
+      preset === "quick_reel" || preset === "silent_captions"
+        ? preset
+        : undefined,
+    includeCaptions:
+      typeof record.includeCaptions === "boolean"
+        ? record.includeCaptions
+        : undefined,
+    voiceQuality:
+      voiceQuality === "standard" || voiceQuality === "studio"
+        ? voiceQuality
+        : undefined,
     persona: typeof record.persona === "string" ? record.persona : undefined,
     audioUrl: typeof record.audioUrl === "string" ? record.audioUrl : undefined,
     silentVideoUrl:
       typeof record.silentVideoUrl === "string"
         ? record.silentVideoUrl
         : undefined,
+    pendingVideoUrl:
+      typeof record.pendingVideoUrl === "string"
+        ? record.pendingVideoUrl
+        : undefined,
+    captionSegments: Array.isArray(record.captionSegments)
+      ? (record.captionSegments as CaptionSegment[])
+      : undefined,
   };
 }

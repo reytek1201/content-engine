@@ -2,6 +2,8 @@
 
 import { formatAspectRatio } from "@/utils/campaign-display";
 import type { Campaign } from "@/types/campaign";
+import type { VideoExportPreset } from "@/utils/video-export-presets";
+import { presetBurnsCaptions } from "@/utils/video-export-presets";
 import {
   VIDEO_EXPORT_STAGE_DESCRIPTIONS,
   VIDEO_EXPORT_STAGE_LABELS,
@@ -18,6 +20,8 @@ interface CampaignVideoExportOverlayProps {
   aspectRatio: Campaign["aspect_ratio"];
   slideCount: number;
   stage?: VideoExportUiStage;
+  videoPreset?: VideoExportPreset;
+  includeCaptions?: boolean;
   error?: string | null;
   onDismiss?: () => void;
 }
@@ -35,6 +39,8 @@ export default function CampaignVideoExportOverlay({
   aspectRatio,
   slideCount,
   stage = "preparing",
+  videoPreset = "quick_reel",
+  includeCaptions = false,
   error = null,
   onDismiss,
 }: CampaignVideoExportOverlayProps) {
@@ -59,6 +65,20 @@ export default function CampaignVideoExportOverlay({
 
   const headline = campaignTitle.trim() || campaignTopic;
   const stageDescription = VIDEO_EXPORT_STAGE_DESCRIPTIONS[stage];
+  const visibleStages = VIDEO_EXPORT_UI_STAGES.filter((step) => {
+    if (step === "merge_audio" && videoPreset === "silent_captions") {
+      return false;
+    }
+
+    if (
+      step === "burn_captions" &&
+      !presetBurnsCaptions(videoPreset, includeCaptions)
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-8">
@@ -108,7 +128,7 @@ export default function CampaignVideoExportOverlay({
             </p>
 
             <ol className="mt-6 space-y-2 text-left">
-              {VIDEO_EXPORT_UI_STAGES.map((step) => {
+              {visibleStages.map((step) => {
                 const stepState = getVideoExportStepState(step, stage);
 
                 return (

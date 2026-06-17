@@ -47,6 +47,9 @@ import {
 } from "@/utils/native-slide-export";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
+import type { VoiceQuality } from "@/utils/tts/types";
+import type { VideoExportPreset } from "@/utils/video-export-presets";
+import { getVideoExportFilename } from "@/utils/video-export-filename";
 import {
   TTS_EXPORT_SUCCESS_DISCLOSURE,
   TTS_VIDEO_EXPORT_SUCCESS_DISCLOSURE,
@@ -119,6 +122,9 @@ export default function CampaignWorkspace({
     initialPreferredVoicePersona,
   );
   const [isSavingVoicePersona, setIsSavingVoicePersona] = useState(false);
+  const [voiceQuality, setVoiceQuality] = useState<VoiceQuality>("standard");
+  const [videoPreset, setVideoPreset] = useState<VideoExportPreset>("quick_reel");
+  const [includeVideoCaptions, setIncludeVideoCaptions] = useState(false);
   const textGenerationStarted = useRef(false);
   const prevSlidesRef = useRef(initialSlides);
   const prevImagesCompleteRef = useRef(
@@ -155,7 +161,7 @@ export default function CampaignWorkspace({
     slides.length > 0 &&
     slides.every((slide) => Boolean(slide.voiceover_script?.trim()));
   const canExportVideo =
-    campaign.aspect_ratio === "9:16" &&
+    (campaign.aspect_ratio === "9:16" || campaign.aspect_ratio === "4:5") &&
     imagesComplete &&
     allSlidesHaveVoiceoverScripts;
 
@@ -545,6 +551,7 @@ export default function CampaignWorkspace({
         body: JSON.stringify({
           campaignId: campaign.id,
           persona: preferredVoicePersona,
+          voiceQuality,
         }),
       });
 
@@ -630,15 +637,7 @@ export default function CampaignWorkspace({
   }
 
   function getCampaignVideoFilename(): string {
-    const base =
-      campaign.title
-        ?.trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .slice(0, 60) || `campaign-${campaign.id.slice(0, 8)}`;
-
-    return `${base}-video.mp4`;
+    return getVideoExportFilename(campaign.title, campaign.id, videoPreset);
   }
 
   async function handleExportVideo() {
@@ -655,6 +654,9 @@ export default function CampaignWorkspace({
         body: JSON.stringify({
           campaignId: campaign.id,
           persona: preferredVoicePersona,
+          preset: videoPreset,
+          includeCaptions: includeVideoCaptions,
+          voiceQuality,
         }),
       });
 
@@ -725,6 +727,10 @@ export default function CampaignWorkspace({
     copiedAllCaptions: copiedPlatform === "all",
     isNativeApp: isNativeApp === true,
     preferredVoicePersona,
+    voiceQuality,
+    videoPreset,
+    includeVideoCaptions,
+    aspectRatioLabel: formatAspectRatio(campaign.aspect_ratio),
     brandId: campaign.brand_id,
     isSavingVoicePersona,
     isExporting,
@@ -741,6 +747,9 @@ export default function CampaignWorkspace({
     onCopyCaption: handleCopyCaption,
     onCopyAllCaptions: handleCopyAllCaptions,
     onPersonaChange: (persona: VoicePersona) => void handleVoicePersonaChange(persona),
+    onVoiceQualityChange: setVoiceQuality,
+    onVideoPresetChange: setVideoPreset,
+    onIncludeVideoCaptionsChange: setIncludeVideoCaptions,
     onDownloadZip: handleDownloadZip,
     onDownloadNarration: handleDownloadNarration,
     onExportVideo: handleExportVideo,
@@ -1337,6 +1346,8 @@ export default function CampaignWorkspace({
         aspectRatio={campaign.aspect_ratio}
         slideCount={slides.length}
         stage={videoExportStage}
+        videoPreset={videoPreset}
+        includeCaptions={includeVideoCaptions}
         error={videoExportError}
         onDismiss={() => {
           setVideoExportError(null);

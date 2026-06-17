@@ -10,7 +10,13 @@ import {
 import { normalizeVoiceoverScript } from "@/utils/tts/normalize-script";
 import { getVoiceIdForPersona, type VoicePersona } from "@/utils/tts/voice-catalog";
 import { getTtsProvider } from "@/utils/tts/provider";
-import { ELEVEN_FLASH_MODEL, type TtsUsageContext } from "@/utils/tts/types";
+import {
+  ELEVEN_FLASH_MODEL,
+  resolveTtsModelId,
+  type TtsModelId,
+  type TtsUsageContext,
+  type VoiceQuality,
+} from "@/utils/tts/types";
 import JSZip from "jszip";
 
 export interface CampaignNarrationSlide {
@@ -24,6 +30,8 @@ export interface SynthesizeCampaignNarrationInput {
   slides: Slide[];
   persona?: VoicePersona;
   voiceId?: string;
+  modelId?: TtsModelId;
+  voiceQuality?: VoiceQuality;
   usage: TtsUsageContext;
 }
 
@@ -49,6 +57,8 @@ export async function synthesizeCampaignNarration(
   const voiceId =
     input.voiceId ??
     getVoiceIdForPersona(input.persona ?? "warm");
+  const modelId =
+    input.modelId ?? resolveTtsModelId(input.voiceQuality ?? "standard");
   const provider = getTtsProvider();
   const userId = input.usage.userId;
   const campaignId = input.usage.campaignId;
@@ -63,7 +73,7 @@ export async function synthesizeCampaignNarration(
         );
       }
 
-      const cacheKey = buildNarrationCacheKey(voiceId, normalizedText);
+      const cacheKey = buildNarrationCacheKey(voiceId, normalizedText, modelId);
       const cachePath =
         campaignId && slide.id
           ? buildNarrationCachePath(userId, campaignId, slide.id, cacheKey)
@@ -85,7 +95,7 @@ export async function synthesizeCampaignNarration(
       const result = await provider.synthesize({
         text: slide.voiceover_script!,
         voiceId,
-        modelId: ELEVEN_FLASH_MODEL,
+        modelId,
         usage: {
           userId,
           campaignId,

@@ -5,6 +5,7 @@ import {
   TTS_PREVIEW_DISCLOSURE,
 } from "@/utils/tts/disclosure-copy";
 import { VOICE_PERSONAS, type VoicePersona } from "@/utils/tts/voice-catalog";
+import type { VoiceQuality } from "@/utils/tts/types";
 
 const PERSONA_LABELS: Record<VoicePersona, string> = {
   warm: "Warm",
@@ -14,23 +15,27 @@ const PERSONA_LABELS: Record<VoicePersona, string> = {
 
 interface CampaignNarrationPanelProps {
   preferredVoicePersona: VoicePersona;
+  voiceQuality: VoiceQuality;
   brandId: string | null;
   disabled?: boolean;
   isSavingVoicePersona?: boolean;
   isExportingAudio?: boolean;
   audioExportMessage?: string | null;
   onPersonaChange: (persona: VoicePersona) => void;
+  onVoiceQualityChange: (voiceQuality: VoiceQuality) => void;
   onDownloadNarration: () => void;
 }
 
 export default function CampaignNarrationPanel({
   preferredVoicePersona,
+  voiceQuality,
   brandId,
   disabled = false,
   isSavingVoicePersona = false,
   isExportingAudio = false,
   audioExportMessage = null,
   onPersonaChange,
+  onVoiceQualityChange,
   onDownloadNarration,
 }: CampaignNarrationPanelProps) {
   return (
@@ -62,6 +67,36 @@ export default function CampaignNarrationPanel({
             </button>
           );
         })}
+      </div>
+
+      <div className="mt-4">
+        <p className="text-xs font-semibold text-foreground">Voice quality</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(
+            [
+              { id: "standard", label: "Standard" },
+              { id: "studio", label: "Studio" },
+            ] as const
+          ).map((option) => {
+            const isActive = voiceQuality === option.id;
+
+            return (
+              <button
+                key={option.id}
+                type="button"
+                disabled={disabled || isExportingAudio}
+                onClick={() => onVoiceQualityChange(option.id)}
+                className={`rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  isActive
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-border text-secondary-foreground hover:border-ring/60 hover:text-foreground"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {!brandId && (

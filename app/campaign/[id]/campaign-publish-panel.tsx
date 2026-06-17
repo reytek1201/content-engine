@@ -6,6 +6,8 @@ import CampaignNarrationPanel from "@/app/campaign/[id]/campaign-narration-panel
 import CampaignVideoPanel from "@/app/campaign/[id]/campaign-video-panel";
 import type { PlatformCaption } from "@/types/captions";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
+import type { VoiceQuality } from "@/utils/tts/types";
+import type { VideoExportPreset } from "@/utils/video-export-presets";
 
 interface CampaignPublishPanelProps {
   sortedCaptions: PlatformCaption[];
@@ -19,6 +21,10 @@ interface CampaignPublishPanelProps {
   copiedAllCaptions: boolean;
   isNativeApp: boolean;
   preferredVoicePersona: VoicePersona;
+  voiceQuality: VoiceQuality;
+  videoPreset: VideoExportPreset;
+  includeVideoCaptions: boolean;
+  aspectRatioLabel: string;
   brandId: string | null;
   isSavingVoicePersona: boolean;
   isExporting: boolean;
@@ -35,6 +41,9 @@ interface CampaignPublishPanelProps {
   onCopyCaption: (platformCaption: PlatformCaption) => void;
   onCopyAllCaptions: () => void;
   onPersonaChange: (persona: VoicePersona) => void;
+  onVoiceQualityChange: (voiceQuality: VoiceQuality) => void;
+  onVideoPresetChange: (preset: VideoExportPreset) => void;
+  onIncludeVideoCaptionsChange: (includeCaptions: boolean) => void;
   onDownloadZip: () => void;
   onDownloadNarration: () => void;
   onExportVideo: () => void;
@@ -53,6 +62,10 @@ export default function CampaignPublishPanel({
   copiedAllCaptions,
   isNativeApp,
   preferredVoicePersona,
+  voiceQuality,
+  videoPreset,
+  includeVideoCaptions,
+  aspectRatioLabel,
   brandId,
   isSavingVoicePersona,
   isExporting,
@@ -69,6 +82,9 @@ export default function CampaignPublishPanel({
   onCopyCaption,
   onCopyAllCaptions,
   onPersonaChange,
+  onVoiceQualityChange,
+  onVideoPresetChange,
+  onIncludeVideoCaptionsChange,
   onDownloadZip,
   onDownloadNarration,
   onExportVideo,
@@ -82,12 +98,14 @@ export default function CampaignPublishPanel({
       {hasVoiceoverScripts && (
         <CampaignNarrationPanel
           preferredVoicePersona={preferredVoicePersona}
+          voiceQuality={voiceQuality}
           brandId={brandId}
           disabled={disabled}
           isSavingVoicePersona={isSavingVoicePersona}
           isExportingAudio={isExportingAudio}
           audioExportMessage={audioExportMessage}
           onPersonaChange={onPersonaChange}
+          onVoiceQualityChange={onVoiceQualityChange}
           onDownloadNarration={onDownloadNarration}
         />
       )}
@@ -95,9 +113,16 @@ export default function CampaignPublishPanel({
       {canExportVideo && (
         <CampaignVideoPanel
           canExportVideo={canExportVideo}
+          aspectRatioLabel={aspectRatioLabel}
           disabled={disabled}
           isExportingVideo={isExportingVideo}
           videoExportMessage={videoExportMessage}
+          videoPreset={videoPreset}
+          includeCaptions={includeVideoCaptions}
+          voiceQuality={voiceQuality}
+          onPresetChange={onVideoPresetChange}
+          onIncludeCaptionsChange={onIncludeVideoCaptionsChange}
+          onVoiceQualityChange={onVoiceQualityChange}
           onExportVideo={onExportVideo}
         />
       )}
