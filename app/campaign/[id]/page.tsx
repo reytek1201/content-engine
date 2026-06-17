@@ -59,16 +59,25 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
   const typedCampaign = campaign as Campaign;
 
   let brandName: string | null = null;
+  let initialPreferredVoicePersona: "warm" | "energetic" | "professional" = "warm";
 
   if (typedCampaign.brand_id) {
     const { data: brand } = await supabase
       .from("brands")
-      .select("name")
+      .select("name, preferred_voice_persona")
       .eq("id", typedCampaign.brand_id)
       .eq("user_id", user.id)
       .maybeSingle();
 
     brandName = brand?.name ?? null;
+
+    if (
+      brand?.preferred_voice_persona === "warm" ||
+      brand?.preferred_voice_persona === "energetic" ||
+      brand?.preferred_voice_persona === "professional"
+    ) {
+      initialPreferredVoicePersona = brand.preferred_voice_persona;
+    }
   }
 
   return (
@@ -78,6 +87,7 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
       initialCaptions={(captions ?? []) as PlatformCaption[]}
       userId={user.id}
       brandName={brandName}
+      initialPreferredVoicePersona={initialPreferredVoicePersona}
     />
   );
 }

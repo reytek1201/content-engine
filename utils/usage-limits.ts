@@ -32,6 +32,14 @@ export function getBetaLimits() {
     process.env.BETA_REGENERATIONS_PER_MONTH ?? "30",
     10
   );
+  const ttsPreviewsPerMonth = parseInt(
+    process.env.BETA_TTS_PREVIEWS_PER_MONTH ?? "30",
+    10
+  );
+  const audioExportsPerMonth = parseInt(
+    process.env.BETA_AUDIO_EXPORTS_PER_MONTH ?? "5",
+    10
+  );
 
   return {
     campaignsPerMonth: Number.isFinite(campaignsPerMonth)
@@ -40,6 +48,12 @@ export function getBetaLimits() {
     slideRegenerationsPerMonth: Number.isFinite(slideRegenerationsPerMonth)
       ? slideRegenerationsPerMonth
       : 30,
+    ttsPreviewsPerMonth: Number.isFinite(ttsPreviewsPerMonth)
+      ? ttsPreviewsPerMonth
+      : 30,
+    audioExportsPerMonth: Number.isFinite(audioExportsPerMonth)
+      ? audioExportsPerMonth
+      : 5,
   };
 }
 
@@ -49,6 +63,14 @@ export function campaignLimitMessage(limit: number): string {
 
 export function regenerationLimitMessage(limit: number): string {
   return `Beta limit: ${limit} slide regenerations per month. Resets on the 1st.`;
+}
+
+export function ttsPreviewLimitMessage(limit: number): string {
+  return `Beta limit: ${limit} voice previews per month. Resets on the 1st.`;
+}
+
+export function audioExportLimitMessage(limit: number): string {
+  return `Beta limit: ${limit} narration exports per month. Resets on the 1st.`;
 }
 
 export async function getUsageSummary(
@@ -90,8 +112,32 @@ export async function getUsageSummary(
     throw new Error("Failed to load regeneration usage");
   }
 
+  const { count: ttsPreviewsThisMonth, error: ttsPreviewError } = await supabase
+    .from("usage_events")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("event_type", "tts_preview")
+    .gte("created_at", startOfMonth.toISOString());
+
+  if (ttsPreviewError) {
+    throw new Error("Failed to load TTS preview usage");
+  }
+
+  const { count: audioExportsThisMonth, error: audioExportError } = await supabase
+    .from("usage_events")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("event_type", "tts_export")
+    .gte("created_at", startOfMonth.toISOString());
+
+  if (audioExportError) {
+    throw new Error("Failed to load audio export usage");
+  }
+
   const campaignsUsed = campaignsThisMonth ?? 0;
   const regenerationsUsed = slideRegenerationsThisMonth ?? 0;
+  const ttsPreviewsUsed = ttsPreviewsThisMonth ?? 0;
+  const audioExportsUsed = audioExportsThisMonth ?? 0;
 
   const remainingCampaigns = Math.max(
     0,
@@ -101,18 +147,32 @@ export async function getUsageSummary(
     0,
     limits.slideRegenerationsPerMonth - regenerationsUsed
   );
+  const remainingTtsPreviews = Math.max(
+    0,
+    limits.ttsPreviewsPerMonth - ttsPreviewsUsed
+  );
+  const remainingAudioExports = Math.max(
+    0,
+    limits.audioExportsPerMonth - audioExportsUsed
+  );
 
   return {
     campaignsThisMonth: campaignsUsed,
     totalCampaigns: totalCampaigns ?? 0,
     slideRegenerationsThisMonth: regenerationsUsed,
+    ttsPreviewsThisMonth: ttsPreviewsUsed,
+    audioExportsThisMonth: audioExportsUsed,
     limits,
     remaining: {
       campaigns: remainingCampaigns,
       slideRegenerations: remainingRegenerations,
+      ttsPreviews: remainingTtsPreviews,
+      audioExports: remainingAudioExports,
     },
     canCreateCampaign: remainingCampaigns > 0,
     canRegenerateSlide: remainingRegenerations > 0,
+    canPreviewTts: remainingTtsPreviews > 0,
+    canExportAudio: remainingAudioExports > 0,
     planLabel: "Early access",
     resetsAt: getNextMonthStart().toISOString(),
   };
@@ -139,6 +199,79 @@ export async function assertRegenerationLimit(
     throw new UsageLimitError(
       regenerationLimitMessage(usage.limits.slideRegenerationsPerMonth)
     );
+  }
+}
+
+export async function assertTtsPreviewLimit(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<void> {
+  const usage = await getUsageSummary(supabase, userId);
+
+  if (!usage.canPreviewTts) {
+    throw new UsageLimitError(
+      ttsPreviewLimitMessage(usage.limits.ttsPreviewsPerMonth),
+    );
+  }
+}
+
+export interface RecordTtsPreviewMetadata {
+  campaignId: string;
+  slideId: string;
+  persona: string;
+  charCount: number;
+  cached: boolean;
+}
+
+export async function recordTtsPreview(
+  userId: string,
+  metadata: RecordTtsPreviewMetadata,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("usage_events").insert({
+    user_id: userId,
+    event_type: "tts_preview",
+    metadata,
+  });
+
+  if (error) {
+    throw new Error("Failed to record TTS preview");
+  }
+}
+
+export async function assertTtsAudioExportLimit(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<void> {
+  const usage = await getUsageSummary(supabase, userId);
+
+  if (!usage.canExportAudio) {
+    throw new UsageLimitError(
+      audioExportLimitMessage(usage.limits.audioExportsPerMonth),
+    );
+  }
+}
+
+export interface RecordTtsAudioExportMetadata {
+  campaignId: string;
+  persona: string;
+  slideCount: number;
+  charCount: number;
+}
+
+export async function recordTtsAudioExport(
+  userId: string,
+  metadata: RecordTtsAudioExportMetadata,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("usage_events").insert({
+    user_id: userId,
+    event_type: "tts_export",
+    metadata,
+  });
+
+  if (error) {
+    throw new Error("Failed to record audio export");
   }
 }
 

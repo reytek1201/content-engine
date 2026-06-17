@@ -109,6 +109,36 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
             </div>
             <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
               <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Voice previews
+              </dt>
+              <dd className="mt-2 text-2xl font-semibold text-foreground">
+                {usage.ttsPreviewsThisMonth}
+                <span className="text-base font-normal text-muted-foreground">
+                  {" "}
+                  / {usage.limits.ttsPreviewsPerMonth}
+                </span>
+              </dd>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {usage.remaining.ttsPreviews} remaining
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Narration exports
+              </dt>
+              <dd className="mt-2 text-2xl font-semibold text-foreground">
+                {usage.audioExportsThisMonth}
+                <span className="text-base font-normal text-muted-foreground">
+                  {" "}
+                  / {usage.limits.audioExportsPerMonth}
+                </span>
+              </dd>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {usage.remaining.audioExports} remaining
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Total campaigns
               </dt>
               <dd className="mt-2 text-2xl font-semibold text-foreground">

@@ -29,6 +29,10 @@ export const BrandPatchSchema = z.object({
   style: z.string().url().nullable().optional(),
   logo: z.string().url().nullable().optional(),
   voice_notes: z.string().trim().max(2000).nullable().optional(),
+  preferred_voice_persona: z
+    .enum(["warm", "energetic", "professional"])
+    .nullable()
+    .optional(),
 });
 
 export const CreateBrandProductSchema = z.object({

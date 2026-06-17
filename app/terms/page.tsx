@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Terms of Service",
 };
 
-const LAST_UPDATED = "June 16, 2026";
+const LAST_UPDATED = "June 17, 2026";
 const CONTACT_EMAIL = "hello@slidepress.co";
 
 interface TermsPageProps {
@@ -39,8 +39,8 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
         <h2 className="text-base font-semibold text-foreground">The service</h2>
         <p className="mt-3">
           SlidePress helps you create carousel campaigns with AI-generated slide
-          copy, images, and platform captions. Features and limits may change
-          during beta.
+          copy, images, platform captions, and AI voice narration and video
+          export where available. Features and limits may change during beta.
         </p>
       </section>
 
@@ -64,6 +64,10 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
           <li>Attempt to bypass usage limits or access others&apos; data.</li>
           <li>Reverse engineer or disrupt the service.</li>
           <li>Upload content you do not have rights to use.</li>
+          <li>
+            Use AI narration to impersonate real people without consent or to
+            create deceptive synthetic media.
+          </li>
         </ul>
       </section>
 
@@ -72,9 +76,12 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
           AI-generated content
         </h2>
         <p className="mt-3">
-          SlidePress uses third-party AI models to generate text and images. You
-          are responsible for reviewing outputs before publishing. We do not
-          guarantee accuracy, originality, or fitness for a particular purpose.
+          SlidePress uses third-party AI services to generate text, images, and
+          synthetic voice audio. AI voices are not human recordings. You are
+          responsible for reviewing all outputs before publishing, including any
+          platform or legal disclosure required for AI-generated or synthetic
+          content. We do not guarantee accuracy, originality, or fitness for a
+          particular purpose.
         </p>
       </section>
 

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
 };
 
-const LAST_UPDATED = "June 16, 2026";
+const LAST_UPDATED = "June 17, 2026";
 const CONTACT_EMAIL = "hello@slidepress.co";
 
 interface PrivacyPageProps {
@@ -48,12 +48,20 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           </li>
           <li>
             <strong className="text-foreground">Campaign content</strong> —
-            topics, slide copy, generated images, platform captions, and
-            reference images you upload for campaigns or your brand library.
+            topics, slide copy, voiceover scripts, generated images, platform
+            captions, and reference images you upload for campaigns or your
+            brand library.
+          </li>
+          <li>
+            <strong className="text-foreground">Narration &amp; audio exports</strong>{" "}
+            — when you use voice preview or export features, voiceover text is
+            sent for text-to-speech synthesis. We store related usage metadata
+            (for example, character counts) to enforce plan limits.
           </li>
           <li>
             <strong className="text-foreground">Usage data</strong> — campaign
-            counts and slide regeneration counts to enforce beta plan limits.
+            counts, slide regeneration counts, and narration usage to enforce
+            beta plan limits.
           </li>
           <li>
             <strong className="text-foreground">Device tokens (optional)</strong>{" "}
@@ -76,7 +84,10 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
         </h2>
         <ul className="mt-3 list-disc space-y-2 pl-5">
           <li>Provide and secure your account.</li>
-          <li>Generate slide copy, images, and captions you request.</li>
+          <li>
+            Generate slide copy, images, captions, and AI voice narration you
+            request.
+          </li>
           <li>Enforce usage limits and improve reliability.</li>
           <li>Send optional push notifications in the native app.</li>
         </ul>
@@ -89,9 +100,11 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
         <p className="mt-3">
           We use trusted processors to run SlidePress, including Supabase
           (database and auth), Vercel (hosting), Google Gemini (slide text),
-          Fal.ai (image generation), and Firebase Cloud Messaging (push
-          delivery, when enabled). They process data only to provide the
-          service.
+          Fal.ai (image generation), ElevenLabs (text-to-speech / AI voice
+          narration, when you use those features), and Firebase Cloud Messaging
+          (push delivery, when enabled). Voiceover text is sent to ElevenLabs
+          only when you preview or export narration. Processors handle data only
+          to provide the service.
         </p>
       </section>
 

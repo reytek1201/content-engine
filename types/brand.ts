@@ -9,6 +9,7 @@ export interface Brand {
   style_reference_url: string | null;
   logo_reference_url: string | null;
   voice_notes: string | null;
+  preferred_voice_persona: "warm" | "energetic" | "professional" | null;
   is_default: boolean;
   created_at: string;
   updated_at: string;

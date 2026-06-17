@@ -42,3 +42,29 @@ export const AI_RATE_LIMIT = {
 export function assertAiRateLimit(userId: string, route: string): void {
   assertRateLimit(`ai:${route}:${userId}`, AI_RATE_LIMIT.maxRequests, AI_RATE_LIMIT.windowMs);
 }
+
+export const TTS_PREVIEW_RATE_LIMIT = {
+  maxRequests: 20,
+  windowMs: 60_000,
+} as const;
+
+export function assertTtsPreviewRateLimit(userId: string): void {
+  assertRateLimit(
+    `tts:preview:${userId}`,
+    TTS_PREVIEW_RATE_LIMIT.maxRequests,
+    TTS_PREVIEW_RATE_LIMIT.windowMs,
+  );
+}
+
+export const TTS_EXPORT_RATE_LIMIT = {
+  maxRequests: 3,
+  windowMs: 60_000,
+} as const;
+
+export function assertTtsExportRateLimit(userId: string): void {
+  assertRateLimit(
+    `tts:export:${userId}`,
+    TTS_EXPORT_RATE_LIMIT.maxRequests,
+    TTS_EXPORT_RATE_LIMIT.windowMs,
+  );
+}

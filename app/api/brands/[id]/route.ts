@@ -126,6 +126,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       payload.voice_notes = parsedInput.data.voice_notes;
     }
 
+    if (parsedInput.data.preferred_voice_persona !== undefined) {
+      payload.preferred_voice_persona = parsedInput.data.preferred_voice_persona;
+    }
+
     if (Object.keys(payload).length === 0) {
       return NextResponse.json({ success: true, brand: existing });
     }

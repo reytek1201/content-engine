@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { PlatformCaption } from "@/types/captions";
 import {
   formatHashtagsForDisplay,
@@ -15,6 +16,7 @@ interface CampaignPublishPanelProps {
   copiedPlatform: string | null;
   onGenerateCaptions: () => void;
   onCopyCaption: (platformCaption: PlatformCaption) => void;
+  voicePanel?: ReactNode;
 }
 
 export default function CampaignPublishPanel({
@@ -26,6 +28,7 @@ export default function CampaignPublishPanel({
   copiedPlatform,
   onGenerateCaptions,
   onCopyCaption,
+  voicePanel,
 }: CampaignPublishPanelProps) {
   return (
     <section
@@ -53,6 +56,8 @@ export default function CampaignPublishPanel({
           </button>
         )}
       </div>
+
+      {voicePanel && <div className="mt-4">{voicePanel}</div>}
 
       {captionsMessage && (
         <div className="mt-4 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">

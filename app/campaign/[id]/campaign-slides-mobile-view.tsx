@@ -6,6 +6,7 @@ import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspac
 import SlideCard from "@/app/campaign/[id]/slide-card";
 import CampaignGenerationPanel from "@/app/campaign/[id]/campaign-generation-panel";
 import CampaignSlidesFilmstrip from "@/app/campaign/[id]/campaign-slides-filmstrip";
+import type { VoicePersona } from "@/utils/tts/voice-catalog";
 import { useCallback, useRef } from "react";
 
 interface JustFinishedSlide {
@@ -17,6 +18,8 @@ interface CampaignSlidesMobileViewProps {
   slides: Slide[];
   activeSlideIndex: number;
   aspectRatio: AspectRatio;
+  campaignId: string;
+  preferredVoicePersona: VoicePersona;
   justFinishedSlide: JustFinishedSlide | null;
   nextStepProps: CampaignNextStepInput;
   onOpenMoreActions: () => void;
@@ -38,6 +41,8 @@ export default function CampaignSlidesMobileView({
   slides,
   activeSlideIndex,
   aspectRatio,
+  campaignId,
+  preferredVoicePersona,
   justFinishedSlide,
   nextStepProps,
   onOpenMoreActions,
@@ -192,6 +197,8 @@ export default function CampaignSlidesMobileView({
         <SlideCard
           slide={activeSlide}
           aspectRatio={aspectRatio}
+          campaignId={campaignId}
+          preferredVoicePersona={preferredVoicePersona}
           isNativeApp={isNativeApp}
           isAnySlideGenerating={isAnySlideGenerating}
           isRegenerating={regeneratingSlideId === activeSlide.id}

@@ -19,10 +19,14 @@ import { createClient } from "@/utils/supabase/client";
 import { memo, useCallback, useRef, useState } from "react";
 import SlideOverlayEditor from "./slide-overlay-editor";
 import SlideRegenerateControls from "./slide-regenerate-controls";
+import SlideVoicePreview from "./slide-voice-preview";
+import type { VoicePersona } from "@/utils/tts/voice-catalog";
 
 interface SlideCardProps {
   slide: Slide;
   aspectRatio: AspectRatio;
+  campaignId: string;
+  preferredVoicePersona: VoicePersona;
   isNativeApp: boolean;
   isAnySlideGenerating: boolean;
   isRegenerating: boolean;
@@ -39,6 +43,8 @@ interface SlideCardProps {
 const SlideCard = memo(function SlideCard({
   slide,
   aspectRatio,
+  campaignId,
+  preferredVoicePersona,
   isNativeApp,
   isAnySlideGenerating,
   isRegenerating,
@@ -291,6 +297,13 @@ const SlideCard = memo(function SlideCard({
             <p className="mt-1.5 text-sm leading-6 text-secondary-foreground md:mt-2 md:leading-7">
               {slide.voiceover_script ?? "—"}
             </p>
+            <SlideVoicePreview
+              campaignId={campaignId}
+              slideId={slide.id}
+              hasVoiceover={Boolean(slide.voiceover_script)}
+              preferredVoicePersona={preferredVoicePersona}
+              onError={onError}
+            />
           </div>
 
           {slide.image_url && (

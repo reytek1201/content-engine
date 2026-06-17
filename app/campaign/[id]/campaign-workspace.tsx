@@ -29,6 +29,7 @@ import {
   CampaignActionsSheet,
 } from "@/app/campaign/[id]/campaign-actions-sheet";
 import CampaignPublishPanel from "@/app/campaign/[id]/campaign-publish-panel";
+import CampaignVoicePanel from "@/app/campaign/[id]/campaign-voice-panel";
 import CampaignProgressStrip from "@/app/campaign/[id]/campaign-progress-strip";
 import CampaignSlidesMobileView from "@/app/campaign/[id]/campaign-slides-mobile-view";
 import CampaignTitleEditor from "@/app/campaign/[id]/campaign-title-editor";
@@ -47,6 +48,8 @@ import {
   shareCampaignZip,
 } from "@/utils/native-slide-export";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { VoicePersona } from "@/utils/tts/voice-catalog";
+import { TTS_EXPORT_SUCCESS_DISCLOSURE } from "@/utils/tts/disclosure-copy";
 
 const USER_SCROLL_COOLDOWN_MS = 3000;
 const SLIDE_UPDATE_DEBOUNCE_MS = 150;
@@ -57,6 +60,7 @@ interface CampaignWorkspaceProps {
   initialCaptions: PlatformCaption[];
   userId: string;
   brandName?: string | null;
+  initialPreferredVoicePersona?: VoicePersona;
 }
 
 export default function CampaignWorkspace({
@@ -65,6 +69,7 @@ export default function CampaignWorkspace({
   initialCaptions,
   userId,
   brandName = null,
+  initialPreferredVoicePersona = "warm",
 }: CampaignWorkspaceProps) {
   const supabase = createClient();
   const [campaign, setCampaign] = useState(initialCampaign);
@@ -73,7 +78,9 @@ export default function CampaignWorkspace({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingCaptions, setIsGeneratingCaptions] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingAudio, setIsExportingAudio] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const [audioExportMessage, setAudioExportMessage] = useState<string | null>(null);
   const [captionsMessage, setCaptionsMessage] = useState<string | null>(null);
   const [justFinishedSlide, setJustFinishedSlide] = useState<{
     slideIndex: number;
@@ -97,6 +104,10 @@ export default function CampaignWorkspace({
   const [mobileActiveSlideIndex, setMobileActiveSlideIndex] = useState(0);
   const [actionsSheetOpen, setActionsSheetOpen] = useState(false);
   const [isRetryingText, setIsRetryingText] = useState(false);
+  const [preferredVoicePersona, setPreferredVoicePersona] = useState<VoicePersona>(
+    initialPreferredVoicePersona,
+  );
+  const [isSavingVoicePersona, setIsSavingVoicePersona] = useState(false);
   const textGenerationStarted = useRef(false);
   const prevSlidesRef = useRef(initialSlides);
   const prevImagesCompleteRef = useRef(
@@ -126,6 +137,9 @@ export default function CampaignWorkspace({
     !imagesComplete;
   const sortedCaptions = sortCaptionsByPlatform(captions);
   const canGenerateCaptions = slides.length > 0 && !isGeneratingCaptions;
+  const hasVoiceoverScripts = slides.some((slide) =>
+    Boolean(slide.voiceover_script?.trim()),
+  );
 
   useEffect(() => {
     isGeneratingImagesRef.current = isGeneratingImages;
@@ -501,6 +515,71 @@ export default function CampaignWorkspace({
     }
   }
 
+  async function handleDownloadNarration() {
+    setError(null);
+    setAudioExportMessage(null);
+    setIsExportingAudio(true);
+
+    try {
+      const response = await fetch("/api/export-audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          campaignId: campaign.id,
+          persona: preferredVoicePersona,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json()) as { error?: string };
+        throw new Error(data.error ?? "Narration export failed");
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition");
+      const filenameMatch = disposition?.match(/filename="(.+)"/);
+      const filename = filenameMatch?.[1] ?? "narration.zip";
+
+      if (canUseNativeSlideExport()) {
+        await shareCampaignZip(blob, filename);
+        setAudioExportMessage(
+          `Use the share sheet to save the narration zip. ${TTS_EXPORT_SUCCESS_DISCLOSURE}`,
+        );
+      } else {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+
+        setAudioExportMessage(`Narration zip downloaded. ${TTS_EXPORT_SUCCESS_DISCLOSURE}`);
+      }
+    } catch (exportError) {
+      setError(
+        exportError instanceof Error
+          ? exportError.message
+          : "Something went wrong",
+      );
+    } finally {
+      setIsExportingAudio(false);
+    }
+  }
+
+  const voicePanelProps = {
+    preferredVoicePersona,
+    brandId: campaign.brand_id,
+    disabled: campaign.status === "generating_text",
+    isSaving: isSavingVoicePersona,
+    hasVoiceoverScripts,
+    isExportingAudio,
+    audioExportMessage,
+    onPersonaChange: (persona: VoicePersona) => void handleVoicePersonaChange(persona),
+    onExportAudio: () => void handleDownloadNarration(),
+  };
+
   async function handleGenerateCaptions() {
     setError(null);
     setCaptionsMessage(null);
@@ -697,6 +776,45 @@ export default function CampaignWorkspace({
       )
     );
   }, []);
+
+  const handleVoicePersonaChange = useCallback(
+    async (persona: VoicePersona) => {
+      setPreferredVoicePersona(persona);
+
+      if (!campaign.brand_id) {
+        return;
+      }
+
+      setIsSavingVoicePersona(true);
+      try {
+        const response = await fetch(`/api/brands/${campaign.brand_id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ preferred_voice_persona: persona }),
+        });
+
+        const data = (await response.json()) as {
+          success?: boolean;
+          error?: string;
+        };
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error ?? "Failed to save voice preference");
+        }
+      } catch (error) {
+        setPreferredVoicePersona(initialPreferredVoicePersona);
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to save voice preference",
+        );
+      } finally {
+        setIsSavingVoicePersona(false);
+      }
+    },
+    [campaign.brand_id, initialPreferredVoicePersona],
+  );
 
   const nextStepProps = {
     slideCount,
@@ -949,11 +1067,17 @@ export default function CampaignWorkspace({
             </div>
           )}
 
+          <div className="mb-4 hidden md:block">
+            <CampaignVoicePanel {...voicePanelProps} />
+          </div>
+
           <div className="md:hidden">
             <CampaignSlidesMobileView
               slides={slides}
               activeSlideIndex={mobileActiveSlideIndex}
               aspectRatio={campaign.aspect_ratio}
+              campaignId={campaign.id}
+              preferredVoicePersona={preferredVoicePersona}
               justFinishedSlide={justFinishedSlide}
               nextStepProps={nextStepProps}
               onOpenMoreActions={() => setActionsSheetOpen(true)}
@@ -976,6 +1100,8 @@ export default function CampaignWorkspace({
                 key={slide.id}
                 slide={slide}
                 aspectRatio={campaign.aspect_ratio}
+                campaignId={campaign.id}
+                preferredVoicePersona={preferredVoicePersona}
                 isNativeApp={isNativeApp === true}
                 isAnySlideGenerating={isAnySlideGenerating}
                 isRegenerating={regeneratingSlideId === slide.id}
@@ -1009,6 +1135,7 @@ export default function CampaignWorkspace({
               copiedPlatform={copiedPlatform}
               onGenerateCaptions={handleGenerateCaptions}
               onCopyCaption={handleCopyCaption}
+              voicePanel={<CampaignVoicePanel {...voicePanelProps} />}
             />
           </div>
 
@@ -1047,6 +1174,10 @@ export default function CampaignWorkspace({
               {captionsMessage}
             </div>
           )}
+
+          <div className="mt-6">
+            <CampaignVoicePanel {...voicePanelProps} />
+          </div>
 
           <div className="mt-4 sm:mt-6">
             {sortedCaptions.length === 0 ? (
