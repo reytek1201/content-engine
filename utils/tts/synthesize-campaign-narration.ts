@@ -1,7 +1,16 @@
 import type { Slide } from "@/types/campaign";
+import {
+  buildNarrationCacheKey,
+  buildNarrationCachePath,
+} from "@/utils/tts/narration-cache-keys";
+import {
+  getCachedNarrationAudio,
+  setCachedNarrationAudio,
+} from "@/utils/tts/narration-cache";
+import { normalizeVoiceoverScript } from "@/utils/tts/normalize-script";
 import { getVoiceIdForPersona, type VoicePersona } from "@/utils/tts/voice-catalog";
 import { getTtsProvider } from "@/utils/tts/provider";
-import type { TtsUsageContext } from "@/utils/tts/types";
+import { ELEVEN_FLASH_MODEL, type TtsUsageContext } from "@/utils/tts/types";
 import JSZip from "jszip";
 
 export interface CampaignNarrationSlide {
@@ -41,18 +50,52 @@ export async function synthesizeCampaignNarration(
     input.voiceId ??
     getVoiceIdForPersona(input.persona ?? "warm");
   const provider = getTtsProvider();
+  const userId = input.usage.userId;
+  const campaignId = input.usage.campaignId;
 
   const results = await Promise.all(
     slidesWithScript.map(async (slide) => {
+      const normalizedText = normalizeVoiceoverScript(slide.voiceover_script!);
+
+      if (!normalizedText) {
+        throw new Error(
+          `Slide ${slide.slide_index + 1} has an empty voiceover script after normalization`,
+        );
+      }
+
+      const cacheKey = buildNarrationCacheKey(voiceId, normalizedText);
+      const cachePath =
+        campaignId && slide.id
+          ? buildNarrationCachePath(userId, campaignId, slide.id, cacheKey)
+          : null;
+
+      if (cachePath) {
+        const cachedAudio = await getCachedNarrationAudio(cachePath);
+
+        if (cachedAudio) {
+          return {
+            slideIndex: slide.slide_index,
+            filename: `slide-${padSlideIndex(slide.slide_index)}.mp3`,
+            audio: cachedAudio,
+            charCount: normalizedText.length,
+          };
+        }
+      }
+
       const result = await provider.synthesize({
         text: slide.voiceover_script!,
         voiceId,
+        modelId: ELEVEN_FLASH_MODEL,
         usage: {
-          userId: input.usage.userId,
-          campaignId: input.usage.campaignId,
+          userId,
+          campaignId,
           slideId: slide.id,
         },
       });
+
+      if (cachePath) {
+        await setCachedNarrationAudio(cachePath, result.audio);
+      }
 
       return {
         slideIndex: slide.slide_index,

@@ -154,6 +154,14 @@ Rate-limited to 2 requests/minute. Monthly cap via `BETA_VIDEO_EXPORTS_PER_MONTH
 
 Apply migration `supabase/migrations/20260617000005_video_export.sql` before deploying.
 
+`GET /api/exports/:id` polls Fal queue status when webhooks are unavailable (wrong `NEXT_PUBLIC_APP_URL`, deployment protection, etc.).
+
+### Narration cache
+
+Slide MP3s are cached in private Supabase Storage (`tts-cache` bucket) keyed by voice + normalized script. Audio export and video export reuse cached audio — no second ElevenLabs charge for the same slide/persona/script.
+
+Apply migration `supabase/migrations/20260617000006_tts_narration_cache.sql` before deploying.
+
 Local dev requires `FAL_KEY`, `FAL_WEBHOOK_SECRET`, and `NEXT_PUBLIC_APP_URL` reachable by Fal (use ngrok or deploy preview for webhook testing).
 
 ---

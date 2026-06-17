@@ -8,6 +8,14 @@ import {
   getCachedPreviewAudio,
   setCachedPreviewAudio,
 } from "@/utils/tts/preview-cache";
+import {
+  buildNarrationCacheKey,
+  buildNarrationCachePath,
+} from "@/utils/tts/narration-cache-keys";
+import {
+  getCachedNarrationAudio,
+  setCachedNarrationAudio,
+} from "@/utils/tts/narration-cache";
 import { TTS_PREVIEW_DISCLOSURE } from "@/utils/tts/disclosure-copy";
 import {
   assertTtsPreviewLimit,
@@ -122,9 +130,31 @@ export async function POST(request: Request) {
 
     const cacheKey = buildPreviewCacheKey(normalizedText, voiceId);
     const cachedAudio = getCachedPreviewAudio(cacheKey);
+    const storageCachePath = buildNarrationCachePath(
+      user.id,
+      campaignId,
+      slideId,
+      buildNarrationCacheKey(voiceId, normalizedText),
+    );
 
     if (cachedAudio) {
       return new NextResponse(new Uint8Array(cachedAudio), {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+          "Cache-Control": "private, max-age=86400",
+          "X-TTS-Preview-Cached": "true",
+          "X-TTS-Voice-Persona": persona,
+        },
+      });
+    }
+
+    const storageCachedAudio = await getCachedNarrationAudio(storageCachePath);
+
+    if (storageCachedAudio) {
+      setCachedPreviewAudio(cacheKey, storageCachedAudio);
+
+      return new NextResponse(new Uint8Array(storageCachedAudio), {
         status: 200,
         headers: {
           "Content-Type": "audio/mpeg",
@@ -148,6 +178,7 @@ export async function POST(request: Request) {
     });
 
     setCachedPreviewAudio(cacheKey, result.audio);
+    await setCachedNarrationAudio(storageCachePath, result.audio);
     await recordTtsPreview(user.id, {
       campaignId,
       slideId,
