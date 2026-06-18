@@ -24,10 +24,10 @@ export const VIDEO_EXPORT_PRESETS: VideoExportPresetConfig[] = [
 ];
 
 export function presetBurnsCaptions(
-  preset: VideoExportPreset,
+  _preset: VideoExportPreset,
   includeCaptions: boolean,
 ): boolean {
-  return preset === "silent_captions" || includeCaptions;
+  return includeCaptions;
 }
 
 export function presetIncludesNarration(preset: VideoExportPreset): boolean {

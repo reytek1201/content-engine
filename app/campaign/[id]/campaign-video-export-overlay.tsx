@@ -3,7 +3,6 @@
 import { formatAspectRatio } from "@/utils/campaign-display";
 import type { Campaign } from "@/types/campaign";
 import type { VideoExportPreset } from "@/utils/video-export-presets";
-import { presetBurnsCaptions } from "@/utils/video-export-presets";
 import {
   VIDEO_EXPORT_STAGE_DESCRIPTIONS,
   VIDEO_EXPORT_STAGE_LABELS,
@@ -68,10 +67,7 @@ export default function CampaignVideoExportOverlay({
       return false;
     }
 
-    if (
-      step === "burn_captions" &&
-      !presetBurnsCaptions(videoPreset, false)
-    ) {
+    if (step === "burn_captions") {
       return false;
     }
 

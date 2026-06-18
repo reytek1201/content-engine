@@ -4,7 +4,6 @@ import {
   buildComposeStageMetadata,
   buildStoredSlideClips,
 } from "@/utils/compose-video-export-stage";
-import { shouldBurnVideoCaptions } from "@/utils/complete-video-export";
 import { resolveCampaignVoicePersona } from "@/utils/tts/resolve-campaign-persona";
 import { isTtsError } from "@/utils/tts/types";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
@@ -197,12 +196,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const captionsOnSlides = shouldBurnVideoCaptions({
-      stage: "compose_slides",
-      preset,
-      includeCaptions,
-    });
-    const slideClips = buildStoredSlideClips(prepared, captionsOnSlides);
+    const slideClips = buildStoredSlideClips(prepared);
     const composeMetadata = buildComposeStageMetadata({
       preset,
       includeCaptions,
@@ -210,7 +204,6 @@ export async function POST(request: Request) {
       persona,
       aspectRatio: typedCampaign.aspect_ratio,
       prepared,
-      captionsOnSlides,
       slideClips,
     });
 

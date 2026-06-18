@@ -13,14 +13,10 @@ import type { PrepareCampaignVideoResult } from "@/utils/prepare-campaign-video"
 
 export function buildStoredSlideClips(
   prepared: PrepareCampaignVideoResult,
-  burnCaptionsOnSlides: boolean,
 ): StoredSlideClip[] {
-  return prepared.slideClips.map((clip, index) => ({
+  return prepared.slideClips.map((clip) => ({
     imageUrl: clip.imageUrl,
     durationSeconds: clip.durationSeconds,
-    captionText: burnCaptionsOnSlides
-      ? prepared.captionSegments[index]?.text
-      : undefined,
   }));
 }
 
@@ -124,7 +120,6 @@ export function buildComposeStageMetadata(input: {
   persona: string;
   aspectRatio: AspectRatio;
   prepared: PrepareCampaignVideoResult;
-  captionsOnSlides: boolean;
   slideClips: StoredSlideClip[];
 }): VideoExportMetadata {
   return {
@@ -136,7 +131,6 @@ export function buildComposeStageMetadata(input: {
     aspectRatio: input.aspectRatio,
     audioUrl: input.prepared.audioUrl,
     captionSegments: input.prepared.captionSegments,
-    captionsOnSlides: input.captionsOnSlides,
     slideClips: input.slideClips,
   };
 }
