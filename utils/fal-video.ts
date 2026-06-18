@@ -1,13 +1,12 @@
 import { fal } from "@fal-ai/client";
 
+/** Legacy Fal pipeline — only used to poll in-flight exports from older builds. */
 export const FAL_IMAGES_TO_VIDEO_MODEL = "fal-ai/ffmpeg-api/images-to-video";
 export const FAL_MERGE_AUDIO_VIDEO_MODEL =
   "fal-ai/ffmpeg-api/merge-audio-video";
 
 export const VIDEO_EXPORT_FPS = 24;
-export const VIDEO_MIN_FRAMES_PER_SLIDE = 12;
 
-import type { CaptionSegment } from "@/utils/build-caption-srt";
 import type { AspectRatio } from "@/types/campaign";
 import type { VoiceQuality } from "@/utils/tts/types";
 import type { VideoExportPreset } from "@/utils/video-export-presets";
@@ -18,29 +17,20 @@ export type VideoExportPipelineStage =
   | "merge_audio"
   | "burn_captions";
 
-export interface FalVideoImageFrame {
-  url: string;
-  frames: number;
-}
-
 export interface StoredSlideClip {
   imageUrl: string;
   durationSeconds: number;
-  captionText?: string;
 }
 
 export interface VideoExportMetadata {
   stage: VideoExportPipelineStage;
   preset?: VideoExportPreset;
-  includeCaptions?: boolean;
   voiceQuality?: VoiceQuality;
   persona?: string;
   aspectRatio?: AspectRatio;
   audioUrl?: string;
   silentVideoUrl?: string;
   pendingVideoUrl?: string;
-  captionSegments?: CaptionSegment[];
-  captionsOnSlides?: boolean;
   slideClips?: StoredSlideClip[];
   composeStarted?: boolean;
 }
@@ -74,13 +64,6 @@ function configureFalClient(): void {
   fal.config({
     credentials: getFalKey(),
   });
-}
-
-export function framesForAudioDuration(durationSeconds: number): number {
-  return Math.max(
-    VIDEO_MIN_FRAMES_PER_SLIDE,
-    Math.ceil(durationSeconds * VIDEO_EXPORT_FPS),
-  );
 }
 
 export async function uploadFalMedia(
@@ -128,20 +111,6 @@ export async function submitFalVideoQueue(
   }
 
   return data.request_id;
-}
-
-export async function submitImagesToVideoQueue(
-  images: FalVideoImageFrame[],
-  webhookUrl: string,
-): Promise<string> {
-  return submitFalVideoQueue(
-    FAL_IMAGES_TO_VIDEO_MODEL,
-    {
-      images,
-      fps: VIDEO_EXPORT_FPS,
-    },
-    webhookUrl,
-  );
 }
 
 export async function submitMergeAudioVideoQueue(
@@ -235,10 +204,6 @@ export function parseVideoExportMetadata(
       preset === "quick_reel" || preset === "silent_captions"
         ? preset
         : undefined,
-    includeCaptions:
-      typeof record.includeCaptions === "boolean"
-        ? record.includeCaptions
-        : undefined,
     voiceQuality:
       voiceQuality === "standard" || voiceQuality === "studio"
         ? voiceQuality
@@ -252,13 +217,6 @@ export function parseVideoExportMetadata(
     pendingVideoUrl:
       typeof record.pendingVideoUrl === "string"
         ? record.pendingVideoUrl
-        : undefined,
-    captionSegments: Array.isArray(record.captionSegments)
-      ? (record.captionSegments as CaptionSegment[])
-      : undefined,
-    captionsOnSlides:
-      typeof record.captionsOnSlides === "boolean"
-        ? record.captionsOnSlides
         : undefined,
     aspectRatio:
       record.aspectRatio === "4:5" || record.aspectRatio === "9:16"
@@ -298,9 +256,6 @@ function parseStoredSlideClips(value: unknown): StoredSlideClip[] | undefined {
       return {
         imageUrl,
         durationSeconds,
-        ...(typeof record.captionText === "string"
-          ? { captionText: record.captionText }
-          : {}),
       } satisfies StoredSlideClip;
     })
     .filter((entry): entry is StoredSlideClip => entry !== null);

@@ -7,7 +7,7 @@ import {
 
 describe("mapPipelineStageToUiStage", () => {
   it("maps Fal pipeline stages to UI stages", () => {
-    assert.equal(mapPipelineStageToUiStage("images_to_video"), "images_to_video");
+    assert.equal(mapPipelineStageToUiStage("images_to_video"), "compose_slides");
     assert.equal(mapPipelineStageToUiStage("merge_audio"), "merge_audio");
     assert.equal(mapPipelineStageToUiStage(undefined), "preparing");
   });

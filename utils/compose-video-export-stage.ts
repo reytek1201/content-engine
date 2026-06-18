@@ -115,7 +115,6 @@ export async function runComposeSlidesStage(
 
 export function buildComposeStageMetadata(input: {
   preset: VideoExportMetadata["preset"];
-  includeCaptions: boolean;
   voiceQuality: VideoExportMetadata["voiceQuality"];
   persona: string;
   aspectRatio: AspectRatio;
@@ -125,12 +124,10 @@ export function buildComposeStageMetadata(input: {
   return {
     stage: "compose_slides",
     preset: input.preset,
-    includeCaptions: input.includeCaptions,
     voiceQuality: input.voiceQuality,
     persona: input.persona,
     aspectRatio: input.aspectRatio,
     audioUrl: input.prepared.audioUrl,
-    captionSegments: input.prepared.captionSegments,
     slideClips: input.slideClips,
   };
 }

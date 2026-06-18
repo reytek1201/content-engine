@@ -23,13 +23,6 @@ export const VIDEO_EXPORT_PRESETS: VideoExportPresetConfig[] = [
   },
 ];
 
-export function presetBurnsCaptions(
-  _preset: VideoExportPreset,
-  includeCaptions: boolean,
-): boolean {
-  return includeCaptions;
-}
-
 export function presetIncludesNarration(preset: VideoExportPreset): boolean {
   return preset === "quick_reel";
 }

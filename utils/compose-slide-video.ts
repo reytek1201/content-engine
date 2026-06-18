@@ -15,7 +15,6 @@ export const VIDEO_CROSSFADE_SECONDS = 0.45;
 export interface SlideClipInput {
   imageUrl: string;
   durationSeconds: number;
-  captionText?: string;
 }
 
 export interface ComposeSlideVideoOptions {

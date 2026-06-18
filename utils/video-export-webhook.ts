@@ -76,14 +76,13 @@ export async function handleVideoExportWebhook(
       metadata,
       videoUrl,
       appBaseUrl,
-      true,
     );
 
     return { handled: "merge_queued", status: 200 };
   }
 
   if (metadata.stage === "merge_audio") {
-    await handleMergeAudioComplete(exportRow.id, metadata, videoUrl, true);
+    await handleMergeAudioComplete(exportRow.id, metadata, videoUrl);
 
     return { handled: "completed", status: 200 };
   }

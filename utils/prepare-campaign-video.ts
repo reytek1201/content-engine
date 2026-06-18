@@ -1,14 +1,6 @@
 import type { Slide } from "@/types/campaign";
-import {
-  buildCaptionSegmentsFromDurations,
-  estimateSlideDurationSeconds,
-  type CaptionSegment,
-} from "@/utils/build-caption-srt";
-import {
-  framesForAudioDuration,
-  uploadFalMedia,
-  type FalVideoImageFrame,
-} from "@/utils/fal-video";
+import { estimateSlideDurationSeconds } from "@/utils/build-caption-srt";
+import { uploadFalMedia } from "@/utils/fal-video";
 import { concatMp3Buffers, getMp3DurationSeconds } from "@/utils/merge-mp3-buffers";
 import { synthesizeCampaignNarration } from "@/utils/tts/synthesize-campaign-narration";
 import { resolveTtsModelId, type VoiceQuality } from "@/utils/tts/types";
@@ -34,9 +26,7 @@ export interface PreparedSlideClip {
 
 export interface PrepareCampaignVideoResult {
   slideClips: PreparedSlideClip[];
-  imageFrames: FalVideoImageFrame[];
   audioUrl?: string;
-  captionSegments: CaptionSegment[];
   slideCount: number;
   totalChars: number;
 }
@@ -76,7 +66,6 @@ export async function prepareCampaignVideo(
   const includeNarration = presetIncludesNarration(input.preset);
   const modelId = resolveTtsModelId(input.voiceQuality);
 
-  const imageFrames: FalVideoImageFrame[] = [];
   const slideClips: PreparedSlideClip[] = [];
   let totalChars = 0;
 
@@ -93,7 +82,6 @@ export async function prepareCampaignVideo(
     );
 
     const audioBuffers: Buffer[] = [];
-    const durationsSeconds: number[] = [];
 
     for (const slide of sortedSlides) {
       const narration = narrationByIndex.get(slide.slide_index);
@@ -103,11 +91,6 @@ export async function prepareCampaignVideo(
       }
 
       const durationSeconds = await getMp3DurationSeconds(narration.audio);
-      durationsSeconds.push(durationSeconds);
-      imageFrames.push({
-        url: slide.image_url!,
-        frames: framesForAudioDuration(durationSeconds),
-      });
       slideClips.push({
         imageUrl: slide.image_url!,
         durationSeconds,
@@ -125,28 +108,15 @@ export async function prepareCampaignVideo(
 
     return {
       slideClips,
-      imageFrames,
       audioUrl,
-      captionSegments: buildCaptionSegmentsFromDurations(
-        scripts,
-        durationsSeconds,
-      ),
       slideCount: sortedSlides.length,
       totalChars,
     };
   }
 
-  const durationsSeconds = scripts.map((script) =>
-    estimateSlideDurationSeconds(script),
-  );
-
   for (let index = 0; index < sortedSlides.length; index++) {
     const slide = sortedSlides[index]!;
-    const durationSeconds = durationsSeconds[index]!;
-    imageFrames.push({
-      url: slide.image_url!,
-      frames: framesForAudioDuration(durationSeconds),
-    });
+    const durationSeconds = estimateSlideDurationSeconds(scripts[index]!);
     slideClips.push({
       imageUrl: slide.image_url!,
       durationSeconds,
@@ -156,11 +126,6 @@ export async function prepareCampaignVideo(
 
   return {
     slideClips,
-    imageFrames,
-    captionSegments: buildCaptionSegmentsFromDurations(
-      scripts,
-      durationsSeconds,
-    ),
     slideCount: sortedSlides.length,
     totalChars,
   };

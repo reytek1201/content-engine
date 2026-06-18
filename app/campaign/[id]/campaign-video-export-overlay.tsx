@@ -67,10 +67,6 @@ export default function CampaignVideoExportOverlay({
       return false;
     }
 
-    if (step === "burn_captions") {
-      return false;
-    }
-
     return true;
   });
 

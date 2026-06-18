@@ -28,7 +28,6 @@ const RequestSchema = z.object({
   campaignId: z.string().uuid(),
   persona: z.enum(["warm", "energetic", "professional"]).optional(),
   preset: z.enum(["quick_reel", "silent_captions"]).optional(),
-  includeCaptions: z.boolean().optional(),
   voiceQuality: z.enum(["standard", "studio"]).optional(),
 });
 
@@ -70,12 +69,10 @@ export async function POST(request: Request) {
       campaignId,
       persona: personaOverride,
       preset: presetInput,
-      includeCaptions: includeCaptionsInput,
       voiceQuality: voiceQualityInput,
     } = parsedInput.data;
 
     const preset = presetInput ?? "quick_reel";
-    const includeCaptions = includeCaptionsInput ?? false;
     const voiceQuality = voiceQualityInput ?? "standard";
 
     const { data: campaign, error: campaignError } = await supabase
@@ -164,7 +161,6 @@ export async function POST(request: Request) {
         metadata: {
           stage: "compose_slides",
           preset,
-          includeCaptions,
           voiceQuality,
           persona,
         } satisfies VideoExportMetadata,
@@ -199,7 +195,6 @@ export async function POST(request: Request) {
     const slideClips = buildStoredSlideClips(prepared);
     const composeMetadata = buildComposeStageMetadata({
       preset,
-      includeCaptions,
       voiceQuality,
       persona,
       aspectRatio: typedCampaign.aspect_ratio,

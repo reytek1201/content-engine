@@ -9,11 +9,7 @@ import {
   submitMergeAudioVideoQueue,
   type VideoExportMetadata,
 } from "@/utils/fal-video";
-import {
-  completeVideoExportWithCaptions,
-  includesVideoNarration,
-  shouldPostBurnVideoCaptions,
-} from "@/utils/complete-video-export";
+import { includesVideoNarration } from "@/utils/complete-video-export";
 import { runComposeSlidesStage } from "@/utils/compose-video-export-stage";
 
 interface ProcessingExportRow {
@@ -36,73 +32,10 @@ async function markExportFailed(exportId: string, message: string): Promise<void
     .eq("id", exportId);
 }
 
-async function completeBurnCaptionsStage(
-  exportId: string,
-  metadata: VideoExportMetadata,
-  videoUrl: string,
-): Promise<void> {
-  const supabase = createAdminClient();
-
-  try {
-    const outputUrl = await completeVideoExportWithCaptions(metadata, videoUrl);
-
-    await supabase
-      .from("exports")
-      .update({
-        status: "completed",
-        output_url: outputUrl,
-        error_message: null,
-        fal_request_id: null,
-        metadata: {
-          ...metadata,
-          pendingVideoUrl: undefined,
-        },
-      })
-      .eq("id", exportId);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Caption burn-in failed";
-
-    await markExportFailed(exportId, message);
-    throw error;
-  }
-}
-
-async function queueBurnCaptionsStage(
-  exportId: string,
-  metadata: VideoExportMetadata,
-  videoUrl: string,
-): Promise<void> {
-  const supabase = createAdminClient();
-
-  await supabase
-    .from("exports")
-    .update({
-      fal_request_id: null,
-      metadata: {
-        ...metadata,
-        stage: "burn_captions",
-        pendingVideoUrl: videoUrl,
-        silentVideoUrl: metadata.silentVideoUrl ?? videoUrl,
-      },
-    })
-    .eq("id", exportId);
-}
-
 async function completeVideoExport(
   exportId: string,
-  metadata: VideoExportMetadata,
   videoUrl: string,
-  deferBurn = false,
 ): Promise<void> {
-  if (shouldPostBurnVideoCaptions(metadata)) {
-    await queueBurnCaptionsStage(exportId, metadata, videoUrl);
-    if (!deferBurn) {
-      await completeBurnCaptionsStage(exportId, metadata, videoUrl);
-    }
-    return;
-  }
-
   const supabase = createAdminClient();
 
   await supabase
@@ -111,12 +44,13 @@ async function completeVideoExport(
       status: "completed",
       output_url: videoUrl,
       error_message: null,
+      fal_request_id: null,
     })
     .eq("id", exportId);
 }
 
 /**
- * Advances in-flight video exports when Fal jobs finish or caption burn-in runs.
+ * Advances in-flight video exports when Fal jobs finish.
  */
 export async function advanceVideoExportIfReady(
   exportRow: ProcessingExportRow,
@@ -128,12 +62,9 @@ export async function advanceVideoExportIfReady(
   const metadata = parseVideoExportMetadata(exportRow.metadata);
   if (!metadata) return;
 
+  // Legacy exports stuck on the removed caption-burn stage — complete as-is.
   if (metadata.stage === "burn_captions" && metadata.pendingVideoUrl) {
-    await completeBurnCaptionsStage(
-      exportRow.id,
-      metadata,
-      metadata.pendingVideoUrl,
-    );
+    await completeVideoExport(exportRow.id, metadata.pendingVideoUrl);
     return;
   }
 
@@ -161,7 +92,7 @@ export async function advanceVideoExportIfReady(
 
   if (metadata.stage === "images_to_video") {
     if (!includesVideoNarration(metadata)) {
-      await completeVideoExport(exportRow.id, metadata, videoUrl);
+      await completeVideoExport(exportRow.id, videoUrl);
       return;
     }
 
@@ -187,7 +118,7 @@ export async function advanceVideoExportIfReady(
       .update({ fal_request_id: mergeRequestId, metadata: nextMetadata })
       .eq("id", exportRow.id);
   } else if (metadata.stage === "merge_audio") {
-    await completeVideoExport(exportRow.id, metadata, videoUrl);
+    await completeVideoExport(exportRow.id, videoUrl);
   }
 }
 
@@ -196,10 +127,9 @@ export async function handleImagesToVideoComplete(
   metadata: VideoExportMetadata,
   videoUrl: string,
   appBaseUrl: string,
-  deferBurn = false,
 ): Promise<void> {
   if (!includesVideoNarration(metadata)) {
-    await completeVideoExport(exportId, metadata, videoUrl, deferBurn);
+    await completeVideoExport(exportId, videoUrl);
     return;
   }
 
@@ -237,9 +167,8 @@ export async function handleImagesToVideoComplete(
 
 export async function handleMergeAudioComplete(
   exportId: string,
-  metadata: VideoExportMetadata,
+  _metadata: VideoExportMetadata,
   videoUrl: string,
-  deferBurn = false,
 ): Promise<void> {
-  await completeVideoExport(exportId, metadata, videoUrl, deferBurn);
+  await completeVideoExport(exportId, videoUrl);
 }
