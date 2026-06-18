@@ -50,6 +50,7 @@ import type { VoicePersona } from "@/utils/tts/voice-catalog";
 import type { VoiceQuality } from "@/utils/tts/types";
 import type { VideoExportPreset } from "@/utils/video-export-presets";
 import { getVideoExportFilename } from "@/utils/video-export-filename";
+import { readJsonResponse } from "@/utils/read-json-response";
 import {
   TTS_EXPORT_SUCCESS_DISCLOSURE,
   TTS_VIDEO_EXPORT_SUCCESS_DISCLOSURE,
@@ -603,7 +604,7 @@ export default function CampaignWorkspace({
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const response = await fetch(`/api/exports/${exportId}`);
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         success?: boolean;
         export?: {
           status?: string;
@@ -612,7 +613,7 @@ export default function CampaignWorkspace({
           errorMessage?: string | null;
         };
         error?: string;
-      };
+      }>(response);
 
       if (!response.ok || !data.success || !data.export) {
         throw new Error(data.error ?? "Failed to check video export status");
@@ -660,11 +661,11 @@ export default function CampaignWorkspace({
         }),
       });
 
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         success?: boolean;
         exportId?: string;
         error?: string;
-      };
+      }>(response);
 
       if (!response.ok || !data.success || !data.exportId) {
         throw new Error(data.error ?? "Video export failed");

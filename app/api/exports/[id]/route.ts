@@ -5,6 +5,8 @@ import { advanceVideoExportIfReady } from "@/utils/advance-video-export";
 import { parseVideoExportMetadata } from "@/utils/fal-video";
 import { NextResponse } from "next/server";
 
+export const maxDuration = 300;
+
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },

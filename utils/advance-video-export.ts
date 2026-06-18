@@ -12,9 +12,9 @@ import {
 import {
   completeVideoExportWithCaptions,
   includesVideoNarration,
-  shouldBurnVideoCaptions,
   shouldPostBurnVideoCaptions,
 } from "@/utils/complete-video-export";
+import { runComposeSlidesStage } from "@/utils/compose-video-export-stage";
 
 interface ProcessingExportRow {
   id: string;
@@ -134,6 +134,15 @@ export async function advanceVideoExportIfReady(
       metadata,
       metadata.pendingVideoUrl,
     );
+    return;
+  }
+
+  if (
+    metadata.stage === "compose_slides" &&
+    metadata.slideClips?.length &&
+    !metadata.silentVideoUrl
+  ) {
+    await runComposeSlidesStage(exportRow.id, metadata, appBaseUrl);
     return;
   }
 

@@ -8,6 +8,7 @@ export const VIDEO_EXPORT_FPS = 24;
 export const VIDEO_MIN_FRAMES_PER_SLIDE = 12;
 
 import type { CaptionSegment } from "@/utils/build-caption-srt";
+import type { AspectRatio } from "@/types/campaign";
 import type { VoiceQuality } from "@/utils/tts/types";
 import type { VideoExportPreset } from "@/utils/video-export-presets";
 
@@ -22,17 +23,26 @@ export interface FalVideoImageFrame {
   frames: number;
 }
 
+export interface StoredSlideClip {
+  imageUrl: string;
+  durationSeconds: number;
+  captionText?: string;
+}
+
 export interface VideoExportMetadata {
   stage: VideoExportPipelineStage;
   preset?: VideoExportPreset;
   includeCaptions?: boolean;
   voiceQuality?: VoiceQuality;
   persona?: string;
+  aspectRatio?: AspectRatio;
   audioUrl?: string;
   silentVideoUrl?: string;
   pendingVideoUrl?: string;
   captionSegments?: CaptionSegment[];
   captionsOnSlides?: boolean;
+  slideClips?: StoredSlideClip[];
+  composeStarted?: boolean;
 }
 
 interface FalQueueResponse {
@@ -250,5 +260,50 @@ export function parseVideoExportMetadata(
       typeof record.captionsOnSlides === "boolean"
         ? record.captionsOnSlides
         : undefined,
+    aspectRatio:
+      record.aspectRatio === "4:5" || record.aspectRatio === "9:16"
+        ? record.aspectRatio
+        : undefined,
+    slideClips: parseStoredSlideClips(record.slideClips),
+    composeStarted:
+      typeof record.composeStarted === "boolean"
+        ? record.composeStarted
+        : undefined,
   };
+}
+
+function parseStoredSlideClips(value: unknown): StoredSlideClip[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  const clips = value
+    .map((entry) => {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+        return null;
+      }
+
+      const record = entry as Record<string, unknown>;
+      const imageUrl =
+        typeof record.imageUrl === "string" ? record.imageUrl : null;
+      const durationSeconds =
+        typeof record.durationSeconds === "number"
+          ? record.durationSeconds
+          : null;
+
+      if (!imageUrl || durationSeconds === null) {
+        return null;
+      }
+
+      return {
+        imageUrl,
+        durationSeconds,
+        ...(typeof record.captionText === "string"
+          ? { captionText: record.captionText }
+          : {}),
+      } satisfies StoredSlideClip;
+    })
+    .filter((entry): entry is StoredSlideClip => entry !== null);
+
+  return clips.length > 0 ? clips : undefined;
 }

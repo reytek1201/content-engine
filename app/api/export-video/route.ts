@@ -1,7 +1,10 @@
-import { buildFalWebhookUrl, getAppBaseUrl } from "@/utils/fal";
-import { queueComposedVideoExport } from "@/utils/queue-composed-video-export";
 import type { VideoExportMetadata } from "@/utils/fal-video";
 import { prepareCampaignVideo } from "@/utils/prepare-campaign-video";
+import {
+  buildComposeStageMetadata,
+  buildStoredSlideClips,
+} from "@/utils/compose-video-export-stage";
+import { shouldBurnVideoCaptions } from "@/utils/complete-video-export";
 import { resolveCampaignVoicePersona } from "@/utils/tts/resolve-campaign-persona";
 import { isTtsError } from "@/utils/tts/types";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
@@ -152,21 +155,19 @@ export async function POST(request: Request) {
       personaOverride as VoicePersona | undefined,
     );
 
-    const metadata: VideoExportMetadata = {
-      stage: "compose_slides",
-      preset,
-      includeCaptions,
-      voiceQuality,
-      persona,
-    };
-
     const { data: exportRow, error: exportInsertError } = await supabase
       .from("exports")
       .insert({
         campaign_id: campaignId,
         export_type: "video",
         status: "processing",
-        metadata,
+        metadata: {
+          stage: "compose_slides",
+          preset,
+          includeCaptions,
+          voiceQuality,
+          persona,
+        } satisfies VideoExportMetadata,
       })
       .select("id")
       .single();
@@ -195,19 +196,33 @@ export async function POST(request: Request) {
       },
     });
 
-    const webhookUrl = buildFalWebhookUrl(getAppBaseUrl(request));
-
-    await queueComposedVideoExport({
-      supabase,
-      exportId: exportRow.id,
-      aspectRatio: typedCampaign.aspect_ratio,
-      prepared,
+    const captionsOnSlides = shouldBurnVideoCaptions({
+      stage: "compose_slides",
+      preset,
+      includeCaptions,
+    });
+    const slideClips = buildStoredSlideClips(prepared, captionsOnSlides);
+    const composeMetadata = buildComposeStageMetadata({
       preset,
       includeCaptions,
       voiceQuality,
       persona,
-      webhookUrl,
+      aspectRatio: typedCampaign.aspect_ratio,
+      prepared,
+      captionsOnSlides,
+      slideClips,
     });
+
+    const { error: exportUpdateError } = await supabase
+      .from("exports")
+      .update({
+        metadata: composeMetadata,
+      })
+      .eq("id", exportRow.id);
+
+    if (exportUpdateError) {
+      throw new Error("Failed to update export record with compose metadata");
+    }
 
     await recordVideoExport(user.id, {
       campaignId,
