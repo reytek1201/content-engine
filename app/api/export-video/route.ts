@@ -18,6 +18,7 @@ import {
   isRateLimitError,
 } from "@/utils/rate-limit";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import type { Campaign, Slide } from "@/types/campaign";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -239,17 +240,17 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (exportId) {
-      const supabase = await createClient();
-      const message =
-        error instanceof Error ? error.message : "Video export failed";
-
-      await supabase
-        .from("exports")
-        .update({
-          status: "failed",
-          error_message: message,
-        })
-        .eq("id", exportId);
+      try {
+        const admin = createAdminClient();
+        const message =
+          error instanceof Error ? error.message : "Video export failed";
+        await admin
+          .from("exports")
+          .update({ status: "failed", error_message: message })
+          .eq("id", exportId);
+      } catch {
+        // Best-effort; don't let this shadow the original error.
+      }
     }
 
     if (isUsageLimitError(error)) {
