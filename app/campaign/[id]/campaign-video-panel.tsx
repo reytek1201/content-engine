@@ -17,10 +17,8 @@ interface CampaignVideoPanelProps {
   isExportingVideo?: boolean;
   videoExportMessage?: string | null;
   videoPreset: VideoExportPreset;
-  includeCaptions: boolean;
   voiceQuality: VoiceQuality;
   onPresetChange: (preset: VideoExportPreset) => void;
-  onIncludeCaptionsChange: (includeCaptions: boolean) => void;
   onVoiceQualityChange: (voiceQuality: VoiceQuality) => void;
   onExportVideo: () => void;
 }
@@ -32,10 +30,8 @@ export default function CampaignVideoPanel({
   isExportingVideo = false,
   videoExportMessage = null,
   videoPreset,
-  includeCaptions,
   voiceQuality,
   onPresetChange,
-  onIncludeCaptionsChange,
   onVoiceQualityChange,
   onExportVideo,
 }: CampaignVideoPanelProps) {
@@ -81,21 +77,6 @@ export default function CampaignVideoPanel({
           );
         })}
       </div>
-
-      {!isSilentPreset && (
-        <label className="mt-4 flex items-start gap-3 rounded-xl border border-border px-3 py-3">
-          <input
-            type="checkbox"
-            checked={includeCaptions}
-            disabled={disabled || isExportingVideo}
-            onChange={(event) => onIncludeCaptionsChange(event.target.checked)}
-            className="mt-0.5"
-          />
-          <span className="text-xs leading-5 text-muted-foreground">
-            Include on-screen captions synced to the narration.
-          </span>
-        </label>
-      )}
 
       {!isSilentPreset && (
         <div className="mt-4">

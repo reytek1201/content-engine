@@ -21,7 +21,6 @@ interface CampaignVideoExportOverlayProps {
   slideCount: number;
   stage?: VideoExportUiStage;
   videoPreset?: VideoExportPreset;
-  includeCaptions?: boolean;
   error?: string | null;
   onDismiss?: () => void;
 }
@@ -40,7 +39,6 @@ export default function CampaignVideoExportOverlay({
   slideCount,
   stage = "preparing",
   videoPreset = "quick_reel",
-  includeCaptions = false,
   error = null,
   onDismiss,
 }: CampaignVideoExportOverlayProps) {
@@ -72,7 +70,7 @@ export default function CampaignVideoExportOverlay({
 
     if (
       step === "burn_captions" &&
-      !presetBurnsCaptions(videoPreset, includeCaptions)
+      !presetBurnsCaptions(videoPreset, false)
     ) {
       return false;
     }

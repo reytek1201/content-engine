@@ -125,7 +125,6 @@ export default function CampaignWorkspace({
   const [isSavingVoicePersona, setIsSavingVoicePersona] = useState(false);
   const [voiceQuality, setVoiceQuality] = useState<VoiceQuality>("standard");
   const [videoPreset, setVideoPreset] = useState<VideoExportPreset>("quick_reel");
-  const [includeVideoCaptions, setIncludeVideoCaptions] = useState(false);
   const textGenerationStarted = useRef(false);
   const prevSlidesRef = useRef(initialSlides);
   const prevImagesCompleteRef = useRef(
@@ -656,7 +655,6 @@ export default function CampaignWorkspace({
           campaignId: campaign.id,
           persona: preferredVoicePersona,
           preset: videoPreset,
-          includeCaptions: includeVideoCaptions,
           voiceQuality,
         }),
       });
@@ -730,7 +728,6 @@ export default function CampaignWorkspace({
     preferredVoicePersona,
     voiceQuality,
     videoPreset,
-    includeVideoCaptions,
     aspectRatioLabel: formatAspectRatio(campaign.aspect_ratio),
     brandId: campaign.brand_id,
     isSavingVoicePersona,
@@ -750,7 +747,6 @@ export default function CampaignWorkspace({
     onPersonaChange: (persona: VoicePersona) => void handleVoicePersonaChange(persona),
     onVoiceQualityChange: setVoiceQuality,
     onVideoPresetChange: setVideoPreset,
-    onIncludeVideoCaptionsChange: setIncludeVideoCaptions,
     onDownloadZip: handleDownloadZip,
     onDownloadNarration: handleDownloadNarration,
     onExportVideo: handleExportVideo,
@@ -1348,7 +1344,6 @@ export default function CampaignWorkspace({
         slideCount={slides.length}
         stage={videoExportStage}
         videoPreset={videoPreset}
-        includeCaptions={includeVideoCaptions}
         error={videoExportError}
         onDismiss={() => {
           setVideoExportError(null);

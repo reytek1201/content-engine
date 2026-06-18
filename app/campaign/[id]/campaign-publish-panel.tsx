@@ -23,7 +23,6 @@ interface CampaignPublishPanelProps {
   preferredVoicePersona: VoicePersona;
   voiceQuality: VoiceQuality;
   videoPreset: VideoExportPreset;
-  includeVideoCaptions: boolean;
   aspectRatioLabel: string;
   brandId: string | null;
   isSavingVoicePersona: boolean;
@@ -43,7 +42,6 @@ interface CampaignPublishPanelProps {
   onPersonaChange: (persona: VoicePersona) => void;
   onVoiceQualityChange: (voiceQuality: VoiceQuality) => void;
   onVideoPresetChange: (preset: VideoExportPreset) => void;
-  onIncludeVideoCaptionsChange: (includeCaptions: boolean) => void;
   onDownloadZip: () => void;
   onDownloadNarration: () => void;
   onExportVideo: () => void;
@@ -64,7 +62,6 @@ export default function CampaignPublishPanel({
   preferredVoicePersona,
   voiceQuality,
   videoPreset,
-  includeVideoCaptions,
   aspectRatioLabel,
   brandId,
   isSavingVoicePersona,
@@ -84,7 +81,6 @@ export default function CampaignPublishPanel({
   onPersonaChange,
   onVoiceQualityChange,
   onVideoPresetChange,
-  onIncludeVideoCaptionsChange,
   onDownloadZip,
   onDownloadNarration,
   onExportVideo,
@@ -118,10 +114,8 @@ export default function CampaignPublishPanel({
           isExportingVideo={isExportingVideo}
           videoExportMessage={videoExportMessage}
           videoPreset={videoPreset}
-          includeCaptions={includeVideoCaptions}
           voiceQuality={voiceQuality}
           onPresetChange={onVideoPresetChange}
-          onIncludeCaptionsChange={onIncludeVideoCaptionsChange}
           onVoiceQualityChange={onVoiceQualityChange}
           onExportVideo={onExportVideo}
         />
