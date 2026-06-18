@@ -55,7 +55,6 @@ export async function runComposeSlidesStage(
 
   const composedBuffer = await composeSlidesToVideo(metadata.slideClips, {
     aspectRatio: metadata.aspectRatio,
-    motion: true,
   });
 
   const silentVideoUrl = await uploadFalMedia(

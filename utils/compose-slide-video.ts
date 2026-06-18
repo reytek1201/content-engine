@@ -6,7 +6,6 @@ import { promisify } from "node:util";
 import type { AspectRatio } from "@/types/campaign";
 import { requireFfmpegPath } from "@/utils/ffmpeg";
 import { VIDEO_EXPORT_FPS } from "@/utils/fal-video";
-import { overlayCaptionOnSlideImage } from "@/utils/overlay-slide-caption";
 import { getVideoDimensions } from "@/utils/video-dimensions";
 
 const execFileAsync = promisify(execFile);
@@ -21,7 +20,6 @@ export interface SlideClipInput {
 
 export interface ComposeSlideVideoOptions {
   aspectRatio: AspectRatio;
-  motion?: boolean;
   crossfadeSeconds?: number;
 }
 
@@ -32,19 +30,6 @@ async function downloadImage(url: string): Promise<Buffer> {
   }
 
   return Buffer.from(await response.arrayBuffer());
-}
-
-function buildKenBurnsFilter(
-  frames: number,
-  width: number,
-  height: number,
-): string {
-  return [
-    `scale=${width * 2}:${height * 2}:force_original_aspect_ratio=increase`,
-    `crop=${width * 2}:${height * 2}`,
-    `zoompan=z='min(1+0.0009*on,1.1)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${frames}:s=${width}x${height}:fps=${VIDEO_EXPORT_FPS}`,
-    "format=yuv420p",
-  ].join(",");
 }
 
 function buildStaticSlideFilter(width: number, height: number): string {
@@ -62,15 +47,8 @@ async function renderSlideClip(
   durationSeconds: number,
   width: number,
   height: number,
-  motion: boolean,
 ): Promise<void> {
-  const frames = Math.max(
-    1,
-    Math.ceil(durationSeconds * VIDEO_EXPORT_FPS),
-  );
-  const vf = motion
-    ? buildKenBurnsFilter(frames, width, height)
-    : buildStaticSlideFilter(width, height);
+  const vf = buildStaticSlideFilter(width, height);
 
   await execFileAsync(requireFfmpegPath(), [
     "-y",
@@ -182,7 +160,6 @@ export async function composeSlidesToVideo(
     throw new Error("No slides provided for video compose");
   }
 
-  const motion = options.motion ?? true;
   const crossfadeSeconds = options.crossfadeSeconds ?? VIDEO_CROSSFADE_SECONDS;
   const { width, height } = getVideoDimensions(options.aspectRatio);
   const dir = await mkdtemp(join(tmpdir(), "slidepress-compose-"));
@@ -193,18 +170,9 @@ export async function composeSlidesToVideo(
 
     for (let index = 0; index < slides.length; index++) {
       const slide = slides[index]!;
-      let imageBuffer = await downloadImage(slide.imageUrl);
+      const imageBuffer = await downloadImage(slide.imageUrl);
       const imagePath = join(dir, `slide-${index}.jpg`);
       const clipPath = join(dir, `clip-${index}.mp4`);
-
-      if (slide.captionText?.trim()) {
-        imageBuffer = await overlayCaptionOnSlideImage(
-          imageBuffer,
-          slide.captionText,
-          width,
-          height,
-        );
-      }
 
       await writeFile(imagePath, imageBuffer);
       await renderSlideClip(
@@ -213,7 +181,6 @@ export async function composeSlidesToVideo(
         slide.durationSeconds,
         width,
         height,
-        motion,
       );
 
       clipPaths.push(clipPath);
