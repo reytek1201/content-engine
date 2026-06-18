@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Terms of Service",
 };
 
-const LAST_UPDATED = "June 17, 2026";
+const LAST_UPDATED = "June 18, 2026";
 const CONTACT_EMAIL = "hello@slidepress.co";
 
 interface TermsPageProps {
@@ -87,12 +87,52 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
 
       <section>
         <h2 className="text-base font-semibold text-foreground">
+          Subscriptions &amp; billing
+        </h2>
+        <p className="mt-3">
+          SlidePress offers a free tier and paid auto-renewing subscriptions:
+          <strong className="text-foreground"> Creator</strong> (monthly) and{" "}
+          <strong className="text-foreground">Agency Pro</strong> (monthly).
+          Prices are shown in the app or at checkout before you confirm a
+          purchase. Paid plans include monthly credit allowances for campaigns,
+          slide regenerations, video exports, voice previews, narration exports,
+          and brand workspaces. Free-tier credits are lifetime and do not
+          reset.
+        </p>
+        <p className="mt-3">
+          <strong className="text-foreground">Web.</strong> Subscriptions on{" "}
+          {siteUrl.replace(/^https?:\/\//, "")} are billed through Stripe. You
+          can manage or cancel your subscription in Settings → Usage → Manage
+          subscription (Stripe Customer Portal).
+        </p>
+        <p className="mt-3">
+          <strong className="text-foreground">Native app (iOS / Android).</strong>{" "}
+          Subscriptions in the SlidePress mobile app are sold as in-app purchases
+          through the Apple App Store or Google Play Store. Payment is charged to
+          your store account. Subscriptions renew automatically unless you cancel
+          at least 24 hours before the end of the current period. You can manage
+          or cancel in your device&apos;s subscription settings (App Store or
+          Play Store). Use <strong className="text-foreground">Restore purchases</strong>{" "}
+          in Settings → Usage if you reinstall the app or switch devices.
+        </p>
+        <p className="mt-3">
+          Upgrading, downgrading, or canceling takes effect per the billing
+          platform&apos;s rules (Stripe, Apple, or Google). We do not refund
+          fees already charged; refund requests for in-app purchases must be
+          directed to Apple or Google per their policies.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-base font-semibold text-foreground">
           Beta & availability
         </h2>
         <p className="mt-3">
           SlidePress is in beta. The service may be unavailable, change without
-          notice, or include bugs. We provide the service &quot;as is&quot; to
-          the extent permitted by law.
+          notice, or include bugs. Subscription features and plan limits may
+          evolve; we will update these terms when material billing changes
+          occur. We provide the service &quot;as is&quot; to the extent permitted
+          by law.
         </p>
       </section>
 

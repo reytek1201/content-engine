@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
 };
 
-const LAST_UPDATED = "June 17, 2026";
+const LAST_UPDATED = "June 18, 2026";
 const CONTACT_EMAIL = "hello@slidepress.co";
 
 interface PrivacyPageProps {
@@ -60,8 +60,17 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           </li>
           <li>
             <strong className="text-foreground">Usage data</strong> — campaign
-            counts, slide regeneration counts, and narration usage to enforce
-            beta plan limits.
+            counts, slide regeneration counts, video and narration usage, and
+            credit balances to enforce your plan limits.
+          </li>
+          <li>
+            <strong className="text-foreground">Subscription &amp; billing</strong>{" "}
+            — your plan tier, subscription status, and billing period dates. On
+            the web, payments are processed by Stripe; we receive a customer ID
+            and subscription status, not your full card number. In the native
+            app, purchases are processed by Apple (iOS) or Google (Android) via
+            in-app purchase; we receive purchase and entitlement status through
+            RevenueCat. We do not store payment card or bank account details.
           </li>
           <li>
             <strong className="text-foreground">Device tokens (optional)</strong>{" "}
@@ -89,6 +98,10 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
             request.
           </li>
           <li>Enforce usage limits and improve reliability.</li>
+          <li>
+            Process subscriptions, apply plan entitlements, and manage billing
+            status across web and mobile.
+          </li>
           <li>Send optional push notifications in the native app.</li>
         </ul>
       </section>
@@ -101,7 +114,9 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           We use trusted processors to run SlidePress, including Supabase
           (database and auth), Vercel (hosting), Google Gemini (slide text),
           Fal.ai (image generation), ElevenLabs (text-to-speech / AI voice
-          narration, when you use those features), and Firebase Cloud Messaging
+          narration, when you use those features), Stripe (web subscriptions),
+          RevenueCat (mobile subscription status), Apple App Store and Google
+          Play (in-app purchases on native apps), and Firebase Cloud Messaging
           (push delivery, when enabled). Voiceover text is sent to ElevenLabs
           only when you preview or export narration. Processors handle data only
           to provide the service.
