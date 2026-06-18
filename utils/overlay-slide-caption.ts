@@ -1,4 +1,3 @@
-import sharp from "sharp";
 import { wrapCaptionText } from "@/utils/build-caption-srt";
 
 function escapeXml(text: string): string {
@@ -61,6 +60,8 @@ export async function overlayCaptionOnSlideImage(
   if (!svg) {
     return imageBuffer;
   }
+
+  const { default: sharp } = await import("sharp");
 
   const normalized = await sharp(imageBuffer)
     .resize(width, height, { fit: "cover", position: "centre" })
