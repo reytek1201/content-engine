@@ -7,6 +7,7 @@ import type { AspectRatio } from "@/types/campaign";
 import { requireFfmpegPath } from "@/utils/ffmpeg";
 import { VIDEO_EXPORT_FPS } from "@/utils/fal-video";
 import { getVideoDimensions } from "@/utils/video-dimensions";
+import { slideClipDurationForCompose } from "@/utils/video-compose-duration";
 
 const execFileAsync = promisify(execFile);
 
@@ -172,18 +173,24 @@ export async function composeSlidesToVideo(
       const imageBuffer = await downloadImage(slide.imageUrl);
       const imagePath = join(dir, `slide-${index}.jpg`);
       const clipPath = join(dir, `clip-${index}.mp4`);
+      const clipDuration = slideClipDurationForCompose(
+        slide.durationSeconds,
+        index,
+        slides.length,
+        crossfadeSeconds,
+      );
 
       await writeFile(imagePath, imageBuffer);
       await renderSlideClip(
         imagePath,
         clipPath,
-        slide.durationSeconds,
+        clipDuration,
         width,
         height,
       );
 
       clipPaths.push(clipPath);
-      durations.push(slide.durationSeconds);
+      durations.push(clipDuration);
     }
 
     const outputPath = join(dir, "composed.mp4");

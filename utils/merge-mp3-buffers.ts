@@ -53,8 +53,12 @@ export async function concatMp3Buffers(buffers: Buffer[]): Promise<Buffer> {
       "0",
       "-i",
       listPath,
-      "-c",
-      "copy",
+      "-c:a",
+      "libmp3lame",
+      "-b:a",
+      "192k",
+      "-ar",
+      "44100",
       outputPath,
     ]);
 
