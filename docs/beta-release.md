@@ -96,11 +96,11 @@ Then **rebuild** in Xcode / Android Studio (web deploy alone is not enough for n
 
 ## Store listing copy (draft)
 
-**Subtitle (iOS):** Topic to carousel slides in minutes
+**Subtitle (iOS):** Carousel slides & AI video in minutes
 
-**Short description (Play):** AI carousel campaigns — slide copy, images, and captions for social.
+**Short description (Play):** Turn a topic into carousel slides, AI narration, and Reel-ready video — no design skills needed.
 
-**Keywords:** carousel, slides, Instagram, marketing, AI, social media
+**Keywords:** carousel, reels, video, Instagram, TikTok, marketing, AI, social media
 
 ---
 

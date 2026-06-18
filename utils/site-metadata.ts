@@ -14,10 +14,10 @@ export const brandLogoSrc = "/brand/logo.png";
 export const brandLogoPath = "public/brand/logo.png";
 
 export const defaultDescription =
-  "Turn a topic into carousel slide copy, AI-generated images, and platform captions in minutes.";
+  "Describe your idea once — get carousel slides, AI narration, and Reel-ready video. No design tools required.";
 
 export const defaultTitle =
-  "SlidePress — Topic to post-ready carousel slides";
+  "SlidePress — Topic to carousel slides & AI video";
 
 /** App routes — keep out of search indexes. */
 export const appRobots: Metadata["robots"] = {

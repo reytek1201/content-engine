@@ -125,4 +125,120 @@
   .page-content {
     @apply mx-auto w-full max-w-3xl;
   }
+
+  .marketing-hero-section {
+    @apply relative overflow-hidden;
+  }
+
+  .marketing-store-badge {
+    @apply inline-flex min-w-[200px] items-center gap-3 rounded-xl border border-border bg-card/60 px-4 py-3 transition hover:border-ring/50 hover:bg-card/80;
+  }
+
+  .marketing-output-card {
+    @apply rounded-2xl border border-border bg-card/40 p-6 transition hover:border-primary/25 hover:bg-card/60;
+  }
+
+  .marketing-output-step {
+    @apply absolute right-4 top-4 text-4xl font-bold text-border;
+  }
+
+  .marketing-feature-mock {
+    @apply rounded-2xl border border-border bg-gradient-to-br from-card/80 to-background shadow-lg shadow-black/20;
+  }
+
+  .marketing-apps-panel {
+    @apply rounded-3xl border border-border bg-gradient-to-br from-card/50 to-background p-6 sm:p-10;
+  }
+
+  .marketing-apps-phone-ring {
+    @apply rounded-[2.5rem] bg-gradient-to-br from-primary/20 via-transparent to-ring/10 p-4;
+  }
+
+  .marketing-hero-visual {
+    @apply relative mx-auto aspect-[4/5] w-full max-w-[280px] sm:max-w-[320px];
+  }
+
+  .marketing-hero-glow {
+    @apply pointer-events-none absolute inset-0 rounded-full bg-primary/15 blur-3xl;
+  }
+
+  .marketing-slide-card {
+    @apply absolute flex w-[38%] flex-col rounded-xl border border-border bg-card/90 p-3 shadow-xl backdrop-blur-sm;
+    aspect-ratio: 4 / 5;
+  }
+
+  .marketing-slide-card-accent {
+    @apply border-primary/40;
+  }
+
+  .marketing-slide-card-shine {
+    @apply absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent;
+  }
+
+  .marketing-slide-fan-left {
+    @apply -left-[4%] top-[12%] z-0 -rotate-12 opacity-80;
+    animation: marketing-float-left 6s ease-in-out infinite;
+  }
+
+  .marketing-slide-fan-right {
+    @apply -right-[4%] top-[8%] z-0 rotate-12 opacity-70;
+    animation: marketing-float-right 6s ease-in-out 1.5s infinite;
+  }
+
+  .marketing-phone-frame {
+    @apply absolute left-1/2 top-1/2 z-10 w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] border-2 border-zinc-700 bg-zinc-900 p-1.5 shadow-2xl shadow-black/50;
+    aspect-ratio: 9 / 19;
+  }
+
+  .marketing-phone-frame-large {
+    @apply relative left-auto top-auto w-[220px] translate-x-0 translate-y-0 sm:w-[240px];
+  }
+
+  .marketing-phone-notch {
+    @apply absolute left-1/2 top-2 z-20 h-1.5 w-12 -translate-x-1/2 rounded-full bg-zinc-800;
+  }
+
+  .marketing-phone-screen {
+    @apply h-full w-full overflow-hidden rounded-[1.4rem] bg-zinc-950;
+  }
+
+  .marketing-phone-placeholder {
+    @apply flex h-full flex-col justify-center p-3;
+    background: linear-gradient(
+      180deg,
+      rgba(24, 24, 27, 1) 0%,
+      rgba(9, 9, 11, 1) 100%
+    );
+  }
+
+  .marketing-phone-placeholder-slide {
+    @apply rounded-lg border border-border/80 bg-card/60 p-2.5;
+  }
+}
+
+@keyframes marketing-float-left {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-12deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(-12deg);
+  }
+}
+
+@keyframes marketing-float-right {
+  0%,
+  100% {
+    transform: translateY(0) rotate(12deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(12deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-slide-fan-left,
+  .marketing-slide-fan-right {
+    animation: none;
+  }
 }

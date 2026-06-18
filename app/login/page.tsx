@@ -340,7 +340,7 @@ function LoginForm() {
               Sign in to SlidePress
             </h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Create carousel campaigns with AI slide copy, images, and captions.
+              Create carousel campaigns with AI slides, captions, narration, and video.
             </p>
           </header>
 

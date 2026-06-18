@@ -1,55 +1,32 @@
 import BrandLogo from "@/app/components/brand-logo";
+import MarketingApps from "@/app/components/marketing/marketing-apps";
+import MarketingFeatures from "@/app/components/marketing/marketing-features";
+import MarketingHero from "@/app/components/marketing/marketing-hero";
+import MarketingOutputs from "@/app/components/marketing/marketing-outputs";
+import MarketingProTeaser from "@/app/components/marketing/marketing-pro-teaser";
+import MarketingSteps from "@/app/components/marketing/marketing-steps";
 import Link from "next/link";
 import {
   defaultDescription,
   getSiteUrl,
   siteName,
 } from "@/utils/site-metadata";
+import {
+  getAppStoreUrl,
+  getPlayStoreUrl,
+} from "@/utils/app-store-links";
 
-const FEATURES = [
-  {
-    title: "Slide copy",
-    description:
-      "Gemini drafts headlines, voiceover, and image prompts from your topic.",
-  },
-  {
-    title: "AI visuals",
-    description:
-      "Fal generates on-brand carousel images with text baked into each slide.",
-  },
-  {
-    title: "Platform captions",
-    description:
-      "TikTok, Instagram, and YouTube Shorts copy — hooks, hashtags, and titles.",
-  },
-  {
-    title: "Export ready",
-    description:
-      "Download a zip of slides plus captions.txt, or grab images one at a time.",
-  },
-] as const;
+function buildLandingJsonLd() {
+  const siteUrl = getSiteUrl();
+  const appStoreUrl = getAppStoreUrl();
+  const playStoreUrl = getPlayStoreUrl();
 
-const STEPS = [
-  "Enter a topic",
-  "Generate slides & images",
-  "Copy captions or download zip",
-  "Post to social",
-] as const;
-
-const landingJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebSite",
-      name: siteName,
-      url: getSiteUrl(),
-      description: defaultDescription,
-    },
+  const applications: Record<string, unknown>[] = [
     {
       "@type": "SoftwareApplication",
       name: siteName,
       description: defaultDescription,
-      url: getSiteUrl(),
+      url: siteUrl,
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       offers: {
@@ -58,119 +35,113 @@ const landingJsonLd = {
         priceCurrency: "USD",
       },
     },
-  ],
-};
+  ];
+
+  if (appStoreUrl) {
+    applications.push({
+      "@type": "SoftwareApplication",
+      name: `${siteName} for iOS`,
+      operatingSystem: "iOS",
+      downloadUrl: appStoreUrl,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    });
+  }
+
+  if (playStoreUrl) {
+    applications.push({
+      "@type": "SoftwareApplication",
+      name: `${siteName} for Android`,
+      operatingSystem: "Android",
+      downloadUrl: playStoreUrl,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    });
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        name: siteName,
+        url: siteUrl,
+        description: defaultDescription,
+      },
+      ...applications,
+    ],
+  };
+}
 
 export default function MarketingLanding() {
+  const landingJsonLd = buildLandingJsonLd();
+
   return (
     <div className="min-h-full bg-background text-foreground">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd) }}
       />
+
       <header className="page-shell flex items-center justify-between py-5 md:py-6">
         <BrandLogo href="/" />
-        <Link
-          href="/login"
-          className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground"
-        >
-          Sign in
-        </Link>
+        <nav className="flex items-center gap-1 sm:gap-2">
+          <a
+            href="#download"
+            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground sm:inline"
+          >
+            Download app
+          </a>
+          <Link
+            href="/login"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground"
+          >
+            Sign in
+          </Link>
+          <Link href="/login" className="btn-primary hidden py-2 sm:inline-flex">
+            Start free
+          </Link>
+        </nav>
       </header>
 
       <main>
-        <section className="page-shell pb-16 pt-8 md:pb-24 md:pt-12">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="brand-kicker">Carousel content in minutes</p>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-              Turn a topic into post-ready slides
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-              SlidePress writes your carousel copy, generates AI slide images with
-              headlines, and drafts platform captions — so you can ship organic
-              social content without juggling five tools.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="/login" className="btn-primary w-full sm:w-auto">
-                Get started free
-              </Link>
-              <Link
-                href="/login"
-                className="btn-secondary w-full sm:w-auto"
-              >
-                Sign in
-              </Link>
-            </div>
-          </div>
-        </section>
+        <MarketingHero />
+        <MarketingOutputs />
+        <MarketingFeatures />
+        <MarketingSteps />
+        <MarketingApps />
+        <MarketingProTeaser />
+      </main>
 
-        <section className="border-y border-border bg-card/20">
-          <div className="page-shell py-14 md:py-16">
-            <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              What you get
-            </h2>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2">
-              {FEATURES.map((feature) => (
-                <div
-                  key={feature.title}
-                  className="rounded-2xl border border-border bg-card/40 p-5 sm:p-6"
-                >
-                  <h3 className="text-base font-semibold text-foreground">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="page-shell py-14 md:py-16">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              Idea to publish in four steps
-            </h2>
-            <ol className="mt-8 space-y-4 text-left">
-              {STEPS.map((step, index) => (
-                <li
-                  key={step}
-                  className="flex items-start gap-4 rounded-xl border border-border bg-card/30 px-4 py-3 sm:px-5 sm:py-4"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-sm font-semibold text-primary">
-                    {index + 1}
-                  </span>
-                  <span className="pt-1 text-sm font-medium text-secondary-foreground sm:text-base">
-                    {step}
-                  </span>
-                </li>
-              ))}
-            </ol>
-            <Link href="/login" className="btn-primary mt-10 inline-flex">
-              Start your first campaign
-            </Link>
-          </div>
-        </section>
-
-        <footer className="border-t border-border">
-          <div className="page-shell py-8 text-center text-xs text-muted-foreground">
-            <p>SlidePress — slidepress.co</p>
-            <p className="mt-2">
-              <Link
-                href="/privacy"
+      <footer className="border-t border-border">
+        <div className="page-shell py-10">
+          <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
+            <BrandLogo href="/" />
+            <p className="text-center text-xs text-muted-foreground sm:text-right">
+              Carousel slides, AI narration &amp; video for creators
+              <br />
+              <a
+                href="mailto:hello@slidepress.co"
                 className="underline-offset-2 hover:underline"
               >
-                Privacy
-              </Link>
-              {" · "}
-              <Link href="/terms" className="underline-offset-2 hover:underline">
-                Terms
-              </Link>
+                hello@slidepress.co
+              </a>
             </p>
           </div>
-        </footer>
-      </main>
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            <Link
+              href="/privacy"
+              className="underline-offset-2 hover:underline"
+            >
+              Privacy
+            </Link>
+            {" · "}
+            <Link href="/terms" className="underline-offset-2 hover:underline">
+              Terms
+            </Link>
+            {" · "}
+            <span>© {new Date().getFullYear()} SlidePress</span>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

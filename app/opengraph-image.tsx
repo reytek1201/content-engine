@@ -7,7 +7,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-export const alt = `${siteName} — Topic to post-ready carousel slides`;
+export const alt = `${siteName} — Carousel slides & AI-narrated video`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -74,7 +74,7 @@ export default async function Image() {
               color: "#f97316",
             }}
           >
-            Carousel content in minutes
+            Carousel & video in minutes
           </p>
           <h1
             style={{
@@ -87,7 +87,7 @@ export default async function Image() {
               color: "#f4f4f5",
             }}
           >
-            Turn a topic into post-ready slides
+            Slides, narration & Reel-ready video
           </h1>
           <p
             style={{
@@ -111,7 +111,7 @@ export default async function Image() {
           }}
         >
           <div style={{ display: "flex", gap: 10 }}>
-            {["Slide copy", "AI visuals", "Captions"].map((label) => (
+            {["Slides", "AI voice", "Video"].map((label) => (
               <div
                 key={label}
                 style={{
