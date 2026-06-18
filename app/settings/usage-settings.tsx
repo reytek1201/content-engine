@@ -337,43 +337,55 @@ function NativeManageSubscriptionButton() {
   );
 }
 
-/** Restore purchases link (native only). */
-function NativeRestoreButton() {
+/** Manage + restore actions grouped for the plan header (native IAP). */
+function NativeSubscriptionActions({
+  showManage,
+  restoreMessage,
+  onRestoreMessage,
+}: {
+  showManage: boolean;
+  restoreMessage: string | null;
+  onRestoreMessage: (message: string | null) => void;
+}) {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
   async function handleRestore() {
     setLoading(true);
-    setMessage(null);
+    onRestoreMessage(null);
 
     try {
       const { restoreRCPurchases } = await import("@/utils/revenuecat");
       const result = await restoreRCPurchases();
 
       if (result.success) {
-        setMessage("Purchases restored. Reloading…");
+        onRestoreMessage("Purchases restored. Reloading…");
         setTimeout(() => window.location.reload(), 1500);
       } else {
-        setMessage(result.error ?? "Nothing to restore");
+        onRestoreMessage(result.error ?? "Nothing to restore");
       }
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Restore failed");
+      onRestoreMessage(err instanceof Error ? err.message : "Restore failed");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div>
-      <button
-        type="button"
-        onClick={() => void handleRestore()}
-        disabled={loading}
-        className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-60"
-      >
-        {loading ? "Restoring…" : "Restore purchases"}
-      </button>
-      {message && <p className="mt-1 text-xs text-muted-foreground">{message}</p>}
+    <div className="flex flex-col items-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
+        {showManage ? <NativeManageSubscriptionButton /> : null}
+        <button
+          type="button"
+          onClick={() => void handleRestore()}
+          disabled={loading}
+          className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? "Restoring…" : "Restore purchases"}
+        </button>
+      </div>
+      {restoreMessage ? (
+        <p className="text-xs text-muted-foreground">{restoreMessage}</p>
+      ) : null}
     </div>
   );
 }
@@ -386,6 +398,7 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
   const [usageError, setUsageError] = useState<string | null>(null);
+  const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
   const isNative = isNativeAppRuntime();
 
   useEffect(() => {
@@ -469,11 +482,15 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
                 </span>
               )}
             </div>
-            {!usage.isLifetimeTier && (
-              isNative
-                ? <NativeManageSubscriptionButton />
-                : <ManageSubscriptionButton />
-            )}
+            {isNative ? (
+              <NativeSubscriptionActions
+                showManage={!usage.isLifetimeTier}
+                restoreMessage={restoreMessage}
+                onRestoreMessage={setRestoreMessage}
+              />
+            ) : !usage.isLifetimeTier ? (
+              <ManageSubscriptionButton />
+            ) : null}
           </div>
 
           {/* Credit tiles */}
@@ -592,11 +609,6 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
                   );
                 })}
               </div>
-              {isNative && (
-                <div className="mt-4">
-                  <NativeRestoreButton />
-                </div>
-              )}
             </div>
           )}
 
@@ -650,7 +662,6 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
                   </>
                 )}
               </p>
-              {isNative && <NativeRestoreButton />}
             </div>
           )}
         </>
