@@ -3,6 +3,7 @@
 import CampaignCaptionsAccordion from "@/app/campaign/[id]/campaign-captions-accordion";
 import CampaignExportPanel from "@/app/campaign/[id]/campaign-export-panel";
 import CampaignNarrationPanel from "@/app/campaign/[id]/campaign-narration-panel";
+import CampaignVideoLockedPanel from "@/app/campaign/[id]/campaign-video-locked-panel";
 import CampaignVideoPanel from "@/app/campaign/[id]/campaign-video-panel";
 import type { PlatformCaption } from "@/types/captions";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
@@ -14,7 +15,11 @@ interface CampaignPublishPanelProps {
   sortedCaptions: PlatformCaption[];
   imagesComplete: boolean;
   hasVoiceoverScripts: boolean;
-  canExportVideo: boolean;
+  videoExportReady: boolean;
+  hasVideoCredits: boolean;
+  videoCreditsKnown: boolean;
+  videoPlanLabel: string;
+  videoTier: string;
   canGenerateCaptions: boolean;
   isGeneratingCaptions: boolean;
   captionsMessage: string | null;
@@ -56,7 +61,11 @@ export default function CampaignPublishPanel({
   sortedCaptions,
   imagesComplete,
   hasVoiceoverScripts,
-  canExportVideo,
+  videoExportReady,
+  hasVideoCredits,
+  videoCreditsKnown,
+  videoPlanLabel,
+  videoTier,
   canGenerateCaptions,
   isGeneratingCaptions,
   captionsMessage,
@@ -113,9 +122,9 @@ export default function CampaignPublishPanel({
         />
       )}
 
-      {canExportVideo && (
+      {videoExportReady && hasVideoCredits && (
         <CampaignVideoPanel
-          canExportVideo={canExportVideo}
+          canExportVideo
           aspectRatioLabel={aspectRatioLabel}
           disabled={disabled}
           isExportingVideo={isExportingVideo}
@@ -128,6 +137,13 @@ export default function CampaignPublishPanel({
           onPresetChange={onVideoPresetChange}
           onVoiceQualityChange={onVoiceQualityChange}
           onExportVideo={onExportVideo}
+        />
+      )}
+
+      {videoExportReady && videoCreditsKnown && !hasVideoCredits && (
+        <CampaignVideoLockedPanel
+          planLabel={videoPlanLabel}
+          tier={videoTier}
         />
       )}
 

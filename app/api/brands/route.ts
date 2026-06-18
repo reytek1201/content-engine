@@ -1,6 +1,10 @@
 import type { Brand } from "@/types/brand";
 import { CreateBrandSchema } from "@/utils/campaign-generation";
 import { ensureDefaultBrand, listUserBrands } from "@/utils/brands-server";
+import {
+  assertBrandLimit,
+  isUsageLimitError,
+} from "@/utils/usage-limits";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -65,6 +69,7 @@ export async function POST(request: Request) {
     }
 
     await ensureDefaultBrand(supabase, user.id);
+    await assertBrandLimit(supabase, user.id);
 
     const { data: brand, error } = await supabase
       .from("brands")
@@ -88,6 +93,10 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
+    if (isUsageLimitError(error)) {
+      return NextResponse.json(error.toJSON(), { status: 429 });
+    }
+
     const message =
       error instanceof Error ? error.message : "Unexpected server error";
 

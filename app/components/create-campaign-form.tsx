@@ -653,12 +653,12 @@ export default function CreateCampaignForm({
             role="status"
             className="mt-6 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100"
           >
-            You&apos;ve used all {usage.limits.campaignsPerMonth} beta campaigns
-            this month. Limits reset on the 1st — see{" "}
+            You&apos;ve used all {usage.limits.campaigns} campaigns on your{" "}
+            {usage.planLabel} plan.{" "}
             <Link href="/settings" className="font-medium underline underline-offset-2">
-              Settings
+              View usage
             </Link>{" "}
-            for usage.
+            or upgrade to get more.
           </div>
         )}
 

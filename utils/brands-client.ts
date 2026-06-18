@@ -26,6 +26,7 @@ export async function createBrand(name: string): Promise<Brand> {
     success: boolean;
     brand?: Brand;
     error?: string;
+    code?: string;
   };
 
   if (!response.ok || !data.success || !data.brand) {

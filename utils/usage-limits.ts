@@ -1,13 +1,36 @@
 import type { UsageSummary } from "@/types/usage";
+import { getPlanLabel, getPlanLimits, isLifetimeTier } from "@/utils/plan-limits";
+import type { Tier } from "@/utils/plan-limits";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/utils/supabase/admin";
 
+// ─── Date helpers (re-exported for COGS tracking in utils/tts/record-usage.ts) ─
+
+export function getStartOfMonth(date = new Date()): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+// ─── Error class ──────────────────────────────────────────────────────────────
+
 export class UsageLimitError extends Error {
   readonly code = "LIMIT_EXCEEDED" as const;
+  readonly tier: string;
+  readonly upgradeUrl = "/settings/usage";
 
-  constructor(message: string) {
+  constructor(message: string, tier: string = "free") {
     super(message);
     this.name = "UsageLimitError";
+    this.tier = tier;
+  }
+
+  toJSON() {
+    return {
+      success: false,
+      error: this.message,
+      code: this.code,
+      tier: this.tier,
+      upgradeUrl: this.upgradeUrl,
+    };
   }
 }
 
@@ -15,219 +38,141 @@ export function isUsageLimitError(error: unknown): error is UsageLimitError {
   return error instanceof UsageLimitError;
 }
 
-export function getStartOfMonth(date = new Date()): Date {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
+// ─── Internal helper ─────────────────────────────────────────────────────────
+// Fetches the usage_balances row for a user. Callers pass the user's authenticated
+// client so RLS select-own policy is satisfied.
+
+interface BalanceRow {
+  tier: string;
+  campaign_credits_remaining: number;
+  regeneration_credits_remaining: number;
+  video_credits_remaining: number;
+  tts_preview_credits_remaining: number;
+  audio_export_credits_remaining: number;
+  current_period_end: string | null;
 }
 
-export function getNextMonthStart(date = new Date()): Date {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+async function fetchBalance(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<BalanceRow> {
+  const { data, error } = await supabase
+    .from("usage_balances")
+    .select(
+      "tier, campaign_credits_remaining, regeneration_credits_remaining, video_credits_remaining, tts_preview_credits_remaining, audio_export_credits_remaining, current_period_end",
+    )
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !data) {
+    throw new Error("Failed to load usage balance");
+  }
+
+  return data as BalanceRow;
 }
 
-export function getBetaLimits() {
-  const campaignsPerMonth = parseInt(
-    process.env.BETA_CAMPAIGNS_PER_MONTH ?? "10",
-    10
-  );
-  const slideRegenerationsPerMonth = parseInt(
-    process.env.BETA_REGENERATIONS_PER_MONTH ?? "30",
-    10
-  );
-  const ttsPreviewsPerMonth = parseInt(
-    process.env.BETA_TTS_PREVIEWS_PER_MONTH ?? "30",
-    10
-  );
-  const audioExportsPerMonth = parseInt(
-    process.env.BETA_AUDIO_EXPORTS_PER_MONTH ?? "5",
-    10
-  );
-  const videoExportsPerMonth = parseInt(
-    process.env.BETA_VIDEO_EXPORTS_PER_MONTH ?? "3",
-    10
-  );
-
-  return {
-    campaignsPerMonth: Number.isFinite(campaignsPerMonth)
-      ? campaignsPerMonth
-      : 10,
-    slideRegenerationsPerMonth: Number.isFinite(slideRegenerationsPerMonth)
-      ? slideRegenerationsPerMonth
-      : 30,
-    ttsPreviewsPerMonth: Number.isFinite(ttsPreviewsPerMonth)
-      ? ttsPreviewsPerMonth
-      : 30,
-    audioExportsPerMonth: Number.isFinite(audioExportsPerMonth)
-      ? audioExportsPerMonth
-      : 5,
-    videoExportsPerMonth: Number.isFinite(videoExportsPerMonth)
-      ? videoExportsPerMonth
-      : 3,
-  };
-}
-
-export function campaignLimitMessage(limit: number): string {
-  return `Beta limit: ${limit} campaigns per month. Resets on the 1st.`;
-}
-
-export function regenerationLimitMessage(limit: number): string {
-  return `Beta limit: ${limit} slide regenerations per month. Resets on the 1st.`;
-}
-
-export function ttsPreviewLimitMessage(limit: number): string {
-  return `Beta limit: ${limit} voice previews per month. Resets on the 1st.`;
-}
-
-export function audioExportLimitMessage(limit: number): string {
-  return `Beta limit: ${limit} narration exports per month. Resets on the 1st.`;
-}
-
-export function videoExportLimitMessage(limit: number): string {
-  return `Beta limit: ${limit} video exports per month. Resets on the 1st.`;
-}
+// ─── Summary ─────────────────────────────────────────────────────────────────
 
 export async function getUsageSummary(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
 ): Promise<UsageSummary> {
-  const limits = getBetaLimits();
-  const startOfMonth = getStartOfMonth();
-
-  const { count: campaignsThisMonth, error: campaignCountError } = await supabase
-    .from("usage_events")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("event_type", "campaign_created")
-    .gte("created_at", startOfMonth.toISOString());
-
-  if (campaignCountError) {
-    throw new Error("Failed to load campaign usage");
-  }
-
-  const { count: totalCampaigns, error: totalError } = await supabase
-    .from("campaigns")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  if (totalError) {
-    throw new Error("Failed to load campaign usage");
-  }
-
-  const { count: slideRegenerationsThisMonth, error: regenError } =
-    await supabase
-      .from("usage_events")
+  const [balance, campaignResult, brandResult] = await Promise.all([
+    fetchBalance(supabase, userId),
+    supabase
+      .from("campaigns")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("event_type", "slide_regenerated")
-      .gte("created_at", startOfMonth.toISOString());
+      .eq("user_id", userId),
+    supabase
+      .from("brands")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId),
+  ]);
 
-  if (regenError) {
-    throw new Error("Failed to load regeneration usage");
-  }
+  const tier = balance.tier as Tier;
+  const planLimits = getPlanLimits(tier);
+  const brandCount = brandResult.count ?? 0;
+  const brandLimit = planLimits.brands;
 
-  const { count: ttsPreviewsThisMonth, error: ttsPreviewError } = await supabase
-    .from("usage_events")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("event_type", "tts_preview")
-    .gte("created_at", startOfMonth.toISOString());
-
-  if (ttsPreviewError) {
-    throw new Error("Failed to load TTS preview usage");
-  }
-
-  const { count: audioExportsThisMonth, error: audioExportError } = await supabase
-    .from("usage_events")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("event_type", "tts_export")
-    .gte("created_at", startOfMonth.toISOString());
-
-  if (audioExportError) {
-    throw new Error("Failed to load audio export usage");
-  }
-
-  const { count: videoExportsThisMonth, error: videoExportError } = await supabase
-    .from("usage_events")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("event_type", "video_export")
-    .gte("created_at", startOfMonth.toISOString());
-
-  if (videoExportError) {
-    throw new Error("Failed to load video export usage");
-  }
-
-  const campaignsUsed = campaignsThisMonth ?? 0;
-  const regenerationsUsed = slideRegenerationsThisMonth ?? 0;
-  const ttsPreviewsUsed = ttsPreviewsThisMonth ?? 0;
-  const audioExportsUsed = audioExportsThisMonth ?? 0;
-  const videoExportsUsed = videoExportsThisMonth ?? 0;
-
-  const remainingCampaigns = Math.max(
-    0,
-    limits.campaignsPerMonth - campaignsUsed
-  );
-  const remainingRegenerations = Math.max(
-    0,
-    limits.slideRegenerationsPerMonth - regenerationsUsed
-  );
-  const remainingTtsPreviews = Math.max(
-    0,
-    limits.ttsPreviewsPerMonth - ttsPreviewsUsed
-  );
-  const remainingAudioExports = Math.max(
-    0,
-    limits.audioExportsPerMonth - audioExportsUsed
-  );
-  const remainingVideoExports = Math.max(
-    0,
-    limits.videoExportsPerMonth - videoExportsUsed
-  );
+  const remaining = {
+    campaigns: balance.campaign_credits_remaining,
+    regenerations: balance.regeneration_credits_remaining,
+    videos: balance.video_credits_remaining,
+    ttsPreviews: balance.tts_preview_credits_remaining,
+    audioExports: balance.audio_export_credits_remaining,
+  };
 
   return {
-    campaignsThisMonth: campaignsUsed,
-    totalCampaigns: totalCampaigns ?? 0,
-    slideRegenerationsThisMonth: regenerationsUsed,
-    ttsPreviewsThisMonth: ttsPreviewsUsed,
-    audioExportsThisMonth: audioExportsUsed,
-    videoExportsThisMonth: videoExportsUsed,
-    limits,
-    remaining: {
-      campaigns: remainingCampaigns,
-      slideRegenerations: remainingRegenerations,
-      ttsPreviews: remainingTtsPreviews,
-      audioExports: remainingAudioExports,
-      videoExports: remainingVideoExports,
+    tier,
+    planLabel: getPlanLabel(tier),
+    remaining,
+    limits: {
+      campaigns: planLimits.campaigns,
+      regenerations: planLimits.regenerations,
+      videos: planLimits.videos,
+      ttsPreviews: planLimits.ttsPreviews,
+      audioExports: planLimits.audioExports,
+      brands: brandLimit,
     },
-    canCreateCampaign: remainingCampaigns > 0,
-    canRegenerateSlide: remainingRegenerations > 0,
-    canPreviewTts: remainingTtsPreviews > 0,
-    canExportAudio: remainingAudioExports > 0,
-    canExportVideo: remainingVideoExports > 0,
-    planLabel: "Early access",
-    resetsAt: getNextMonthStart().toISOString(),
+    canCreateCampaign: remaining.campaigns > 0,
+    canRegenerateSlide: remaining.regenerations > 0,
+    canExportVideo: remaining.videos > 0,
+    canPreviewTts: remaining.ttsPreviews > 0,
+    canExportAudio: remaining.audioExports > 0,
+    canCreateBrand: brandCount < brandLimit,
+    brands: {
+      count: brandCount,
+      limit: brandLimit,
+      canCreate: brandCount < brandLimit,
+    },
+    resetsAt: balance.current_period_end ?? null,
+    isLifetimeTier: isLifetimeTier(tier),
+    totalCampaigns: campaignResult.count ?? 0,
   };
 }
 
+// ─── Assert helpers ───────────────────────────────────────────────────────────
+// Each assert does a single targeted read from usage_balances. Throws UsageLimitError
+// (with tier info) if the balance is exhausted.
+
 export async function assertCampaignLimit(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
 ): Promise<void> {
-  const usage = await getUsageSummary(supabase, userId);
+  const balance = await fetchBalance(supabase, userId);
 
-  if (!usage.canCreateCampaign) {
-    throw new UsageLimitError(campaignLimitMessage(usage.limits.campaignsPerMonth));
+  if (balance.campaign_credits_remaining <= 0) {
+    throw new UsageLimitError(
+      `Campaign limit reached for your ${getPlanLabel(balance.tier as Tier)} plan.`,
+      balance.tier,
+    );
   }
 }
 
 export async function assertRegenerationLimit(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
 ): Promise<void> {
-  const usage = await getUsageSummary(supabase, userId);
+  const balance = await fetchBalance(supabase, userId);
 
-  if (!usage.canRegenerateSlide) {
+  if (balance.regeneration_credits_remaining <= 0) {
     throw new UsageLimitError(
-      regenerationLimitMessage(usage.limits.slideRegenerationsPerMonth)
+      `Slide regeneration limit reached for your ${getPlanLabel(balance.tier as Tier)} plan.`,
+      balance.tier,
+    );
+  }
+}
+
+export async function assertVideoExportLimit(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<void> {
+  const balance = await fetchBalance(supabase, userId);
+
+  if (balance.video_credits_remaining <= 0) {
+    throw new UsageLimitError(
+      `Video export limit reached for your ${getPlanLabel(balance.tier as Tier)} plan.`,
+      balance.tier,
     );
   }
 }
@@ -236,14 +181,115 @@ export async function assertTtsPreviewLimit(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<void> {
-  const usage = await getUsageSummary(supabase, userId);
+  const balance = await fetchBalance(supabase, userId);
 
-  if (!usage.canPreviewTts) {
+  if (balance.tts_preview_credits_remaining <= 0) {
     throw new UsageLimitError(
-      ttsPreviewLimitMessage(usage.limits.ttsPreviewsPerMonth),
+      `Voice preview limit reached for your ${getPlanLabel(balance.tier as Tier)} plan.`,
+      balance.tier,
     );
   }
 }
+
+export async function assertTtsAudioExportLimit(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<void> {
+  const balance = await fetchBalance(supabase, userId);
+
+  if (balance.audio_export_credits_remaining <= 0) {
+    throw new UsageLimitError(
+      `Narration export limit reached for your ${getPlanLabel(balance.tier as Tier)} plan.`,
+      balance.tier,
+    );
+  }
+}
+
+export async function assertBrandLimit(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<void> {
+  const balance = await fetchBalance(supabase, userId);
+  const tier = balance.tier as Tier;
+  const brandLimit = getPlanLimits(tier).brands;
+
+  const { count, error } = await supabase
+    .from("brands")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error("Failed to load brand count");
+  }
+
+  if ((count ?? 0) >= brandLimit) {
+    throw new UsageLimitError(
+      `Brand limit reached for your ${getPlanLabel(tier)} plan (${brandLimit} max).`,
+      balance.tier,
+    );
+  }
+}
+
+// ─── Credit consumption ───────────────────────────────────────────────────────
+// All record* functions call consume_credit() atomically via the admin client,
+// then insert an audit row into usage_events.
+
+async function consumeCredit(
+  userId: string,
+  creditType: "campaign" | "regeneration" | "video" | "tts_preview" | "audio_export",
+): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("consume_credit", {
+    p_user_id: userId,
+    p_credit: creditType,
+  });
+
+  if (error) {
+    if (error.message.includes("credit_exhausted")) {
+      throw new UsageLimitError(
+        `${creditType} credit exhausted (concurrent request).`,
+        "free",
+      );
+    }
+    throw new Error(`Failed to consume ${creditType} credit: ${error.message}`);
+  }
+}
+
+export async function recordCampaignCreation(userId: string): Promise<void> {
+  await consumeCredit(userId, "campaign");
+
+  const admin = createAdminClient();
+  await admin.from("usage_events").insert({
+    user_id: userId,
+    event_type: "campaign_created",
+  });
+}
+
+export async function recordSlideRegeneration(userId: string): Promise<void> {
+  await consumeCredit(userId, "regeneration");
+
+  const admin = createAdminClient();
+  await admin.from("usage_events").insert({
+    user_id: userId,
+    event_type: "slide_regenerated",
+  });
+}
+
+export async function recordVideoExport(
+  userId: string,
+  metadata: RecordVideoExportMetadata,
+): Promise<void> {
+  await consumeCredit(userId, "video");
+
+  const admin = createAdminClient();
+  await admin.from("usage_events").insert({
+    user_id: userId,
+    event_type: "video_export",
+    metadata,
+  });
+}
+
+// ─── TTS record functions ──────────────────────────────────────────────────────
 
 export interface RecordTtsPreviewMetadata {
   campaignId: string;
@@ -257,29 +303,14 @@ export async function recordTtsPreview(
   userId: string,
   metadata: RecordTtsPreviewMetadata,
 ): Promise<void> {
-  const supabase = createAdminClient();
-  const { error } = await supabase.from("usage_events").insert({
+  await consumeCredit(userId, "tts_preview");
+
+  const admin = createAdminClient();
+  await admin.from("usage_events").insert({
     user_id: userId,
     event_type: "tts_preview",
     metadata,
   });
-
-  if (error) {
-    throw new Error("Failed to record TTS preview");
-  }
-}
-
-export async function assertTtsAudioExportLimit(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<void> {
-  const usage = await getUsageSummary(supabase, userId);
-
-  if (!usage.canExportAudio) {
-    throw new UsageLimitError(
-      audioExportLimitMessage(usage.limits.audioExportsPerMonth),
-    );
-  }
 }
 
 export interface RecordTtsAudioExportMetadata {
@@ -293,30 +324,17 @@ export async function recordTtsAudioExport(
   userId: string,
   metadata: RecordTtsAudioExportMetadata,
 ): Promise<void> {
-  const supabase = createAdminClient();
-  const { error } = await supabase.from("usage_events").insert({
+  await consumeCredit(userId, "audio_export");
+
+  const admin = createAdminClient();
+  await admin.from("usage_events").insert({
     user_id: userId,
     event_type: "tts_export",
     metadata,
   });
-
-  if (error) {
-    throw new Error("Failed to record audio export");
-  }
 }
 
-export async function assertVideoExportLimit(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<void> {
-  const usage = await getUsageSummary(supabase, userId);
-
-  if (!usage.canExportVideo) {
-    throw new UsageLimitError(
-      videoExportLimitMessage(usage.limits.videoExportsPerMonth),
-    );
-  }
-}
+// ─── Video export metadata type ───────────────────────────────────────────────
 
 export interface RecordVideoExportMetadata {
   campaignId: string;
@@ -324,44 +342,4 @@ export interface RecordVideoExportMetadata {
   persona: string;
   slideCount: number;
   charCount: number;
-}
-
-export async function recordVideoExport(
-  userId: string,
-  metadata: RecordVideoExportMetadata,
-): Promise<void> {
-  const supabase = createAdminClient();
-  const { error } = await supabase.from("usage_events").insert({
-    user_id: userId,
-    event_type: "video_export",
-    metadata,
-  });
-
-  if (error) {
-    throw new Error("Failed to record video export");
-  }
-}
-
-export async function recordSlideRegeneration(userId: string): Promise<void> {
-  const supabase = createAdminClient();
-  const { error } = await supabase.from("usage_events").insert({
-    user_id: userId,
-    event_type: "slide_regenerated",
-  });
-
-  if (error) {
-    throw new Error("Failed to record slide regeneration");
-  }
-}
-
-export async function recordCampaignCreation(userId: string): Promise<void> {
-  const supabase = createAdminClient();
-  const { error } = await supabase.from("usage_events").insert({
-    user_id: userId,
-    event_type: "campaign_created",
-  });
-
-  if (error) {
-    throw new Error("Failed to record campaign creation");
-  }
 }

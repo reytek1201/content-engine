@@ -207,10 +207,7 @@ export async function POST(request: Request) {
     }
 
     if (isUsageLimitError(error)) {
-      return NextResponse.json(
-        { success: false, error: error.message, code: error.code },
-        { status: 429 },
-      );
+      return NextResponse.json(error.toJSON(), { status: 429 });
     }
 
     if (isRateLimitError(error)) {

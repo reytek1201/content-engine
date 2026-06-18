@@ -212,6 +212,19 @@ export async function POST(request: Request) {
 
     exportId = exportRow.id;
 
+    const estimatedCharCount = slidesForExport.reduce(
+      (sum, slide) => sum + (slide.voiceover_script?.trim().length ?? 0),
+      0,
+    );
+
+    await recordVideoExport(user.id, {
+      campaignId,
+      exportId: exportRow.id,
+      persona,
+      slideCount: slidesForExport.length,
+      charCount: estimatedCharCount,
+    });
+
     const prepared = await prepareCampaignVideo({
       slides: slidesForExport,
       persona,
@@ -244,14 +257,6 @@ export async function POST(request: Request) {
       throw new Error("Failed to update export record with compose metadata");
     }
 
-    await recordVideoExport(user.id, {
-      campaignId,
-      exportId: exportRow.id,
-      persona,
-      slideCount: prepared.slideCount,
-      charCount: prepared.totalChars,
-    });
-
     return NextResponse.json({
       success: true,
       exportId,
@@ -273,10 +278,7 @@ export async function POST(request: Request) {
     }
 
     if (isUsageLimitError(error)) {
-      return NextResponse.json(
-        { success: false, error: error.message, code: error.code },
-        { status: 429 },
-      );
+      return NextResponse.json(error.toJSON(), { status: 429 });
     }
 
     if (isRateLimitError(error)) {

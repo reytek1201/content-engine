@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/client";
 import type { AspectRatio, Campaign, Slide, SlideImage } from "@/types/campaign";
 import type { PlatformCaption } from "@/types/captions";
+import type { UsageSummary } from "@/types/usage";
 import {
   formatAllCaptionsForCopy,
   formatCaptionForCopy,
@@ -145,6 +146,8 @@ export default function CampaignWorkspace({
   const [isSavingVoicePersona, setIsSavingVoicePersona] = useState(false);
   const [voiceQuality, setVoiceQuality] = useState<VoiceQuality>("standard");
   const [videoPreset, setVideoPreset] = useState<VideoExportPreset>("quick_reel");
+  const [usage, setUsage] = useState<UsageSummary | null>(null);
+  const [usageLoading, setUsageLoading] = useState(true);
   const textGenerationStarted = useRef(false);
   const prevSlidesRef = useRef(initialSlides);
   const prevImagesCompleteRef = useRef(
@@ -237,7 +240,7 @@ export default function CampaignWorkspace({
   const allSlidesHaveVoiceoverScripts =
     slides.length > 0 &&
     slides.every((slide) => Boolean(slide.voiceover_script?.trim()));
-  const canExportVideo =
+  const videoExportReady =
     (videoExportAspectRatio === "9:16" || videoExportAspectRatio === "4:5") &&
     slidesCompleteForAspect(
       slides,
@@ -246,6 +249,38 @@ export default function CampaignWorkspace({
       imageIndex,
     ) &&
     allSlidesHaveVoiceoverScripts;
+  const hasVideoCredits = usage?.canExportVideo ?? false;
+  const videoCreditsKnown = !usageLoading;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadUsage() {
+      try {
+        const response = await fetch("/api/usage");
+        const data = (await response.json()) as {
+          success: boolean;
+          usage?: UsageSummary;
+        };
+
+        if (response.ok && data.success && data.usage && !cancelled) {
+          setUsage(data.usage);
+        }
+      } catch {
+        // Publish panel falls back to locked video until usage loads.
+      } finally {
+        if (!cancelled) {
+          setUsageLoading(false);
+        }
+      }
+    }
+
+    void loadUsage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     slideIdsRef.current = new Set(slides.map((slide) => slide.id));
@@ -850,11 +885,42 @@ export default function CampaignWorkspace({
         success?: boolean;
         exportId?: string;
         error?: string;
+        code?: string;
+        upgradeUrl?: string;
       }>(response);
+
+      if (response.status === 429 && data.code === "LIMIT_EXCEEDED") {
+        setUsage((current) =>
+          current
+            ? {
+                ...current,
+                canExportVideo: false,
+                remaining: { ...current.remaining, videos: 0 },
+              }
+            : current,
+        );
+        throw new Error(
+          data.error ??
+            "Video export limit reached. View plans in Settings to upgrade.",
+        );
+      }
 
       if (!response.ok || !data.success || !data.exportId) {
         throw new Error(data.error ?? "Video export failed");
       }
+
+      setUsage((current) =>
+        current && current.remaining.videos > 0
+          ? {
+              ...current,
+              remaining: {
+                ...current.remaining,
+                videos: current.remaining.videos - 1,
+              },
+              canExportVideo: current.remaining.videos - 1 > 0,
+            }
+          : current,
+      );
 
       setVideoExportStage("compose_slides");
 
@@ -905,7 +971,11 @@ export default function CampaignWorkspace({
     sortedCaptions,
     imagesComplete,
     hasVoiceoverScripts,
-    canExportVideo,
+    videoExportReady,
+    hasVideoCredits,
+    videoCreditsKnown,
+    videoPlanLabel: usage?.planLabel ?? "Free",
+    videoTier: usage?.tier ?? "free",
     canGenerateCaptions,
     isGeneratingCaptions,
     captionsMessage,
