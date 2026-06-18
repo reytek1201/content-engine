@@ -13,6 +13,7 @@ import {
   completeVideoExportWithCaptions,
   includesVideoNarration,
   shouldBurnVideoCaptions,
+  shouldPostBurnVideoCaptions,
 } from "@/utils/complete-video-export";
 
 interface ProcessingExportRow {
@@ -94,7 +95,7 @@ async function completeVideoExport(
   videoUrl: string,
   deferBurn = false,
 ): Promise<void> {
-  if (shouldBurnVideoCaptions(metadata)) {
+  if (shouldPostBurnVideoCaptions(metadata)) {
     await queueBurnCaptionsStage(exportId, metadata, videoUrl);
     if (!deferBurn) {
       await completeBurnCaptionsStage(exportId, metadata, videoUrl);

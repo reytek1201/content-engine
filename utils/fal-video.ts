@@ -32,6 +32,7 @@ export interface VideoExportMetadata {
   silentVideoUrl?: string;
   pendingVideoUrl?: string;
   captionSegments?: CaptionSegment[];
+  captionsOnSlides?: boolean;
 }
 
 interface FalQueueResponse {
@@ -245,5 +246,9 @@ export function parseVideoExportMetadata(
     captionSegments: Array.isArray(record.captionSegments)
       ? (record.captionSegments as CaptionSegment[])
       : undefined,
+    captionsOnSlides:
+      typeof record.captionsOnSlides === "boolean"
+        ? record.captionsOnSlides
+        : undefined,
   };
 }

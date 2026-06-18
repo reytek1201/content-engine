@@ -1,4 +1,3 @@
-import { buildFalWebhookUrl } from "@/utils/fal";
 import {
   submitMergeAudioVideoQueue,
   uploadFalMedia,
@@ -6,7 +5,6 @@ import {
 } from "@/utils/fal-video";
 import { composeSlidesToVideo } from "@/utils/compose-slide-video";
 import {
-  completeVideoExportWithCaptions,
   includesVideoNarration,
   shouldBurnVideoCaptions,
 } from "@/utils/complete-video-export";
@@ -31,7 +29,21 @@ export interface QueueVideoExportInput {
 export async function queueComposedVideoExport(
   input: QueueVideoExportInput,
 ): Promise<void> {
-  const composedBuffer = await composeSlidesToVideo(input.prepared.slideClips, {
+  const metadataForCaptions: VideoExportMetadata = {
+    stage: "compose_slides",
+    preset: input.preset,
+    includeCaptions: input.includeCaptions,
+  };
+  const burnCaptionsOnSlides = shouldBurnVideoCaptions(metadataForCaptions);
+
+  const slideClips = input.prepared.slideClips.map((clip, index) => ({
+    ...clip,
+    captionText: burnCaptionsOnSlides
+      ? input.prepared.captionSegments[index]?.text
+      : undefined,
+  }));
+
+  const composedBuffer = await composeSlidesToVideo(slideClips, {
     aspectRatio: input.aspectRatio,
     motion: true,
   });
@@ -50,6 +62,7 @@ export async function queueComposedVideoExport(
     persona: input.persona,
     audioUrl: input.prepared.audioUrl,
     captionSegments: input.prepared.captionSegments,
+    captionsOnSlides: burnCaptionsOnSlides,
     silentVideoUrl,
   };
 
@@ -82,22 +95,16 @@ export async function queueComposedVideoExport(
     return;
   }
 
-  let outputUrl = silentVideoUrl;
-
-  if (shouldBurnVideoCaptions(metadata)) {
-    outputUrl = await completeVideoExportWithCaptions(metadata, silentVideoUrl);
-  }
-
   const { error } = await input.supabase
     .from("exports")
     .update({
       status: "completed",
-      output_url: outputUrl,
+      output_url: silentVideoUrl,
       error_message: null,
       fal_request_id: null,
       metadata: {
         ...metadata,
-        stage: shouldBurnVideoCaptions(metadata) ? "burn_captions" : "merge_audio",
+        stage: burnCaptionsOnSlides ? "burn_captions" : "merge_audio",
       },
     })
     .eq("id", input.exportId);

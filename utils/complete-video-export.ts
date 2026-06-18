@@ -16,15 +16,20 @@ export function includesVideoNarration(metadata: VideoExportMetadata): boolean {
   return presetIncludesNarration(preset);
 }
 
+export function shouldPostBurnVideoCaptions(
+  metadata: VideoExportMetadata,
+): boolean {
+  return shouldBurnVideoCaptions(metadata) && !metadata.captionsOnSlides;
+}
+
 export async function completeVideoExportWithCaptions(
   metadata: VideoExportMetadata,
   videoUrl: string,
 ): Promise<string> {
   const preset = metadata.preset ?? "quick_reel";
   const includeCaptions = metadata.includeCaptions ?? false;
-  const shouldBurnCaptions = shouldBurnVideoCaptions(metadata);
 
-  if (!shouldBurnCaptions) {
+  if (!shouldPostBurnVideoCaptions(metadata)) {
     return videoUrl;
   }
 

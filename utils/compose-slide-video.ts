@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import type { AspectRatio } from "@/types/campaign";
 import { requireFfmpegPath } from "@/utils/ffmpeg";
 import { VIDEO_EXPORT_FPS } from "@/utils/fal-video";
+import { overlayCaptionOnSlideImage } from "@/utils/overlay-slide-caption";
 import { getVideoDimensions } from "@/utils/video-dimensions";
 
 const execFileAsync = promisify(execFile);
@@ -15,6 +16,7 @@ export const VIDEO_CROSSFADE_SECONDS = 0.45;
 export interface SlideClipInput {
   imageUrl: string;
   durationSeconds: number;
+  captionText?: string;
 }
 
 export interface ComposeSlideVideoOptions {
@@ -191,9 +193,18 @@ export async function composeSlidesToVideo(
 
     for (let index = 0; index < slides.length; index++) {
       const slide = slides[index]!;
-      const imageBuffer = await downloadImage(slide.imageUrl);
+      let imageBuffer = await downloadImage(slide.imageUrl);
       const imagePath = join(dir, `slide-${index}.jpg`);
       const clipPath = join(dir, `clip-${index}.mp4`);
+
+      if (slide.captionText?.trim()) {
+        imageBuffer = await overlayCaptionOnSlideImage(
+          imageBuffer,
+          slide.captionText,
+          width,
+          height,
+        );
+      }
 
       await writeFile(imagePath, imageBuffer);
       await renderSlideClip(
