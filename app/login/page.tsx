@@ -119,8 +119,13 @@ function LoginForm() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       // TOKEN_REFRESHED fires on existing sessions and causes a spurious
       // redirect when the user is already navigating away. Only act on
-      // an explicit new sign-in.
-      if (session?.user && event === "SIGNED_IN") {
+      // an explicit new sign-in. On native, OAuth navigation is handled by
+      // NativeAuthListener / explicit authNavigate after password sign-in.
+      if (
+        session?.user &&
+        event === "SIGNED_IN" &&
+        !isNativeAppRuntime()
+      ) {
         authNavigate(resolveNextPath());
       }
     });

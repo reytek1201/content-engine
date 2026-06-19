@@ -5,6 +5,31 @@ import { storeRefreshToken } from "@/utils/secure-token-store";
 import type { NativeAuthCallback } from "@/utils/native-oauth";
 import { Capacitor } from "@capacitor/core";
 
+async function persistNativeServerSession(tokens: {
+  access_token: string;
+  refresh_token: string;
+}): Promise<{ error: string | null }> {
+  const response = await fetch("/api/auth/native-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(tokens),
+  });
+
+  const data = (await response.json().catch(() => null)) as {
+    success?: boolean;
+    error?: string;
+  } | null;
+
+  if (!response.ok || !data?.success) {
+    return {
+      error: data?.error ?? "Failed to establish server session",
+    };
+  }
+
+  return { error: null };
+}
+
 export async function exchangeNativeOAuthCode(
   code: string,
 ): Promise<{ error: string | null }> {
@@ -39,6 +64,13 @@ async function syncBrowserSession(tokens: {
   access_token: string;
   refresh_token: string;
 }): Promise<{ error: string | null }> {
+  if (Capacitor.isNativePlatform()) {
+    const serverResult = await persistNativeServerSession(tokens);
+    if (serverResult.error) {
+      return serverResult;
+    }
+  }
+
   const browserSupabase = createClient();
   const { error: setSessionError } = await browserSupabase.auth.setSession(tokens);
 

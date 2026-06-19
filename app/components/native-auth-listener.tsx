@@ -9,6 +9,7 @@ import {
   getNativeAuthCallbackKey,
   parseNativeAuthCallback,
 } from "@/utils/native-oauth";
+import { setNativeOAuthInProgress } from "@/utils/native-oauth-in-progress";
 import { createClient } from "@/utils/supabase/client";
 import { configureRevenueCat } from "@/utils/revenuecat";
 import { App } from "@capacitor/app";
@@ -44,10 +45,12 @@ async function handleNativeAuthUrl(
 
   if (error) {
     handledAuthCallbacks.delete(callbackKey);
+    setNativeOAuthInProgress(false);
     navigate("/login?error=auth_callback_error");
     return;
   }
 
+  setNativeOAuthInProgress(false);
   completeNativeOAuthNavigation(nextPath, navigate);
 }
 
