@@ -4,7 +4,7 @@ import { getYouTubePublishErrorMessage } from "@/utils/youtube/publish-errors";
 import type { PlatformConnectionPublic } from "@/types/platform-connection";
 import type { PlatformPostPublic } from "@/types/platform-post";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 interface PublishReadinessResponse {
   success: boolean;
@@ -37,6 +37,11 @@ interface CampaignYouTubePublishPanelProps {
   campaignId: string;
   disabled?: boolean;
   refreshKey?: number;
+  imagesComplete?: boolean;
+  hasYoutubeCaptions?: boolean;
+  onGenerateCaptions?: () => void;
+  canGenerateCaptions?: boolean;
+  isGeneratingCaptions?: boolean;
 }
 
 function YouTubeIcon() {
@@ -54,15 +59,47 @@ function YouTubeIcon() {
   );
 }
 
+function YouTubePanelShell({
+  helperText,
+  children,
+}: {
+  helperText: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-background/40 p-4 sm:rounded-xl sm:p-5">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background/70">
+          <YouTubeIcon />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold text-foreground">
+            YouTube Shorts
+          </h3>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            {helperText}
+          </p>
+        </div>
+      </div>
+      {children ? <div className="mt-4">{children}</div> : null}
+    </div>
+  );
+}
+
 export default function CampaignYouTubePublishPanel({
   campaignId,
   disabled = false,
   refreshKey = 0,
+  imagesComplete = false,
+  hasYoutubeCaptions = false,
+  onGenerateCaptions,
+  canGenerateCaptions = false,
+  isGeneratingCaptions = false,
 }: CampaignYouTubePublishPanelProps) {
   const [readiness, setReadiness] = useState<PublishReadinessResponse | null>(
     null,
   );
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +107,10 @@ export default function CampaignYouTubePublishPanel({
   const publishInFlightRef = useRef(false);
 
   const loadReadiness = useCallback(async () => {
+    if (!hasYoutubeCaptions) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -102,7 +143,7 @@ export default function CampaignYouTubePublishPanel({
     } finally {
       setLoading(false);
     }
-  }, [campaignId]);
+  }, [campaignId, hasYoutubeCaptions]);
 
   useEffect(() => {
     void loadReadiness();
@@ -171,20 +212,41 @@ export default function CampaignYouTubePublishPanel({
     }
   }
 
-  function handleGrantUploadPermission() {
-    window.location.href = "/api/platforms/youtube/upload-authorize";
+  if (!imagesComplete) {
+    return null;
   }
 
-  if (loading) {
+  if (!hasYoutubeCaptions) {
     return (
-      <div className="rounded-lg border border-border bg-background/40 p-4 sm:rounded-xl sm:p-5">
-        <p className="text-sm text-muted-foreground">Checking YouTube…</p>
-      </div>
+      <YouTubePanelShell helperText="Step 1: Generate captions to unlock YouTube title, description, and hashtags for your Short.">
+        <button
+          type="button"
+          disabled={disabled || !canGenerateCaptions || isGeneratingCaptions}
+          onClick={onGenerateCaptions}
+          className="btn-primary w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
+        >
+          {isGeneratingCaptions ? "Generating captions…" : "Generate captions"}
+        </button>
+      </YouTubePanelShell>
     );
   }
 
-  if (!readiness?.hasYoutubeCaption) {
-    return null;
+  if (loading && !readiness) {
+    return (
+      <YouTubePanelShell helperText="Checking YouTube publish status…" />
+    );
+  }
+
+  if (!readiness) {
+    return (
+      <YouTubePanelShell helperText="Could not load YouTube status. Refresh the page and try again.">
+        {error ? (
+          <p className="text-xs text-red-300" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </YouTubePanelShell>
+    );
   }
 
   const needsUploadScope =
@@ -193,10 +255,10 @@ export default function CampaignYouTubePublishPanel({
   let helperText = "Post your 9:16 Quick Reel with YouTube Shorts caption.";
 
   if (!readiness.connected) {
-    helperText = "Connect YouTube in Settings before posting.";
+    helperText = "Step 3: Connect YouTube in Settings, then post your Short.";
   } else if (!readiness.hasVideoExport) {
     helperText =
-      "Export a 9:16 video above first, then post directly to YouTube.";
+      "Step 2: Export a 9:16 Quick Reel above, then post directly to YouTube.";
   } else if (readiness.isUploading || isPublishing) {
     helperText = "Publishing in progress. Keep this page open until it finishes.";
   } else if (readiness.alreadyPublished || publishedUrl) {
@@ -213,30 +275,15 @@ export default function CampaignYouTubePublishPanel({
     !needsUploadScope;
 
   return (
-    <div className="rounded-lg border border-border bg-background/40 p-4 sm:rounded-xl sm:p-5">
-      <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background/70">
-          <YouTubeIcon />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-foreground">
-            YouTube Shorts
-          </h3>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            {helperText}
-          </p>
-          {readiness.connection ? (
-            <p className="mt-2 text-xs text-foreground">
-              Channel:{" "}
-              <span className="font-medium">
-                {readiness.connection.accountLabel}
-              </span>
-            </p>
-          ) : null}
-        </div>
-      </div>
+    <YouTubePanelShell helperText={helperText}>
+      {readiness.connection ? (
+        <p className="mb-4 text-xs text-foreground">
+          Channel:{" "}
+          <span className="font-medium">{readiness.connection.accountLabel}</span>
+        </p>
+      ) : null}
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         {!readiness.connected ? (
           <Link
             href="/settings/connected-accounts"
@@ -247,7 +294,9 @@ export default function CampaignYouTubePublishPanel({
         ) : needsUploadScope ? (
           <button
             type="button"
-            onClick={handleGrantUploadPermission}
+            onClick={() => {
+              window.location.href = "/api/platforms/youtube/upload-authorize";
+            }}
             className="btn-primary w-full py-2.5 text-sm sm:w-auto sm:px-6"
           >
             Grant upload permission
@@ -297,6 +346,6 @@ export default function CampaignYouTubePublishPanel({
           {error}
         </div>
       ) : null}
-    </div>
+    </YouTubePanelShell>
   );
 }

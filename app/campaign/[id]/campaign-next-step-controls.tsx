@@ -27,6 +27,11 @@ export interface CampaignNextStepInput {
   saveAllPhotosProgress: { saved: number; total: number } | null;
   savedAllPhotos: boolean;
   copiedAllCaptions: boolean;
+  videoExportReady?: boolean;
+  hasVideoCredits?: boolean;
+  hasVideoExport?: boolean;
+  youtubeAlreadyPublished?: boolean;
+  isExportingVideo?: boolean;
   onGenerateImages: () => void;
   onGenerateCaptions: () => void;
   onDownloadZip: () => void;
@@ -65,6 +70,9 @@ function runNextStepAction(action: NextStepAction, handlers: NextStepHandlers) {
     case "save_all_photos":
       handlers.onSaveAllToPhotos();
       break;
+    case "export_video":
+    case "focus_youtube":
+      break;
   }
 }
 
@@ -101,6 +109,11 @@ export function useCampaignNextStep(input: CampaignNextStepInput) {
     isNativeApp: input.isNativeApp,
     isSavingAllPhotos: input.isSavingAllPhotos,
     saveAllPhotosProgress: input.saveAllPhotosProgress,
+    videoExportReady: input.videoExportReady,
+    hasVideoCredits: input.hasVideoCredits,
+    hasVideoExport: input.hasVideoExport,
+    youtubeAlreadyPublished: input.youtubeAlreadyPublished,
+    isExportingVideo: input.isExportingVideo,
   });
 
   const handlers: NextStepHandlers = {
@@ -172,12 +185,16 @@ export default function CampaignNextStepControls({
     }
 
     const scrollTarget =
-      action === "copy_captions" ||
-      action === "generate_captions" ||
-      action === "download_zip" ||
-      action === "download_narration"
-        ? "section-publish"
-        : "section-slides";
+      action === "export_video"
+        ? "section-publish-video"
+        : action === "focus_youtube"
+          ? "section-youtube-publish"
+          : action === "copy_captions" ||
+              action === "generate_captions" ||
+              action === "download_zip" ||
+              action === "download_narration"
+            ? "section-publish"
+            : "section-slides";
 
     scrollToCampaignSection(scrollTarget);
   }

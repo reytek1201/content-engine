@@ -110,69 +110,6 @@ export default function CampaignPublishPanel({
   const captionsReady = sortedCaptions.length > 0 && !isGeneratingCaptions;
   const disabled = campaignStatus === "generating_text";
 
-  const downloadSections = (
-    <>
-      {hasVoiceoverScripts && (
-        <CampaignNarrationPanel
-          preferredVoicePersona={preferredVoicePersona}
-          voiceQuality={voiceQuality}
-          brandId={brandId}
-          disabled={disabled}
-          isSavingVoicePersona={isSavingVoicePersona}
-          isExportingAudio={isExportingAudio}
-          audioExportMessage={audioExportMessage}
-          onPersonaChange={onPersonaChange}
-          onVoiceQualityChange={onVoiceQualityChange}
-          onDownloadNarration={onDownloadNarration}
-        />
-      )}
-
-      {videoExportReady && hasVideoCredits && (
-        <CampaignVideoPanel
-          canExportVideo
-          aspectRatioLabel={aspectRatioLabel}
-          disabled={disabled}
-          isExportingVideo={isExportingVideo}
-          videoExportMessage={videoExportMessage}
-          videoPreset={videoPreset}
-          voiceQuality={voiceQuality}
-          dualFormatEnabled={dualFormatVideoReady}
-          videoExportAspectRatio={videoExportAspectRatio}
-          onVideoExportAspectRatioChange={onVideoExportAspectRatioChange}
-          onPresetChange={onVideoPresetChange}
-          onVoiceQualityChange={onVoiceQualityChange}
-          onExportVideo={onExportVideo}
-        />
-      )}
-
-      {videoExportReady && videoCreditsKnown && !hasVideoCredits && (
-        <CampaignVideoLockedPanel
-          planLabel={videoPlanLabel}
-          tier={videoTier}
-        />
-      )}
-
-      <CampaignYouTubePublishPanel
-        campaignId={campaignId}
-        disabled={disabled}
-        refreshKey={youtubePublishRefreshKey}
-      />
-
-      <CampaignExportPanel
-        imagesComplete={imagesComplete}
-        isNativeApp={isNativeApp}
-        disabled={disabled}
-        isExporting={isExporting}
-        isSavingAllPhotos={isSavingAllPhotos}
-        saveAllPhotosProgress={saveAllPhotosProgress}
-        savedAllPhotos={savedAllPhotos}
-        exportMessage={exportMessage}
-        onDownloadZip={onDownloadZip}
-        onSaveAllToPhotos={onSaveAllToPhotos}
-      />
-    </>
-  );
-
   return (
     <section
       id="section-publish"
@@ -184,7 +121,8 @@ export default function CampaignPublishPanel({
             Publish
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6 md:max-w-2xl">
-            Copy post text, export assets, or post to YouTube Shorts.
+            Follow the steps: captions → video → YouTube. Downloads are at the
+            bottom.
           </p>
         </div>
 
@@ -200,76 +138,193 @@ export default function CampaignPublishPanel({
         )}
       </div>
 
-      {captionsReady && (
-        <div className="mt-4 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 sm:mt-6">
-          <p className="text-sm font-semibold text-emerald-200">Ready to post</p>
-          <p className="mt-1 text-sm leading-6 text-emerald-200/90">
-            Copy all captions in one tap, or download assets below.
-          </p>
-          <button
-            type="button"
-            onClick={onCopyAllCaptions}
-            className="btn-primary mt-4 w-full py-2.5 text-sm sm:w-auto sm:px-6"
-          >
-            {copiedAllCaptions ? "Copied all captions" : "Copy all captions"}
-          </button>
-        </div>
-      )}
+      <div
+        id="section-publish-captions"
+        className="mt-4 scroll-mt-32 sm:mt-6 md:scroll-mt-40"
+      >
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
+          Step 1 · Captions
+        </p>
 
-      {isGeneratingCaptions && (
-        <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 sm:mt-6">
-          <p className="text-sm font-semibold text-foreground">
-            Generating captions…
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Writing hooks and post copy for each platform.
-          </p>
-        </div>
-      )}
-
-      {captionsMessage && (
-        <div className="mt-4 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200 sm:mt-6">
-          {captionsMessage}
-        </div>
-      )}
-
-      {captionsReady && (
-        <div className="mt-4 flex flex-col gap-4 sm:mt-6 sm:gap-6">
-          {downloadSections}
-        </div>
-      )}
-
-      <div className="mt-4 sm:mt-6">
-        {sortedCaptions.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border bg-background/40 px-4 py-6 text-center sm:rounded-xl sm:px-6 sm:py-8">
-            <p className="text-xs leading-5 text-muted-foreground sm:text-sm">
-              {imagesComplete
-                ? "Generate hooks, post copy, and hashtags tailored to each platform."
-                : "Finish generating slide images on the Slides tab first."}
+        {captionsReady && (
+          <div className="mt-3 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3">
+            <p className="text-sm font-semibold text-emerald-200">Captions ready</p>
+            <p className="mt-1 text-sm leading-6 text-emerald-200/90">
+              Export your video next, then post to YouTube Shorts.
             </p>
-            {imagesComplete && (
+            <button
+              type="button"
+              onClick={onCopyAllCaptions}
+              className="btn-primary mt-4 w-full py-2.5 text-sm sm:w-auto sm:px-6"
+            >
+              {copiedAllCaptions ? "Copied all captions" : "Copy all captions"}
+            </button>
+          </div>
+        )}
+
+        {isGeneratingCaptions && (
+          <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <p className="text-sm font-semibold text-foreground">
+              Generating captions…
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Writing hooks and post copy for each platform.
+            </p>
+          </div>
+        )}
+
+        {captionsMessage && (
+          <div className="mt-3 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">
+            {captionsMessage}
+          </div>
+        )}
+
+        <div className="mt-3">
+          {sortedCaptions.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-background/40 px-4 py-6 text-center sm:rounded-xl sm:px-6 sm:py-8">
+              <p className="text-xs leading-5 text-muted-foreground sm:text-sm">
+                {imagesComplete
+                  ? "Generate hooks, post copy, and hashtags for TikTok, Instagram, and YouTube Shorts."
+                  : "Finish generating slide images in the Slides section first."}
+              </p>
+              {imagesComplete && (
+                <button
+                  type="button"
+                  onClick={onGenerateCaptions}
+                  disabled={!canGenerateCaptions}
+                  className="btn-primary mt-4 w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
+                >
+                  {isGeneratingCaptions
+                    ? "Generating captions…"
+                    : "Generate captions"}
+                </button>
+              )}
+            </div>
+          ) : (
+            <CampaignCaptionsAccordion
+              captions={sortedCaptions}
+              copiedPlatform={copiedPlatform}
+              onCopyCaption={onCopyCaption}
+            />
+          )}
+        </div>
+      </div>
+
+      {imagesComplete && (
+        <div
+          id="section-publish-video"
+          className="mt-6 scroll-mt-32 sm:mt-8 md:scroll-mt-40"
+        >
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
+            Step 2 · Video export
+          </p>
+
+          {!captionsReady ? (
+            <div className="rounded-lg border border-dashed border-amber-900/40 bg-amber-950/15 px-4 py-5 sm:rounded-xl sm:px-6">
+              <p className="text-sm font-medium text-foreground">
+                Generate captions first
+              </p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">
+                Video export unlocks after captions — you need YouTube title and
+                description before posting a Short.
+              </p>
               <button
                 type="button"
                 onClick={onGenerateCaptions}
-                disabled={!canGenerateCaptions}
+                disabled={!canGenerateCaptions || isGeneratingCaptions}
                 className="btn-primary mt-4 w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
               >
-                {isGeneratingCaptions ? "Generating captions…" : "Generate captions"}
+                {isGeneratingCaptions
+                  ? "Generating captions…"
+                  : "Generate captions"}
               </button>
-            )}
-          </div>
-        ) : (
-          <CampaignCaptionsAccordion
-            captions={sortedCaptions}
-            copiedPlatform={copiedPlatform}
-            onCopyCaption={onCopyCaption}
-          />
-        )}
-      </div>
+            </div>
+          ) : (
+            <>
+              {videoExportReady && hasVideoCredits && (
+                <CampaignVideoPanel
+                  canExportVideo
+                  aspectRatioLabel={aspectRatioLabel}
+                  disabled={disabled}
+                  isExportingVideo={isExportingVideo}
+                  videoExportMessage={videoExportMessage}
+                  videoPreset={videoPreset}
+                  voiceQuality={voiceQuality}
+                  dualFormatEnabled={dualFormatVideoReady}
+                  videoExportAspectRatio={videoExportAspectRatio}
+                  onVideoExportAspectRatioChange={onVideoExportAspectRatioChange}
+                  onPresetChange={onVideoPresetChange}
+                  onVoiceQualityChange={onVoiceQualityChange}
+                  onExportVideo={onExportVideo}
+                />
+              )}
 
-      {!captionsReady && (hasVoiceoverScripts || imagesComplete) && (
-        <div className="mt-4 flex flex-col gap-4 sm:mt-6 sm:gap-6">
-          {downloadSections}
+              {videoExportReady && videoCreditsKnown && !hasVideoCredits && (
+                <CampaignVideoLockedPanel
+                  planLabel={videoPlanLabel}
+                  tier={videoTier}
+                />
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {imagesComplete && (
+        <div
+          id="section-youtube-publish"
+          className="mt-6 scroll-mt-32 sm:mt-8 md:scroll-mt-40"
+        >
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
+            Step 3 · YouTube Shorts
+          </p>
+
+          <CampaignYouTubePublishPanel
+            campaignId={campaignId}
+            disabled={disabled}
+            refreshKey={youtubePublishRefreshKey}
+            imagesComplete={imagesComplete}
+            hasYoutubeCaptions={captionsReady}
+            onGenerateCaptions={onGenerateCaptions}
+            canGenerateCaptions={canGenerateCaptions}
+            isGeneratingCaptions={isGeneratingCaptions}
+          />
+        </div>
+      )}
+
+      {captionsReady && (
+        <div className="mt-6 flex flex-col gap-4 sm:mt-8 sm:gap-6">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
+            Downloads
+          </p>
+
+          {hasVoiceoverScripts && (
+            <CampaignNarrationPanel
+              preferredVoicePersona={preferredVoicePersona}
+              voiceQuality={voiceQuality}
+              brandId={brandId}
+              disabled={disabled}
+              isSavingVoicePersona={isSavingVoicePersona}
+              isExportingAudio={isExportingAudio}
+              audioExportMessage={audioExportMessage}
+              onPersonaChange={onPersonaChange}
+              onVoiceQualityChange={onVoiceQualityChange}
+              onDownloadNarration={onDownloadNarration}
+            />
+          )}
+
+          <CampaignExportPanel
+            imagesComplete={imagesComplete}
+            isNativeApp={isNativeApp}
+            disabled={disabled}
+            isExporting={isExporting}
+            isSavingAllPhotos={isSavingAllPhotos}
+            saveAllPhotosProgress={saveAllPhotosProgress}
+            savedAllPhotos={savedAllPhotos}
+            exportMessage={exportMessage}
+            onDownloadZip={onDownloadZip}
+            onSaveAllToPhotos={onSaveAllToPhotos}
+          />
         </div>
       )}
     </section>

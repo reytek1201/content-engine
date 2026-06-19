@@ -18,7 +18,9 @@ export function tabForNextStepAction(
     action === "generate_captions" ||
     action === "copy_captions" ||
     action === "download_zip" ||
-    action === "download_narration"
+    action === "download_narration" ||
+    action === "export_video" ||
+    action === "focus_youtube"
   ) {
     return "publish";
   }

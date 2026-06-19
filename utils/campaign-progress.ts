@@ -20,6 +20,8 @@ export interface CampaignProgressStep {
 export type NextStepAction =
   | "generate_images"
   | "generate_captions"
+  | "export_video"
+  | "focus_youtube"
   | "download_zip"
   | "download_narration"
   | "copy_captions"
@@ -121,6 +123,12 @@ export function getCampaignProgressSteps(
       label: "Export",
       complete: exportReady && captionsComplete,
       current: currentStep === "export",
+      detail:
+        currentStep === "export"
+          ? captionsComplete
+            ? "Video & post"
+            : "Needs captions"
+          : undefined,
       scrollTargetId: "section-publish",
     },
   ];
@@ -142,6 +150,11 @@ export function getCampaignNextStep(options: {
   isNativeApp?: boolean;
   isSavingAllPhotos?: boolean;
   saveAllPhotosProgress?: { saved: number; total: number } | null;
+  videoExportReady?: boolean;
+  hasVideoCredits?: boolean;
+  hasVideoExport?: boolean;
+  youtubeAlreadyPublished?: boolean;
+  isExportingVideo?: boolean;
 }): CampaignNextStep {
   const {
     slideCount,
@@ -159,6 +172,11 @@ export function getCampaignNextStep(options: {
     isNativeApp = false,
     isSavingAllPhotos = false,
     saveAllPhotosProgress = null,
+    videoExportReady = false,
+    hasVideoCredits = false,
+    hasVideoExport = false,
+    youtubeAlreadyPublished = false,
+    isExportingVideo = false,
   } = options;
 
   const imageProgressLabel = formatImageProgressLabel(
@@ -227,6 +245,74 @@ export function getCampaignNextStep(options: {
         }
       : null;
 
+    const copyCaptionsSecondary: CampaignNextStepButton = {
+      action: "copy_captions",
+      label: "Copy all captions",
+      disabled: false,
+      loading: false,
+    };
+
+    const downloadZipSecondary: CampaignNextStepButton = {
+      action: "download_zip",
+      label: isExporting ? "Preparing zip…" : isNativeApp ? "Share zip" : "Download zip",
+      disabled: isExporting,
+      loading: isExporting,
+    };
+
+    if (
+      !isNativeApp &&
+      videoExportReady &&
+      hasVideoCredits &&
+      !hasVideoExport &&
+      !youtubeAlreadyPublished
+    ) {
+      const secondaries: CampaignNextStepButton[] = [
+        copyCaptionsSecondary,
+        downloadZipSecondary,
+      ];
+
+      if (narrationSecondary) {
+        secondaries.push(narrationSecondary);
+      }
+
+      return {
+        action: "export_video",
+        label: isExportingVideo ? "Exporting video…" : "Export 9:16 video",
+        description:
+          "Export your Quick Reel next — required before posting to YouTube Shorts.",
+        disabled: isExportingVideo,
+        loading: isExportingVideo,
+        scrollTargetId: "section-publish-video",
+        secondaries,
+      };
+    }
+
+    if (
+      !isNativeApp &&
+      hasVideoExport &&
+      !youtubeAlreadyPublished
+    ) {
+      const secondaries: CampaignNextStepButton[] = [
+        copyCaptionsSecondary,
+        downloadZipSecondary,
+      ];
+
+      if (narrationSecondary) {
+        secondaries.push(narrationSecondary);
+      }
+
+      return {
+        action: "focus_youtube",
+        label: "Post to YouTube Shorts",
+        description:
+          "Your video export is ready — connect YouTube if needed, then post below.",
+        disabled: false,
+        loading: false,
+        scrollTargetId: "section-youtube-publish",
+        secondaries,
+      };
+    }
+
     if (isNativeApp) {
       const saveAllLabel = isSavingAllPhotos
         ? saveAllPhotosProgress
@@ -265,14 +351,7 @@ export function getCampaignNextStep(options: {
       };
     }
 
-    const secondaries: CampaignNextStepButton[] = [
-      {
-        action: "download_zip",
-        label: isExporting ? "Preparing zip…" : "Download zip",
-        disabled: isExporting,
-        loading: isExporting,
-      },
-    ];
+    const secondaries: CampaignNextStepButton[] = [downloadZipSecondary];
 
     if (narrationSecondary) {
       secondaries.push(narrationSecondary);
@@ -281,7 +360,9 @@ export function getCampaignNextStep(options: {
     return {
       action: "copy_captions",
       label: "Copy all captions",
-      description: "Post copy is ready — copy captions or download assets below.",
+      description: youtubeAlreadyPublished
+        ? "Posted to YouTube — copy captions or download assets below."
+        : "Post copy is ready — copy captions or download assets below.",
       disabled: false,
       loading: false,
       scrollTargetId: "section-publish",

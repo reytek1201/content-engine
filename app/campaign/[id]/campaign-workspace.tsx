@@ -118,6 +118,10 @@ export default function CampaignWorkspace({
   const [videoExportStage, setVideoExportStage] =
     useState<VideoExportUiStage>("preparing");
   const [youtubePublishRefreshKey, setYoutubePublishRefreshKey] = useState(0);
+  const [youtubePublishFlow, setYoutubePublishFlow] = useState({
+    hasVideoExport: false,
+    alreadyPublished: false,
+  });
   const [captionsMessage, setCaptionsMessage] = useState<string | null>(null);
   const [justFinishedSlide, setJustFinishedSlide] = useState<{
     slideIndex: number;
@@ -282,6 +286,46 @@ export default function CampaignWorkspace({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (captions.length === 0 || !imagesComplete) {
+      setYoutubePublishFlow({
+        hasVideoExport: false,
+        alreadyPublished: false,
+      });
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadYoutubePublishFlow() {
+      try {
+        const response = await fetch(
+          `/api/platforms/youtube/publish-readiness?campaignId=${encodeURIComponent(campaign.id)}`,
+        );
+        const data = (await response.json()) as {
+          success?: boolean;
+          hasVideoExport?: boolean;
+          alreadyPublished?: boolean;
+        };
+
+        if (!cancelled && response.ok && data.success) {
+          setYoutubePublishFlow({
+            hasVideoExport: Boolean(data.hasVideoExport),
+            alreadyPublished: Boolean(data.alreadyPublished),
+          });
+        }
+      } catch {
+        // Next-step bar falls back to copy-captions guidance.
+      }
+    }
+
+    void loadYoutubePublishFlow();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaign.id, captions.length, imagesComplete, youtubePublishRefreshKey]);
 
   useEffect(() => {
     slideIdsRef.current = new Set(slides.map((slide) => slide.id));
@@ -1305,6 +1349,11 @@ export default function CampaignWorkspace({
     saveAllPhotosProgress,
     savedAllPhotos,
     copiedAllCaptions: copiedPlatform === "all",
+    videoExportReady,
+    hasVideoCredits,
+    hasVideoExport: youtubePublishFlow.hasVideoExport,
+    youtubeAlreadyPublished: youtubePublishFlow.alreadyPublished,
+    isExportingVideo,
     onGenerateImages: handleGenerateImages,
     onGenerateCaptions: handleGenerateCaptions,
     onDownloadZip: handleDownloadZip,
