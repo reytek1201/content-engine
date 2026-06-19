@@ -179,8 +179,11 @@ export default function CampaignNextStepControls({
   } = useCampaignNextStep(input);
 
   function handleNavigate(action: NextStepAction) {
-    if (layout === "sheet" && onTabChange) {
+    if (onTabChange) {
       onTabChange(tabForNextStepAction(action));
+    }
+
+    if (layout === "sheet") {
       return;
     }
 

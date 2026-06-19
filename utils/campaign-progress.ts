@@ -412,3 +412,106 @@ export function scrollToCampaignTop() {
     block: "start",
   });
 }
+
+export type PublishChecklistStepId = "captions" | "video" | "youtube" | "posted";
+
+export type PublishChecklistStepStatus = "done" | "current" | "locked";
+
+export interface PublishChecklistStep {
+  id: PublishChecklistStepId;
+  label: string;
+  status: PublishChecklistStepStatus;
+  helperText: string;
+  scrollTargetId?: string;
+}
+
+export function getCampaignPublishChecklist(input: {
+  imagesComplete: boolean;
+  captionsReady: boolean;
+  isGeneratingCaptions: boolean;
+  videoExportReady: boolean;
+  hasVideoCredits: boolean;
+  hasVideoExport: boolean;
+  youtubeAlreadyPublished: boolean;
+  isExportingVideo: boolean;
+  isPublishingYoutube?: boolean;
+}): PublishChecklistStep[] {
+  if (!input.imagesComplete) {
+    return [];
+  }
+
+  const captionsDone = input.captionsReady;
+  const captionsCurrent =
+    !captionsDone && !input.isGeneratingCaptions;
+  const videoDone = input.hasVideoExport || input.youtubeAlreadyPublished;
+  const videoCurrent =
+    captionsDone && !videoDone && !input.isExportingVideo;
+  const youtubeDone = input.youtubeAlreadyPublished;
+  const youtubeCurrent =
+    captionsDone &&
+    videoDone &&
+    !youtubeDone &&
+    !input.isPublishingYoutube;
+
+  const captionsStatus: PublishChecklistStepStatus = captionsDone
+    ? "done"
+    : captionsCurrent
+      ? "current"
+      : "locked";
+
+  const videoStatus: PublishChecklistStepStatus = videoDone
+    ? "done"
+    : videoCurrent
+      ? "current"
+      : "locked";
+
+  const youtubeStatus: PublishChecklistStepStatus = youtubeDone
+    ? "done"
+    : youtubeCurrent
+      ? "current"
+      : "locked";
+
+  return [
+    {
+      id: "captions",
+      label: "Captions",
+      status: captionsStatus,
+      helperText: captionsDone
+        ? "Post copy ready for TikTok, Instagram, and YouTube."
+        : input.isGeneratingCaptions
+          ? "Writing platform captions…"
+          : "Generate hooks, hashtags, and YouTube title.",
+      scrollTargetId: "section-publish-captions",
+    },
+    {
+      id: "video",
+      label: "9:16 video",
+      status: videoStatus,
+      helperText: videoDone
+        ? "Quick Reel export completed."
+        : !captionsDone
+          ? "Unlocks after captions."
+          : !input.videoExportReady
+            ? "Finish slide images and voiceover scripts first."
+            : !input.hasVideoCredits
+              ? "Video credits needed — upgrade in Settings."
+              : input.isExportingVideo
+                ? "Rendering your video…"
+                : "Export your Quick Reel for YouTube Shorts.",
+      scrollTargetId: "section-publish-video",
+    },
+    {
+      id: "youtube",
+      label: "YouTube Shorts",
+      status: youtubeStatus,
+      helperText: youtubeDone
+        ? "Posted to your channel."
+        : !videoDone
+          ? "Unlocks after video export."
+          : input.isPublishingYoutube
+            ? "Publishing to YouTube…"
+            : "Connect YouTube and post your Short.",
+      scrollTargetId: "section-youtube-publish",
+    },
+  ];
+}

@@ -14,7 +14,6 @@ import {
 } from "@/utils/campaign-display";
 import {
   formatSlidesImageStatus,
-  scrollToCampaignNextStep,
   scrollToSlideCard,
 } from "@/utils/campaign-progress";
 import SlideCard from "@/app/campaign/[id]/slide-card";
@@ -24,7 +23,7 @@ import CarouselPreviewModal from "@/app/campaign/[id]/carousel-preview-modal";
 import CampaignDetailsPanel from "@/app/campaign/[id]/campaign-details-panel";
 import CampaignGeneratingView from "@/app/campaign/[id]/campaign-generating-view";
 import CampaignGenerationPanel from "@/app/campaign/[id]/campaign-generation-panel";
-import CampaignMobileTabs from "@/app/campaign/[id]/campaign-mobile-tabs";
+import CampaignWorkspaceTabs from "@/app/campaign/[id]/campaign-workspace-tabs";
 import CampaignNextStepBar from "@/app/campaign/[id]/campaign-next-step-bar";
 import {
   CampaignActionsSheet,
@@ -39,7 +38,6 @@ import {
   type CampaignWorkspaceTab,
 } from "@/app/campaign/[id]/campaign-workspace-tab";
 import CampaignBackLink from "@/app/components/campaign-back-link";
-import DeleteCampaignButton from "@/app/components/delete-campaign-button";
 import DuplicateCampaignButton from "@/app/components/duplicate-campaign-button";
 import ScrollToTopButton from "@/app/components/scroll-to-top-button";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
@@ -141,7 +139,8 @@ export default function CampaignWorkspace({
     null
   );
   const [error, setError] = useState<string | null>(null);
-  const [mobileTab, setMobileTab] = useState<CampaignWorkspaceTab>("slides");
+  const [workspaceTab, setWorkspaceTab] = useState<CampaignWorkspaceTab>("slides");
+  const [publishTabHint, setPublishTabHint] = useState<string | null>(null);
   const [mobileActiveSlideIndex, setMobileActiveSlideIndex] = useState(0);
   const [actionsSheetOpen, setActionsSheetOpen] = useState(false);
   const [isRetryingText, setIsRetryingText] = useState(false);
@@ -390,7 +389,7 @@ export default function CampaignWorkspace({
         if (!userScrolledRecently) {
           requestAnimationFrame(() => {
             if (isMobileWorkspaceLayout()) {
-              setMobileTab("slides");
+              setWorkspaceTab("slides");
               setMobileActiveSlideIndex(newestReadySlide!.slide_index);
               return;
             }
@@ -404,11 +403,13 @@ export default function CampaignWorkspace({
 
   useEffect(() => {
     if (imagesComplete && !prevImagesCompleteRef.current) {
+      setWorkspaceTab("publish");
+      setPublishTabHint(
+        "Images ready — generate captions to continue to video and YouTube.",
+      );
+
       if (isMobileWorkspaceLayout()) {
-        setMobileTab("slides");
         setActionsSheetOpen(true);
-      } else {
-        requestAnimationFrame(() => scrollToCampaignNextStep());
       }
     }
 
@@ -1057,6 +1058,9 @@ export default function CampaignWorkspace({
     isExportingVideo,
     videoExportMessage,
     youtubePublishRefreshKey,
+    publishTabHint,
+    hasVideoExport: youtubePublishFlow.hasVideoExport,
+    youtubeAlreadyPublished: youtubePublishFlow.alreadyPublished,
     campaignStatus: campaign.status,
     onGenerateCaptions: handleGenerateCaptions,
     onCopyCaption: handleCopyCaption,
@@ -1100,9 +1104,8 @@ export default function CampaignWorkspace({
           : "Platform captions generated"
       );
 
-      if (isMobileWorkspaceLayout()) {
-        setMobileTab("publish");
-      }
+      setWorkspaceTab("publish");
+      setPublishTabHint(null);
     } catch (generateError) {
       setError(
         generateError instanceof Error
@@ -1391,7 +1394,6 @@ export default function CampaignWorkspace({
             brandId={campaign.brand_id}
             brandName={brandName}
           />
-          <CampaignMobileTabs active={mobileTab} onChange={setMobileTab} />
 
           {(campaign.error_message || error) && (
             <div className="mt-4 space-y-3">
@@ -1468,88 +1470,37 @@ export default function CampaignWorkspace({
             isGeneratingImages={isGeneratingImages}
             captionsCount={captions.length}
           />
-
-          <dl className="mt-6 grid gap-3 sm:grid-cols-2 md:mt-8 lg:grid-cols-3">
-            <div className="rounded-lg border border-border bg-card/40 p-3 md:rounded-xl md:p-4">
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Target audience
-              </dt>
-              <dd className="mt-1.5 text-sm leading-6 text-secondary-foreground md:mt-2">
-                {campaign.target_audience ?? "—"}
-              </dd>
-            </div>
-            <div className="rounded-lg border border-border bg-card/40 p-3 md:rounded-xl md:p-4">
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Aspect ratio
-              </dt>
-              <dd className="mt-1.5 text-sm text-secondary-foreground md:mt-2">
-                {formatAspectRatio(campaign.aspect_ratio)}
-              </dd>
-            </div>
-            <div className="rounded-lg border border-border bg-card/40 p-3 md:rounded-xl md:p-4">
-              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Slides
-              </dt>
-              <dd className="mt-1.5 text-sm text-secondary-foreground md:mt-2">
-                {campaign.slide_count ?? slides.length}
-              </dd>
-            </div>
-          </dl>
-
-          {(campaign.product_reference_url ||
-            campaign.style_reference_url ||
-            campaign.logo_reference_url) && (
-            <div className="mt-6 md:mt-8">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Campaign references
-              </p>
-              <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-4 sm:grid-cols-3">
-                {campaign.product_reference_url && (
-                  <div className="rounded-lg border border-border bg-card/40 p-2 sm:p-3">
-                    <p className="text-[10px] font-semibold text-secondary-foreground sm:text-xs">Product</p>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={campaign.product_reference_url}
-                      alt="Product reference"
-                      className="mt-2 max-h-20 w-full rounded-md object-contain sm:mt-3 sm:max-h-32 sm:rounded-lg"
-                    />
-                  </div>
-                )}
-                {campaign.style_reference_url && (
-                  <div className="rounded-lg border border-border bg-card/40 p-2 sm:p-3">
-                    <p className="text-[10px] font-semibold text-secondary-foreground sm:text-xs">Style</p>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={campaign.style_reference_url}
-                      alt="Style reference"
-                      className="mt-2 max-h-20 w-full rounded-md object-contain sm:mt-3 sm:max-h-32 sm:rounded-lg"
-                    />
-                  </div>
-                )}
-                {campaign.logo_reference_url && (
-                  <div className="rounded-lg border border-border bg-card/40 p-2 sm:p-3">
-                    <p className="text-[10px] font-semibold text-secondary-foreground sm:text-xs">Logo</p>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={campaign.logo_reference_url}
-                      alt="Logo reference"
-                      className="mt-2 max-h-20 w-full rounded-md object-contain sm:mt-3 sm:max-h-32 sm:rounded-lg"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </header>
 
+        <CampaignWorkspaceTabs
+          active={workspaceTab}
+          onChange={setWorkspaceTab}
+          className="mt-4 md:mt-6"
+        />
+
+        {(workspaceTab === "slides" || workspaceTab === "publish") && (
+          <div className="mt-4 md:hidden">
+            <CampaignProgressStrip
+              slideCount={slideCount}
+              imagesReadyCount={imagesReadyCount}
+              imagesComplete={imagesComplete}
+              isGeneratingImages={isGeneratingImages}
+              captionsCount={captions.length}
+            />
+          </div>
+        )}
+
         <div className="hidden md:block">
-          <CampaignNextStepBar {...nextStepProps} />
+          <CampaignNextStepBar
+            {...nextStepProps}
+            onTabChange={setWorkspaceTab}
+          />
         </div>
 
         <section
           id="section-slides"
           className={`mt-4 scroll-mt-28 md:mt-10 md:scroll-mt-40 ${
-            mobileTab !== "slides" ? "max-md:hidden" : ""
+            workspaceTab !== "slides" ? "hidden" : ""
           }`}
         >
           <div className="mb-4 hidden flex-wrap items-end justify-between gap-3 md:mb-6 md:flex md:gap-4">
@@ -1657,7 +1608,7 @@ export default function CampaignWorkspace({
               justFinishedSlide={justFinishedSlide}
               nextStepProps={nextStepProps}
               onOpenMoreActions={() => setActionsSheetOpen(true)}
-              onTabChange={setMobileTab}
+              onTabChange={setWorkspaceTab}
               isNativeApp={isNativeApp === true}
               isAnySlideGenerating={isAnySlideGenerating}
               regeneratingSlideId={regeneratingSlideId}
@@ -1693,47 +1644,30 @@ export default function CampaignWorkspace({
           </div>
         </section>
 
-        <div
-          className={mobileTab !== "publish" ? "max-md:hidden" : ""}
-        >
+        <div className={workspaceTab !== "publish" ? "hidden" : ""}>
           <CampaignPublishPanel {...publishPanelProps} />
         </div>
 
-        {mobileTab === "details" && (
-          <div className="md:hidden">
-            <CampaignDetailsPanel
-              campaign={campaign}
-              slideCount={slideCount}
-              imagesReadyCount={imagesReadyCount}
-              imagesComplete={imagesComplete}
-              isGeneratingImages={isGeneratingImages}
-              captionsCount={captions.length}
-              onTitleSaved={(title) =>
-                setCampaign((current) => ({ ...current, title }))
-              }
-              onError={setError}
-            />
-          </div>
-        )}
-
-        <section className="mt-12 hidden border-t border-border pt-6 md:mt-16 md:block md:pt-8">
-          <h2 className="text-sm font-semibold text-foreground">Danger zone</h2>
-          <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-            Permanently delete this campaign and all of its slides. This cannot
-            be undone.
-          </p>
-          <DeleteCampaignButton
-            campaignId={campaign.id}
-            campaignTitle={campaign.title}
-            className="mt-4"
+        {workspaceTab === "details" && (
+          <CampaignDetailsPanel
+            campaign={campaign}
+            slideCount={slideCount}
+            imagesReadyCount={imagesReadyCount}
+            imagesComplete={imagesComplete}
+            isGeneratingImages={isGeneratingImages}
+            captionsCount={captions.length}
+            onTitleSaved={(title) =>
+              setCampaign((current) => ({ ...current, title }))
+            }
+            onError={setError}
           />
-        </section>
+        )}
 
       </main>
       <CampaignActionsSheet
         open={actionsSheetOpen}
         onClose={() => setActionsSheetOpen(false)}
-        onTabChange={setMobileTab}
+        onTabChange={setWorkspaceTab}
         {...nextStepProps}
       />
       <div className="hidden md:block">

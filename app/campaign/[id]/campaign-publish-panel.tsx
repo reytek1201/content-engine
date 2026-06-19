@@ -1,5 +1,6 @@
 "use client";
 
+import CampaignPublishChecklist from "@/app/campaign/[id]/campaign-publish-checklist";
 import CampaignCaptionsAccordion from "@/app/campaign/[id]/campaign-captions-accordion";
 import CampaignExportPanel from "@/app/campaign/[id]/campaign-export-panel";
 import CampaignYouTubePublishPanel from "@/app/campaign/[id]/campaign-youtube-publish-panel";
@@ -46,6 +47,9 @@ interface CampaignPublishPanelProps {
   isExportingVideo: boolean;
   videoExportMessage: string | null;
   youtubePublishRefreshKey?: number;
+  publishTabHint?: string | null;
+  hasVideoExport?: boolean;
+  youtubeAlreadyPublished?: boolean;
   campaignStatus: string;
   onGenerateCaptions: () => void;
   onCopyCaption: (platformCaption: PlatformCaption) => void;
@@ -94,6 +98,9 @@ export default function CampaignPublishPanel({
   isExportingVideo,
   videoExportMessage,
   youtubePublishRefreshKey = 0,
+  publishTabHint = null,
+  hasVideoExport = false,
+  youtubeAlreadyPublished = false,
   campaignStatus,
   onGenerateCaptions,
   onCopyCaption,
@@ -113,7 +120,7 @@ export default function CampaignPublishPanel({
   return (
     <section
       id="section-publish"
-      className="scroll-mt-28 rounded-xl border border-border bg-card/30 p-4 md:mt-8 md:scroll-mt-36 md:rounded-2xl md:p-6 lg:scroll-mt-40 lg:p-8"
+      className="scroll-mt-28 rounded-xl border border-border bg-card/30 p-4 md:scroll-mt-36 md:rounded-2xl md:p-6 lg:scroll-mt-40 lg:p-8"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
         <div>
@@ -137,6 +144,28 @@ export default function CampaignPublishPanel({
           </button>
         )}
       </div>
+
+      {publishTabHint ? (
+        <div className="mt-4 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-foreground sm:mt-5">
+          {publishTabHint}
+        </div>
+      ) : null}
+
+      {imagesComplete ? (
+        <div className="mt-4 sm:mt-6">
+          <CampaignPublishChecklist
+            imagesComplete={imagesComplete}
+            captionsReady={captionsReady}
+            isGeneratingCaptions={isGeneratingCaptions}
+            videoExportReady={videoExportReady}
+            hasVideoCredits={hasVideoCredits}
+            hasVideoExport={hasVideoExport}
+            youtubeAlreadyPublished={youtubeAlreadyPublished}
+            isExportingVideo={isExportingVideo}
+            onGenerateCaptions={onGenerateCaptions}
+          />
+        </div>
+      ) : null}
 
       <div
         id="section-publish-captions"
