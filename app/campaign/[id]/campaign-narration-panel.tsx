@@ -1,17 +1,12 @@
 "use client";
 
+import VoicePersonaPicker from "@/app/components/voice-persona-picker";
 import {
   TTS_EXPORT_DISCLOSURE,
   TTS_PREVIEW_DISCLOSURE,
 } from "@/utils/tts/disclosure-copy";
-import { VOICE_PERSONAS, type VoicePersona } from "@/utils/tts/voice-catalog";
+import type { VoicePersona } from "@/utils/tts/voice-catalog";
 import type { VoiceQuality } from "@/utils/tts/types";
-
-const PERSONA_LABELS: Record<VoicePersona, string> = {
-  warm: "Warm",
-  energetic: "Energetic",
-  professional: "Professional",
-};
 
 interface CampaignNarrationPanelProps {
   preferredVoicePersona: VoicePersona;
@@ -41,32 +36,28 @@ export default function CampaignNarrationPanel({
   return (
     <div className="rounded-lg border border-border bg-background/40 p-4 sm:rounded-xl sm:p-5">
       <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-foreground">Narration</h3>
+        <h3 className="text-sm font-semibold text-foreground">
+          Default voice for this brand
+        </h3>
         <p className="text-xs leading-5 text-muted-foreground">
-          Choose a voice, then download MP3s for video editing. Preview each
-          slide on the Slides tab.
+          Same voice used on the Slides tab and in Brand settings. Change it
+          there while previewing, or here before you export narration.
         </p>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {VOICE_PERSONAS.map((persona) => {
-          const isActive = persona === preferredVoicePersona;
-          return (
-            <button
-              key={persona}
-              type="button"
-              disabled={disabled || isSavingVoicePersona || !brandId}
-              onClick={() => onPersonaChange(persona)}
-              className={`rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                isActive
-                  ? "border-primary bg-primary/10 text-foreground"
-                  : "border-border text-secondary-foreground hover:border-ring/60 hover:text-foreground"
-              }`}
-            >
-              {PERSONA_LABELS[persona]}
-            </button>
-          );
-        })}
+      <div className="mt-4">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Voice
+        </p>
+        <div className="mt-2">
+          <VoicePersonaPicker
+            value={preferredVoicePersona}
+            onChange={onPersonaChange}
+            disabled={disabled || !brandId}
+            saving={isSavingVoicePersona}
+            size="sm"
+          />
+        </div>
       </div>
 
       <div className="mt-4">

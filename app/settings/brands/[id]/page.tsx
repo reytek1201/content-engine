@@ -50,7 +50,7 @@ export default async function BrandDetailPage({
   return (
     <SettingsSubpageShell
       title={brand.name}
-      description="Reference images and products for this brand."
+      description="Reference images, default voice, and products for this brand."
       backHref={back.href}
       backLabel={back.label}
     >

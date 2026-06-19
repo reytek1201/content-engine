@@ -1,6 +1,7 @@
 "use client";
 
 import BrandProductsSection from "@/app/components/brand-products-section";
+import BrandVoiceSettings from "@/app/components/brand-voice-settings";
 import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
 import { useActiveBrandOptional } from "@/app/components/active-brand-provider";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
@@ -415,6 +416,16 @@ export default function BrandLibraryEditor({
         >
           {error}
         </div>
+      ) : null}
+
+      {brand ? (
+        <BrandVoiceSettings
+          brand={brand}
+          onUpdated={(updated) => {
+            setBrand(updated);
+            void activeBrandContext?.refreshBrands();
+          }}
+        />
       ) : null}
 
       <BrandProductsSection brandId={resolvedBrandId} user={user} />

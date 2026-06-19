@@ -1,4 +1,5 @@
 import type { Brand, BrandProduct } from "@/types/brand";
+import type { VoicePersona } from "@/utils/tts/voice-catalog";
 
 export async function fetchBrands(): Promise<Brand[]> {
   const response = await fetch("/api/brands");
@@ -59,6 +60,7 @@ export async function updateBrand(
     style?: string | null;
     logo?: string | null;
     voice_notes?: string | null;
+    preferred_voice_persona?: VoicePersona | null;
   },
 ): Promise<Brand> {
   const response = await fetch(`/api/brands/${brandId}`, {

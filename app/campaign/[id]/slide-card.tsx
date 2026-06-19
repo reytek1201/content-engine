@@ -24,6 +24,8 @@ interface SlideCardProps {
   aspectRatio: AspectRatio;
   campaignId: string;
   preferredVoicePersona: VoicePersona;
+  onPersonaChange: (persona: VoicePersona) => void;
+  isSavingVoicePersona?: boolean;
   isNativeApp: boolean;
   isAnySlideGenerating: boolean;
   isRegenerating: boolean;
@@ -42,6 +44,8 @@ const SlideCard = memo(function SlideCard({
   aspectRatio,
   campaignId,
   preferredVoicePersona,
+  onPersonaChange,
+  isSavingVoicePersona = false,
   isNativeApp,
   isAnySlideGenerating,
   isRegenerating,
@@ -265,6 +269,8 @@ const SlideCard = memo(function SlideCard({
             slideId={slide.id}
             hasVoiceover={Boolean(slide.voiceover_script)}
             preferredVoicePersona={preferredVoicePersona}
+            onPersonaChange={onPersonaChange}
+            isSavingVoicePersona={isSavingVoicePersona}
             onError={onError}
           />
 

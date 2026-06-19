@@ -6,6 +6,7 @@ import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspac
 import SlideCard from "@/app/campaign/[id]/slide-card";
 import CampaignGenerationPanel from "@/app/campaign/[id]/campaign-generation-panel";
 import CampaignSlidesFilmstrip from "@/app/campaign/[id]/campaign-slides-filmstrip";
+import CampaignSlidesVoiceBar from "@/app/campaign/[id]/campaign-slides-voice-bar";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
 import { useCallback, useRef } from "react";
 
@@ -20,6 +21,11 @@ interface CampaignSlidesMobileViewProps {
   aspectRatio: AspectRatio;
   campaignId: string;
   preferredVoicePersona: VoicePersona;
+  brandId: string | null;
+  brandName?: string | null;
+  isSavingVoicePersona: boolean;
+  hasVoiceoverScripts: boolean;
+  onPersonaChange: (persona: VoicePersona) => void;
   justFinishedSlide: JustFinishedSlide | null;
   nextStepProps: CampaignNextStepInput;
   onOpenMoreActions: () => void;
@@ -43,6 +49,11 @@ export default function CampaignSlidesMobileView({
   aspectRatio,
   campaignId,
   preferredVoicePersona,
+  brandId,
+  brandName,
+  isSavingVoicePersona,
+  hasVoiceoverScripts,
+  onPersonaChange,
   justFinishedSlide,
   nextStepProps,
   onOpenMoreActions,
@@ -129,6 +140,16 @@ export default function CampaignSlidesMobileView({
         onSelect={onActiveSlideIndexChange}
       />
 
+      {hasVoiceoverScripts && (
+        <CampaignSlidesVoiceBar
+          preferredVoicePersona={preferredVoicePersona}
+          brandId={brandId}
+          brandName={brandName}
+          isSavingVoicePersona={isSavingVoicePersona}
+          onPersonaChange={onPersonaChange}
+        />
+      )}
+
       <div className="mt-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
@@ -199,6 +220,8 @@ export default function CampaignSlidesMobileView({
           aspectRatio={aspectRatio}
           campaignId={campaignId}
           preferredVoicePersona={preferredVoicePersona}
+          onPersonaChange={onPersonaChange}
+          isSavingVoicePersona={isSavingVoicePersona}
           isNativeApp={isNativeApp}
           isAnySlideGenerating={isAnySlideGenerating}
           isRegenerating={regeneratingSlideId === activeSlide.id}
