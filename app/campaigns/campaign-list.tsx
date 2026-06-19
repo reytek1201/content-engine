@@ -2,7 +2,7 @@
 
 import type { Campaign } from "@/types/campaign";
 import {
-  formatAspectRatio,
+  formatCampaignAspectRatios,
   formatCampaignDate,
   getCampaignPreviewImage,
 } from "@/utils/campaign-display";
@@ -57,7 +57,7 @@ export default function CampaignList({ campaigns }: CampaignListProps) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                  <span>{formatAspectRatio(campaign.aspect_ratio)}</span>
+                  <span>{formatCampaignAspectRatios(campaign)}</span>
                   <span>{formatCampaignDate(campaign.created_at)}</span>
                 </div>
               </div>

@@ -1,7 +1,16 @@
 import type { Campaign } from "@/types/campaign";
+import { campaignAspectRatios } from "@/utils/slide-aspect-images";
 
 export function formatAspectRatio(ratio: Campaign["aspect_ratio"]): string {
   return ratio === "4:5" ? "4:5 Portrait" : "9:16 Vertical";
+}
+
+export function formatCampaignAspectRatios(
+  campaign: Pick<Campaign, "aspect_ratio" | "secondary_aspect_ratio">,
+): string {
+  return campaignAspectRatios(campaign)
+    .map((ratio) => formatAspectRatio(ratio))
+    .join(" · ");
 }
 
 export function formatCampaignDate(isoDate: string): string {

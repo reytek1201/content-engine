@@ -43,7 +43,7 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
   let campaignsQuery = supabase
     .from("campaigns")
     .select(
-      "id, title, topic, aspect_ratio, slide_count, status, created_at, brand_id, slides(slide_index, image_url)",
+      "id, title, topic, aspect_ratio, secondary_aspect_ratio, slide_count, status, created_at, brand_id, slides(slide_index, image_url)",
     )
     .order("created_at", { ascending: false })
     .limit(50);

@@ -33,7 +33,6 @@ import CampaignPublishPanel from "@/app/campaign/[id]/campaign-publish-panel";
 import CampaignVideoExportOverlay from "@/app/campaign/[id]/campaign-video-export-overlay";
 import CampaignProgressStrip from "@/app/campaign/[id]/campaign-progress-strip";
 import CampaignSlidesMobileView from "@/app/campaign/[id]/campaign-slides-mobile-view";
-import CampaignSlidesVoiceBar from "@/app/campaign/[id]/campaign-slides-voice-bar";
 import CampaignTitleEditor from "@/app/campaign/[id]/campaign-title-editor";
 import {
   isMobileWorkspaceLayout,
@@ -1561,18 +1560,6 @@ export default function CampaignWorkspace({
             />
           </div>
 
-          {hasVoiceoverScripts && (
-            <div className="mb-4 hidden md:block">
-              <CampaignSlidesVoiceBar
-                preferredVoicePersona={preferredVoicePersona}
-                brandId={campaign.brand_id}
-                brandName={brandName}
-                isSavingVoicePersona={isSavingVoicePersona}
-                onPersonaChange={(persona) => void handleVoicePersonaChange(persona)}
-              />
-            </div>
-          )}
-
           <div className="md:hidden">
             {secondaryAspectRatio ? (
               <div className="mb-4 flex justify-center">
@@ -1610,10 +1597,7 @@ export default function CampaignWorkspace({
               aspectRatio={activeAspectRatio}
               campaignId={campaign.id}
               preferredVoicePersona={preferredVoicePersona}
-              brandId={campaign.brand_id}
-              brandName={brandName}
               isSavingVoicePersona={isSavingVoicePersona}
-              hasVoiceoverScripts={hasVoiceoverScripts}
               onPersonaChange={(persona) => void handleVoicePersonaChange(persona)}
               justFinishedSlide={justFinishedSlide}
               nextStepProps={nextStepProps}
