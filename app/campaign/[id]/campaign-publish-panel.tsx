@@ -2,6 +2,7 @@
 
 import CampaignCaptionsAccordion from "@/app/campaign/[id]/campaign-captions-accordion";
 import CampaignExportPanel from "@/app/campaign/[id]/campaign-export-panel";
+import CampaignYouTubePublishPanel from "@/app/campaign/[id]/campaign-youtube-publish-panel";
 import CampaignNarrationPanel from "@/app/campaign/[id]/campaign-narration-panel";
 import CampaignVideoLockedPanel from "@/app/campaign/[id]/campaign-video-locked-panel";
 import CampaignVideoPanel from "@/app/campaign/[id]/campaign-video-panel";
@@ -12,6 +13,7 @@ import type { AspectRatio } from "@/types/campaign";
 import type { VideoExportPreset } from "@/utils/video-export-presets";
 
 interface CampaignPublishPanelProps {
+  campaignId: string;
   sortedCaptions: PlatformCaption[];
   imagesComplete: boolean;
   hasVoiceoverScripts: boolean;
@@ -43,6 +45,7 @@ interface CampaignPublishPanelProps {
   audioExportMessage: string | null;
   isExportingVideo: boolean;
   videoExportMessage: string | null;
+  youtubePublishRefreshKey?: number;
   campaignStatus: string;
   onGenerateCaptions: () => void;
   onCopyCaption: (platformCaption: PlatformCaption) => void;
@@ -58,6 +61,7 @@ interface CampaignPublishPanelProps {
 }
 
 export default function CampaignPublishPanel({
+  campaignId,
   sortedCaptions,
   imagesComplete,
   hasVoiceoverScripts,
@@ -89,6 +93,7 @@ export default function CampaignPublishPanel({
   audioExportMessage,
   isExportingVideo,
   videoExportMessage,
+  youtubePublishRefreshKey = 0,
   campaignStatus,
   onGenerateCaptions,
   onCopyCaption,
@@ -147,6 +152,12 @@ export default function CampaignPublishPanel({
         />
       )}
 
+      <CampaignYouTubePublishPanel
+        campaignId={campaignId}
+        disabled={disabled}
+        refreshKey={youtubePublishRefreshKey}
+      />
+
       <CampaignExportPanel
         imagesComplete={imagesComplete}
         isNativeApp={isNativeApp}
@@ -173,7 +184,7 @@ export default function CampaignPublishPanel({
             Publish
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6 md:max-w-2xl">
-            Copy post text, download narration, or export slide images.
+            Copy post text, export assets, or post to YouTube Shorts.
           </p>
         </div>
 

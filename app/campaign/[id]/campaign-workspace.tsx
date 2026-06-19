@@ -117,6 +117,7 @@ export default function CampaignWorkspace({
   const [videoExportError, setVideoExportError] = useState<string | null>(null);
   const [videoExportStage, setVideoExportStage] =
     useState<VideoExportUiStage>("preparing");
+  const [youtubePublishRefreshKey, setYoutubePublishRefreshKey] = useState(0);
   const [captionsMessage, setCaptionsMessage] = useState<string | null>(null);
   const [justFinishedSlide, setJustFinishedSlide] = useState<{
     slideIndex: number;
@@ -933,6 +934,9 @@ export default function CampaignWorkspace({
       setVideoExportStage("compose_slides");
 
       const outputUrl = await pollVideoExport(data.exportId, setVideoExportStage);
+      if (videoExportAspectRatio === "9:16") {
+        setYoutubePublishRefreshKey((current) => current + 1);
+      }
       setVideoExportStage("downloading");
       const filename = getCampaignVideoFilename();
       const videoResponse = await fetch(outputUrl);
@@ -976,6 +980,7 @@ export default function CampaignWorkspace({
   }
 
   const publishPanelProps = {
+    campaignId: campaign.id,
     sortedCaptions,
     imagesComplete,
     hasVoiceoverScripts,
@@ -1007,6 +1012,7 @@ export default function CampaignWorkspace({
     audioExportMessage,
     isExportingVideo,
     videoExportMessage,
+    youtubePublishRefreshKey,
     campaignStatus: campaign.status,
     onGenerateCaptions: handleGenerateCaptions,
     onCopyCaption: handleCopyCaption,
