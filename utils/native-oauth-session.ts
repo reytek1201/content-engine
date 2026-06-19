@@ -144,10 +144,12 @@ export async function navigateAfterAuth(
   // On WKWebView (iOS), cookies from a fetch() response are not always
   // committed to the cookie store before the next navigation fires, even
   // when the fetch is fully awaited. Poll the server auth check endpoint
-  // until the session is visible, then navigate.
+  // until the session is visible server-side, then navigate using the
+  // Next.js router so the React app stays mounted (avoids re-processing
+  // the deep link after a full-page reload).
   if (Capacitor.isNativePlatform()) {
     await waitForServerSession();
-    window.location.replace(nextPath);
+    navigate(nextPath);
     return;
   }
 

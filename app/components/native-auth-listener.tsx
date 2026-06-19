@@ -17,7 +17,47 @@ import { Browser } from "@capacitor/browser";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-const handledAuthCallbacks = new Set<string>();
+const HANDLED_CALLBACKS_KEY = "slidepress-handled-auth-callbacks";
+
+function hasHandledCallback(key: string): boolean {
+  try {
+    const raw = sessionStorage.getItem(HANDLED_CALLBACKS_KEY);
+    const list: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+    return list.includes(key);
+  } catch {
+    return false;
+  }
+}
+
+function markCallbackHandled(key: string): void {
+  try {
+    const raw = sessionStorage.getItem(HANDLED_CALLBACKS_KEY);
+    const list: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+    if (!list.includes(key)) {
+      list.push(key);
+      // Cap to avoid unbounded growth across many sign-ins.
+      sessionStorage.setItem(
+        HANDLED_CALLBACKS_KEY,
+        JSON.stringify(list.slice(-10)),
+      );
+    }
+  } catch {
+    // sessionStorage unavailable — fail open.
+  }
+}
+
+function unmarkCallbackHandled(key: string): void {
+  try {
+    const raw = sessionStorage.getItem(HANDLED_CALLBACKS_KEY);
+    const list: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+    sessionStorage.setItem(
+      HANDLED_CALLBACKS_KEY,
+      JSON.stringify(list.filter((k) => k !== key)),
+    );
+  } catch {
+    // sessionStorage unavailable — best effort.
+  }
+}
 
 async function handleNativeAuthUrl(
   url: string,
@@ -29,11 +69,11 @@ async function handleNativeAuthUrl(
   }
 
   const callbackKey = getNativeAuthCallbackKey(callback);
-  if (handledAuthCallbacks.has(callbackKey)) {
+  if (hasHandledCallback(callbackKey)) {
     return;
   }
 
-  handledAuthCallbacks.add(callbackKey);
+  markCallbackHandled(callbackKey);
 
   try {
     await Browser.close();
@@ -44,7 +84,7 @@ async function handleNativeAuthUrl(
   const { error, nextPath } = await completeNativeAuthCallback(callback);
 
   if (error) {
-    handledAuthCallbacks.delete(callbackKey);
+    unmarkCallbackHandled(callbackKey);
     setNativeOAuthInProgress(false);
     navigate("/login?error=auth_callback_error");
     return;
