@@ -1,4 +1,7 @@
-import type { NextStepAction } from "@/utils/campaign-progress";
+import type {
+  CampaignJourneyStepId,
+  NextStepAction,
+} from "@/utils/campaign-progress";
 
 export type CampaignWorkspaceTab = "slides" | "publish" | "details";
 
@@ -26,6 +29,16 @@ export function tabForNextStepAction(
   }
 
   return "slides";
+}
+
+export function tabForJourneyStep(
+  stepId: CampaignJourneyStepId,
+): CampaignWorkspaceTab {
+  if (stepId === "copy" || stepId === "images") {
+    return "slides";
+  }
+
+  return "publish";
 }
 
 export function isMobileWorkspaceLayout(): boolean {

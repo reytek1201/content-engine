@@ -1,12 +1,11 @@
 "use client";
 
-import CampaignNextStepControls, {
-  type CampaignNextStepInput,
-} from "@/app/campaign/[id]/campaign-next-step-controls";
+import CampaignJourneyStrip from "@/app/campaign/[id]/campaign-journey-strip";
+import type { CampaignJourneyStripInput } from "@/app/campaign/[id]/campaign-journey-input";
 import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspace-tab";
 import { useEffect } from "react";
 
-interface CampaignActionsSheetProps extends CampaignNextStepInput {
+interface CampaignActionsSheetProps extends CampaignJourneyStripInput {
   open: boolean;
   onClose: () => void;
   onTabChange?: (tab: CampaignWorkspaceTab) => void;
@@ -86,9 +85,10 @@ export function CampaignActionsSheet({
         </div>
 
         <div className="flex flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-4">
-          <CampaignNextStepControls
+          <CampaignJourneyStrip
             layout="sheet"
             onTabChange={onTabChange}
+            onSheetClose={onClose}
             {...input}
           />
         </div>

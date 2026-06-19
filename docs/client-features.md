@@ -53,11 +53,11 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 ### Campaign workspace
 
-- **Campaign progress strip** — Copy → Images → Captions → Export with checkmarks and live image count
-- **Sticky Next step bar** — one primary action that adapts (generate images → captions → download zip + copy all)
+- **Campaign journey strip** — one guided flow: Copy → Images → Captions → Video → YouTube, with honest checkmarks, next-step CTA, and step navigation (hidden on Details tab)
+- **Captions prompt** — after all images finish, a modal offers one-tap **Generate captions** (dismissible per session)
+- **First-time workspace tour** — three coach marks (journey strip, Publish tab, publish sections); dismiss once via localStorage
 - **Inline campaign rename** — edit title from the workspace header
-- **Slides before Publish** — review copy and images first, then captions
-- **Mobile workspace** — tabbed layout (Slides / Publish / Details), filmstrip, compact progress strip
+- **Tabbed workspace** — **Slides | Publish | Details** on web and mobile; auto-switch to Publish when images complete
 - **Scroll-to-top** button when deep in the page (above mobile tab bar)
 - View all slides with **text overlay** and **voiceover script** (written for natural spoken delivery)
 - **Edit headlines** inline (up to 12 words per slide)
@@ -130,9 +130,8 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 ### Publish copy
 
 - **Platform captions** for TikTok, Instagram, and YouTube Shorts
-- Publish section **after slides** in the workspace
-- One scrollable page with hooks, captions, hashtags (# formatted), and YouTube title
-- **Copy all** (via Next step bar) or **copy one platform** to clipboard
+- Publish section in the **Publish** tab — captions for TikTok, Instagram, and YouTube Shorts; **9:16 video export**; **Post to YouTube Shorts**; file **downloads** (zip, narration) at the bottom
+- **Copy all** (via journey strip) or **copy one platform** to clipboard
 - **Regenerate captions only** — updates publish copy without touching slide images
 
 ### Post to YouTube Shorts
@@ -148,7 +147,7 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 
 ### Export
 
-- **Download zip** when all slide images are ready (via Next step bar)
+- **Download zip** when all slide images are ready (via journey strip or Downloads section)
 - **Dual-format zip** — `4x5/` and `9x16/` image folders when both formats are complete
 - **Download individual slide images** from each slide card (web)
 - **Download narration ZIP** from the Publish panel (per-slide MP3s + full narration)
@@ -170,7 +169,7 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 
 ### Campaign management
 
-- **My campaigns** list with preview thumbnails, format, and date — scoped to the active brand
+- **My campaigns** list with preview thumbnails, format, date, and **publish-status badges** (e.g. Needs captions, Ready to post, On YouTube) — scoped to the active brand
 - **Duplicate campaign** — from the workspace (not the list)
 - **Delete campaign** — hidden in workspace Danger zone only
 
@@ -263,7 +262,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 
 | Phase | Focus |
 |-------|--------|
-| **1** | Workspace clarity — progress strip, next-step bar, inline rename, async text generation, app nav |
+| **1** | Workspace clarity — campaign journey strip, tabbed workspace, inline rename, async text generation, app nav |
 | **2** | Publish handoff — carousel preview, copy voiceover, single-slide download |
 | **3** | Brand library + **Settings** (account, brand assets, usage display) |
 | **4** | Ship & protect — landing, SEO, usage limits, mobile polish, Google auth, account deletion, prod deploy |
@@ -290,6 +289,9 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | Deliverable | Status |
 |-------------|--------|
 | Tabbed campaign workspace (Slides / Publish / Details) | ✅ |
+| Campaign journey strip (progress + next step unified) | ✅ |
+| Campaign list publish-status badges | ✅ |
+| First-time workspace tour + captions prompt | ✅ |
 | Filmstrip + inline generation feedback | ✅ |
 | Mobile settings hub + sub-pages | ✅ |
 | Face ID / biometric app unlock + Keychain session | ✅ |

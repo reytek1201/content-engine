@@ -1,47 +1,20 @@
 "use client";
 
-import { tabForNextStepAction } from "@/app/campaign/[id]/campaign-workspace-tab";
-import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspace-tab";
+import { runJourneyAction } from "@/app/campaign/[id]/campaign-journey-actions";
+import type { CampaignJourneyStripInput } from "@/app/campaign/[id]/campaign-journey-input";
+import { useCampaignJourney } from "@/app/campaign/[id]/campaign-journey-strip";
 import {
-  useCampaignNextStep,
-  type CampaignNextStepInput,
-} from "@/app/campaign/[id]/campaign-next-step-controls";
-import type { CampaignNextStepButton, NextStepAction } from "@/utils/campaign-progress";
+  tabForNextStepAction,
+  type CampaignWorkspaceTab,
+} from "@/app/campaign/[id]/campaign-workspace-tab";
+import {
+  scrollTargetForNextStepAction,
+  scrollToCampaignSection,
+  type CampaignNextStepButton,
+  type NextStepAction,
+} from "@/utils/campaign-progress";
 
-type NextStepHandlers = Pick<
-  CampaignNextStepInput,
-  | "onGenerateImages"
-  | "onGenerateCaptions"
-  | "onDownloadZip"
-  | "onDownloadNarration"
-  | "onCopyAllCaptions"
-  | "onSaveAllToPhotos"
->;
-
-function runNextStepAction(action: NextStepAction, handlers: NextStepHandlers) {
-  switch (action) {
-    case "generate_images":
-      handlers.onGenerateImages();
-      break;
-    case "generate_captions":
-      handlers.onGenerateCaptions();
-      break;
-    case "download_zip":
-      handlers.onDownloadZip();
-      break;
-    case "download_narration":
-      handlers.onDownloadNarration();
-      break;
-    case "copy_captions":
-      handlers.onCopyAllCaptions();
-      break;
-    case "save_all_photos":
-      handlers.onSaveAllToPhotos();
-      break;
-  }
-}
-
-interface CampaignInlineNextStepActionsProps extends CampaignNextStepInput {
+interface CampaignInlineNextStepActionsProps extends CampaignJourneyStripInput {
   onOpenMoreActions?: () => void;
   onTabChange?: (tab: CampaignWorkspaceTab) => void;
 }
@@ -51,32 +24,50 @@ export default function CampaignInlineNextStepActions({
   onTabChange,
   ...input
 }: CampaignInlineNextStepActionsProps) {
-  const {
-    nextStep,
-    handlers,
-    secondaryButtons,
-    primaryLabel,
-    actionDisabled,
-    secondaryButtonLabel,
-  } = useCampaignNextStep(input);
+  const journey = useCampaignJourney(input);
+
+  const handlers = {
+    onGenerateImages: input.onGenerateImages,
+    onGenerateCaptions: input.onGenerateCaptions,
+    onDownloadZip: input.onDownloadZip,
+    onDownloadNarration: input.onDownloadNarration,
+    onCopyAllCaptions: input.onCopyAllCaptions,
+    onSaveAllToPhotos: input.onSaveAllToPhotos,
+  };
 
   const showMoreActions =
-    secondaryButtons.length >= 2 && Boolean(onOpenMoreActions);
-  const inlineSecondaries = showMoreActions ? [] : secondaryButtons;
+    journey.secondaries.length >= 2 && Boolean(onOpenMoreActions);
+  const inlineSecondaries = showMoreActions ? [] : journey.secondaries;
 
   function handleNavigate(action: NextStepAction) {
     if (onTabChange) {
       onTabChange(tabForNextStepAction(action));
     }
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToCampaignSection(scrollTargetForNextStepAction(action));
+      });
+    });
   }
 
   function handlePrimaryClick() {
-    if (actionDisabled) {
+    const primary = journey.primary;
+    if (!primary || primary.disabled || primary.loading) {
       return;
     }
 
-    handleNavigate(nextStep.action);
-    runNextStepAction(nextStep.action, handlers);
+    if (
+      journey.isFullyComplete &&
+      journey.youtubeWatchUrl &&
+      primary.action === "focus_youtube"
+    ) {
+      window.open(journey.youtubeWatchUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    handleNavigate(primary.action);
+    runJourneyAction(primary.action, handlers);
   }
 
   function handleSecondaryClick(button: CampaignNextStepButton) {
@@ -85,8 +76,15 @@ export default function CampaignInlineNextStepActions({
     }
 
     handleNavigate(button.action);
-    runNextStepAction(button.action, handlers);
+    runJourneyAction(button.action, handlers);
   }
+
+  if (!journey.primary) {
+    return null;
+  }
+
+  const primary = journey.primary;
+  const actionDisabled = primary.disabled || primary.loading;
 
   return (
     <div className="mt-4 flex flex-col gap-2">
@@ -98,7 +96,7 @@ export default function CampaignInlineNextStepActions({
           actionDisabled ? "cursor-default opacity-70" : ""
         }`}
       >
-        {primaryLabel}
+        {primary.label}
       </button>
 
       {inlineSecondaries.map((button) => (
@@ -109,7 +107,7 @@ export default function CampaignInlineNextStepActions({
           onClick={() => handleSecondaryClick(button)}
           className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {secondaryButtonLabel(button)}
+          {button.label}
         </button>
       ))}
 

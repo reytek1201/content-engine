@@ -1,7 +1,7 @@
 "use client";
 
 import CampaignInlineNextStepActions from "@/app/campaign/[id]/campaign-inline-next-step-actions";
-import type { CampaignNextStepInput } from "@/app/campaign/[id]/campaign-next-step-controls";
+import type { CampaignJourneyStripInput } from "@/app/campaign/[id]/campaign-journey-input";
 import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspace-tab";
 import {
   formatImageProgressLabel,
@@ -13,7 +13,7 @@ interface JustFinishedSlide {
   imageUrl: string;
 }
 
-interface CampaignGenerationPanelProps extends CampaignNextStepInput {
+interface CampaignGenerationPanelProps extends CampaignJourneyStripInput {
   justFinishedSlide?: JustFinishedSlide | null;
   variant?: "slides" | "publish";
   inlineActions?: boolean;

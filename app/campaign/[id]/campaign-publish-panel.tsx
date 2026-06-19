@@ -1,6 +1,6 @@
 "use client";
 
-import CampaignPublishChecklist from "@/app/campaign/[id]/campaign-publish-checklist";
+import CampaignLockedNotice from "@/app/campaign/[id]/campaign-locked-notice";
 import CampaignCaptionsAccordion from "@/app/campaign/[id]/campaign-captions-accordion";
 import CampaignExportPanel from "@/app/campaign/[id]/campaign-export-panel";
 import CampaignYouTubePublishPanel from "@/app/campaign/[id]/campaign-youtube-publish-panel";
@@ -128,8 +128,8 @@ export default function CampaignPublishPanel({
             Publish
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6 md:max-w-2xl">
-            Follow the steps: captions → video → YouTube. Downloads are at the
-            bottom.
+            Post to platforms here: captions → 9:16 video → YouTube Shorts.
+            File downloads (zip, narration) are at the bottom.
           </p>
         </div>
 
@@ -148,22 +148,6 @@ export default function CampaignPublishPanel({
       {publishTabHint ? (
         <div className="mt-4 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-foreground sm:mt-5">
           {publishTabHint}
-        </div>
-      ) : null}
-
-      {imagesComplete ? (
-        <div className="mt-4 sm:mt-6">
-          <CampaignPublishChecklist
-            imagesComplete={imagesComplete}
-            captionsReady={captionsReady}
-            isGeneratingCaptions={isGeneratingCaptions}
-            videoExportReady={videoExportReady}
-            hasVideoCredits={hasVideoCredits}
-            hasVideoExport={hasVideoExport}
-            youtubeAlreadyPublished={youtubeAlreadyPublished}
-            isExportingVideo={isExportingVideo}
-            onGenerateCaptions={onGenerateCaptions}
-          />
         </div>
       ) : null}
 
@@ -249,25 +233,22 @@ export default function CampaignPublishPanel({
           </p>
 
           {!captionsReady ? (
-            <div className="rounded-lg border border-dashed border-amber-900/40 bg-amber-950/15 px-4 py-5 sm:rounded-xl sm:px-6">
-              <p className="text-sm font-medium text-foreground">
-                Generate captions first
-              </p>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">
-                Video export unlocks after captions — you need YouTube title and
-                description before posting a Short.
-              </p>
+            <CampaignLockedNotice
+              variant="action"
+              title="Generate captions first"
+              description="Video export unlocks after captions — you need YouTube title and description before posting a Short."
+            >
               <button
                 type="button"
                 onClick={onGenerateCaptions}
                 disabled={!canGenerateCaptions || isGeneratingCaptions}
-                className="btn-primary mt-4 w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
+                className="btn-primary w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
               >
                 {isGeneratingCaptions
                   ? "Generating captions…"
                   : "Generate captions"}
               </button>
-            </div>
+            </CampaignLockedNotice>
           ) : (
             <>
               {videoExportReady && hasVideoCredits && (

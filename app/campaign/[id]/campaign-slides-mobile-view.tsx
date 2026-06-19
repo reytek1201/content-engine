@@ -1,7 +1,7 @@
 "use client";
 
 import type { AspectRatio, Slide } from "@/types/campaign";
-import type { CampaignNextStepInput } from "@/app/campaign/[id]/campaign-next-step-controls";
+import type { CampaignJourneyStripInput } from "@/app/campaign/[id]/campaign-journey-input";
 import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspace-tab";
 import SlideCard from "@/app/campaign/[id]/slide-card";
 import CampaignGenerationPanel from "@/app/campaign/[id]/campaign-generation-panel";
@@ -23,7 +23,7 @@ interface CampaignSlidesMobileViewProps {
   isSavingVoicePersona: boolean;
   onPersonaChange: (persona: VoicePersona) => void;
   justFinishedSlide: JustFinishedSlide | null;
-  nextStepProps: CampaignNextStepInput;
+  journeyProps: CampaignJourneyStripInput;
   onOpenMoreActions: () => void;
   onTabChange: (tab: CampaignWorkspaceTab) => void;
   isNativeApp: boolean;
@@ -48,7 +48,7 @@ export default function CampaignSlidesMobileView({
   isSavingVoicePersona,
   onPersonaChange,
   justFinishedSlide,
-  nextStepProps,
+  journeyProps,
   onOpenMoreActions,
   onTabChange,
   isNativeApp,
@@ -117,7 +117,7 @@ export default function CampaignSlidesMobileView({
   return (
     <div className="mt-4 space-y-4">
       <CampaignGenerationPanel
-        {...nextStepProps}
+        {...journeyProps}
         justFinishedSlide={justFinishedSlide}
         inlineActions
         onOpenMoreActions={onOpenMoreActions}
@@ -129,7 +129,7 @@ export default function CampaignSlidesMobileView({
         slides={slides}
         activeSlideIndex={activeSlideIndex}
         aspectRatio={aspectRatio}
-        isGeneratingImages={nextStepProps.isGeneratingImages}
+        isGeneratingImages={journeyProps.isGeneratingImages}
         onSelect={onActiveSlideIndexChange}
       />
 

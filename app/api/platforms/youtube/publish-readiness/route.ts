@@ -1,3 +1,4 @@
+import { buildYouTubeWatchUrl } from "@/utils/youtube/video-metadata";
 import {
   getPlatformPostForCampaignExport,
   isPlatformPostInFlight,
@@ -60,6 +61,7 @@ export async function GET(request: Request) {
     let postForCurrentExport = null;
     let alreadyPublished = false;
     let isUploading = false;
+    let watchUrl: string | null = null;
 
     try {
       const videoExport = await resolveYouTubeVideoExport(supabase, campaignId);
@@ -76,6 +78,12 @@ export async function GET(request: Request) {
       isUploading = postForCurrentExport
         ? isPlatformPostInFlight(postForCurrentExport.status)
         : false;
+
+      if (alreadyPublished && postForCurrentExport?.externalId) {
+        watchUrl =
+          postForCurrentExport.externalUrl ??
+          buildYouTubeWatchUrl(postForCurrentExport.externalId);
+      }
     } catch {
       hasVideoExport = false;
     }
@@ -89,6 +97,7 @@ export async function GET(request: Request) {
       currentExportId,
       alreadyPublished,
       isUploading,
+      watchUrl,
       canPublish:
         Boolean(connection) &&
         Boolean(caption) &&

@@ -14,6 +14,7 @@ import {
 } from "@/utils/campaign-display";
 import {
   formatSlidesImageStatus,
+  scrollToCampaignSection,
   scrollToSlideCard,
 } from "@/utils/campaign-progress";
 import SlideCard from "@/app/campaign/[id]/slide-card";
@@ -24,13 +25,16 @@ import CampaignDetailsPanel from "@/app/campaign/[id]/campaign-details-panel";
 import CampaignGeneratingView from "@/app/campaign/[id]/campaign-generating-view";
 import CampaignGenerationPanel from "@/app/campaign/[id]/campaign-generation-panel";
 import CampaignWorkspaceTabs from "@/app/campaign/[id]/campaign-workspace-tabs";
-import CampaignNextStepBar from "@/app/campaign/[id]/campaign-next-step-bar";
+import CampaignJourneyStrip from "@/app/campaign/[id]/campaign-journey-strip";
 import {
   CampaignActionsSheet,
 } from "@/app/campaign/[id]/campaign-actions-sheet";
 import CampaignPublishPanel from "@/app/campaign/[id]/campaign-publish-panel";
 import CampaignVideoExportOverlay from "@/app/campaign/[id]/campaign-video-export-overlay";
-import CampaignProgressStrip from "@/app/campaign/[id]/campaign-progress-strip";
+import CampaignCaptionsPrompt, {
+  shouldShowCaptionsPrompt,
+} from "@/app/campaign/[id]/campaign-captions-prompt";
+import CampaignWorkspaceTour from "@/app/campaign/[id]/campaign-workspace-tour";
 import CampaignSlidesMobileView from "@/app/campaign/[id]/campaign-slides-mobile-view";
 import CampaignTitleEditor from "@/app/campaign/[id]/campaign-title-editor";
 import {
@@ -119,6 +123,8 @@ export default function CampaignWorkspace({
   const [youtubePublishFlow, setYoutubePublishFlow] = useState({
     hasVideoExport: false,
     alreadyPublished: false,
+    watchUrl: null as string | null,
+    connected: false,
   });
   const [captionsMessage, setCaptionsMessage] = useState<string | null>(null);
   const [justFinishedSlide, setJustFinishedSlide] = useState<{
@@ -143,6 +149,7 @@ export default function CampaignWorkspace({
   const [publishTabHint, setPublishTabHint] = useState<string | null>(null);
   const [mobileActiveSlideIndex, setMobileActiveSlideIndex] = useState(0);
   const [actionsSheetOpen, setActionsSheetOpen] = useState(false);
+  const [captionsPromptOpen, setCaptionsPromptOpen] = useState(false);
   const [isRetryingText, setIsRetryingText] = useState(false);
   const [preferredVoicePersona, setPreferredVoicePersona] = useState<VoicePersona>(
     initialPreferredVoicePersona,
@@ -291,6 +298,8 @@ export default function CampaignWorkspace({
       setYoutubePublishFlow({
         hasVideoExport: false,
         alreadyPublished: false,
+        watchUrl: null,
+        connected: false,
       });
       return;
     }
@@ -306,12 +315,16 @@ export default function CampaignWorkspace({
           success?: boolean;
           hasVideoExport?: boolean;
           alreadyPublished?: boolean;
+          watchUrl?: string | null;
+          connected?: boolean;
         };
 
         if (!cancelled && response.ok && data.success) {
           setYoutubePublishFlow({
             hasVideoExport: Boolean(data.hasVideoExport),
             alreadyPublished: Boolean(data.alreadyPublished),
+            watchUrl: data.watchUrl ?? null,
+            connected: Boolean(data.connected),
           });
         }
       } catch {
@@ -408,13 +421,14 @@ export default function CampaignWorkspace({
         "Images ready — generate captions to continue to video and YouTube.",
       );
 
-      if (isMobileWorkspaceLayout()) {
-        setActionsSheetOpen(true);
+      if (captions.length === 0 && shouldShowCaptionsPrompt(campaign.id)) {
+        setActionsSheetOpen(false);
+        setCaptionsPromptOpen(true);
       }
     }
 
     prevImagesCompleteRef.current = imagesComplete;
-  }, [imagesComplete]);
+  }, [campaign.id, captions.length, imagesComplete]);
 
   useEffect(() => {
     return () => {
@@ -981,6 +995,10 @@ export default function CampaignWorkspace({
       const outputUrl = await pollVideoExport(data.exportId, setVideoExportStage);
       if (videoExportAspectRatio === "9:16") {
         setYoutubePublishRefreshKey((current) => current + 1);
+        setWorkspaceTab("publish");
+        requestAnimationFrame(() => {
+          scrollToCampaignSection("section-youtube-publish");
+        });
       }
       setVideoExportStage("downloading");
       const filename = getCampaignVideoFilename();
@@ -1106,6 +1124,10 @@ export default function CampaignWorkspace({
 
       setWorkspaceTab("publish");
       setPublishTabHint(null);
+      setCaptionsPromptOpen(false);
+      requestAnimationFrame(() => {
+        scrollToCampaignSection("section-publish-video");
+      });
     } catch (generateError) {
       setError(
         generateError instanceof Error
@@ -1334,7 +1356,7 @@ export default function CampaignWorkspace({
     [campaign.brand_id, initialPreferredVoicePersona],
   );
 
-  const nextStepProps = {
+  const journeyProps = {
     slideCount,
     imagesReadyCount,
     imagesComplete,
@@ -1356,6 +1378,7 @@ export default function CampaignWorkspace({
     hasVideoCredits,
     hasVideoExport: youtubePublishFlow.hasVideoExport,
     youtubeAlreadyPublished: youtubePublishFlow.alreadyPublished,
+    youtubeWatchUrl: youtubePublishFlow.watchUrl,
     isExportingVideo,
     onGenerateImages: handleGenerateImages,
     onGenerateCaptions: handleGenerateCaptions,
@@ -1436,9 +1459,6 @@ export default function CampaignWorkspace({
                 }
                 onError={setError}
               />
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground md:mt-3 md:text-base md:leading-7">
-                {campaign.topic}
-              </p>
             </div>
             <div className="flex flex-wrap items-start gap-3">
               <DuplicateCampaignButton campaignId={campaign.id} />
@@ -1462,14 +1482,6 @@ export default function CampaignWorkspace({
               {error}
             </div>
           )}
-
-          <CampaignProgressStrip
-            slideCount={slideCount}
-            imagesReadyCount={imagesReadyCount}
-            imagesComplete={imagesComplete}
-            isGeneratingImages={isGeneratingImages}
-            captionsCount={captions.length}
-          />
         </header>
 
         <CampaignWorkspaceTabs
@@ -1480,21 +1492,22 @@ export default function CampaignWorkspace({
 
         {(workspaceTab === "slides" || workspaceTab === "publish") && (
           <div className="mt-4 md:hidden">
-            <CampaignProgressStrip
-              slideCount={slideCount}
-              imagesReadyCount={imagesReadyCount}
-              imagesComplete={imagesComplete}
-              isGeneratingImages={isGeneratingImages}
-              captionsCount={captions.length}
+            <CampaignJourneyStrip
+              layout="default"
+              onTabChange={setWorkspaceTab}
+              {...journeyProps}
             />
           </div>
         )}
 
         <div className="hidden md:block">
-          <CampaignNextStepBar
-            {...nextStepProps}
-            onTabChange={setWorkspaceTab}
-          />
+          {(workspaceTab === "slides" || workspaceTab === "publish") && (
+            <CampaignJourneyStrip
+              layout="sticky"
+              onTabChange={setWorkspaceTab}
+              {...journeyProps}
+            />
+          )}
         </div>
 
         <section
@@ -1560,7 +1573,7 @@ export default function CampaignWorkspace({
 
           <div className="mb-4 hidden md:block">
             <CampaignGenerationPanel
-              {...nextStepProps}
+              {...journeyProps}
               justFinishedSlide={justFinishedSlide}
               variant="slides"
             />
@@ -1606,7 +1619,7 @@ export default function CampaignWorkspace({
               isSavingVoicePersona={isSavingVoicePersona}
               onPersonaChange={(persona) => void handleVoicePersonaChange(persona)}
               justFinishedSlide={justFinishedSlide}
-              nextStepProps={nextStepProps}
+              journeyProps={journeyProps}
               onOpenMoreActions={() => setActionsSheetOpen(true)}
               onTabChange={setWorkspaceTab}
               isNativeApp={isNativeApp === true}
@@ -1651,15 +1664,20 @@ export default function CampaignWorkspace({
         {workspaceTab === "details" && (
           <CampaignDetailsPanel
             campaign={campaign}
-            slideCount={slideCount}
-            imagesReadyCount={imagesReadyCount}
-            imagesComplete={imagesComplete}
-            isGeneratingImages={isGeneratingImages}
-            captionsCount={captions.length}
+            brandName={brandName}
+            showYouTubeConnectHint={
+              isNativeApp !== true &&
+              captions.length > 0 &&
+              youtubePublishFlow.hasVideoExport &&
+              !youtubePublishFlow.alreadyPublished &&
+              !youtubePublishFlow.connected
+            }
             onTitleSaved={(title) =>
               setCampaign((current) => ({ ...current, title }))
             }
             onError={setError}
+            onTabChange={setWorkspaceTab}
+            {...journeyProps}
           />
         )}
 
@@ -1668,7 +1686,24 @@ export default function CampaignWorkspace({
         open={actionsSheetOpen}
         onClose={() => setActionsSheetOpen(false)}
         onTabChange={setWorkspaceTab}
-        {...nextStepProps}
+        {...journeyProps}
+      />
+      <CampaignCaptionsPrompt
+        open={captionsPromptOpen}
+        campaignId={campaign.id}
+        canGenerateCaptions={canGenerateCaptions}
+        isGeneratingCaptions={isGeneratingCaptions}
+        onGenerateCaptions={handleGenerateCaptions}
+        onClose={() => setCaptionsPromptOpen(false)}
+      />
+      <CampaignWorkspaceTour
+        enabled={
+          workspaceTab !== "details" &&
+          !captionsPromptOpen &&
+          !actionsSheetOpen &&
+          !previewOpen
+        }
+        onTabChange={setWorkspaceTab}
       />
       <div className="hidden md:block">
         <ScrollToTopButton />

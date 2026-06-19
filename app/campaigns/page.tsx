@@ -2,6 +2,7 @@ import CampaignList from "@/app/campaigns/campaign-list";
 import CampaignsPageHeader from "@/app/components/campaigns-page-header";
 import NewCampaignButton from "@/app/components/new-campaign-button";
 import { listUserBrands } from "@/utils/brands-server";
+import { loadCampaignListStatuses } from "@/utils/campaign-list-status-server";
 import { createClient } from "@/utils/supabase/server";
 import { appRobots } from "@/utils/site-metadata";
 import { redirect } from "next/navigation";
@@ -60,6 +61,10 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
 
   const typedCampaigns = (campaigns ?? []) as CampaignWithSlides[];
   const hasMultipleBrands = brands.length > 1;
+  const campaignStatuses = await loadCampaignListStatuses(
+    supabase,
+    typedCampaigns,
+  );
 
   return (
     <div className="min-h-full bg-background text-foreground">
@@ -82,7 +87,10 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
           </section>
         ) : (
           <div className="mt-8">
-            <CampaignList campaigns={typedCampaigns} />
+            <CampaignList
+              campaigns={typedCampaigns}
+              statuses={campaignStatuses}
+            />
           </div>
         )}
       </main>

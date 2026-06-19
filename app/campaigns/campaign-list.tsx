@@ -1,6 +1,8 @@
 "use client";
 
 import type { Campaign } from "@/types/campaign";
+import type { CampaignListStatus } from "@/utils/campaign-list-status";
+import CampaignListStatusBadge from "@/app/campaigns/campaign-list-status-badge";
 import {
   formatCampaignAspectRatios,
   formatCampaignDate,
@@ -14,13 +16,15 @@ interface CampaignListProps {
       slides: Array<{ slide_index: number; image_url: string | null }>;
     }
   >;
+  statuses: Record<string, CampaignListStatus>;
 }
 
-export default function CampaignList({ campaigns }: CampaignListProps) {
+export default function CampaignList({ campaigns, statuses }: CampaignListProps) {
   return (
     <div className="mt-10 grid gap-4">
       {campaigns.map((campaign) => {
         const previewImage = getCampaignPreviewImage(campaign.slides);
+        const status = statuses[campaign.id];
 
         return (
           <Link
@@ -48,9 +52,12 @@ export default function CampaignList({ campaigns }: CampaignListProps) {
 
               <div className="flex flex-1 flex-col justify-between gap-4 p-5 sm:p-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-foreground transition group-hover:text-foreground">
-                    {campaign.title ?? "Untitled campaign"}
-                  </h2>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <h2 className="text-lg font-semibold text-foreground transition group-hover:text-foreground">
+                      {campaign.title ?? "Untitled campaign"}
+                    </h2>
+                    {status ? <CampaignListStatusBadge status={status} /> : null}
+                  </div>
                   <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
                     {campaign.topic}
                   </p>

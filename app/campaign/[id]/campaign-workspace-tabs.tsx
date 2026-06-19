@@ -28,6 +28,7 @@ export default function CampaignWorkspaceTabs({
         return (
           <button
             key={tab.id}
+            id={`campaign-workspace-tab-${tab.id}`}
             type="button"
             role="tab"
             aria-selected={isActive}

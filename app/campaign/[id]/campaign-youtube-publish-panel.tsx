@@ -1,5 +1,6 @@
 "use client";
 
+import CampaignYouTubeReadinessChecklist from "@/app/campaign/[id]/campaign-youtube-readiness-checklist";
 import { getYouTubePublishErrorMessage } from "@/utils/youtube/publish-errors";
 import type { PlatformConnectionPublic } from "@/types/platform-connection";
 import type { PlatformPostPublic } from "@/types/platform-post";
@@ -218,7 +219,13 @@ export default function CampaignYouTubePublishPanel({
 
   if (!hasYoutubeCaptions) {
     return (
-      <YouTubePanelShell helperText="Step 1: Generate captions to unlock YouTube title, description, and hashtags for your Short.">
+      <YouTubePanelShell helperText="Generate captions first — they unlock your YouTube title, description, and hashtags.">
+        <CampaignYouTubeReadinessChecklist
+          hasCaptions={false}
+          hasVideoExport={false}
+          connected={false}
+          alreadyPublished={false}
+        />
         <button
           type="button"
           disabled={disabled || !canGenerateCaptions || isGeneratingCaptions}
@@ -276,6 +283,13 @@ export default function CampaignYouTubePublishPanel({
 
   return (
     <YouTubePanelShell helperText={helperText}>
+      <CampaignYouTubeReadinessChecklist
+        hasCaptions={readiness.hasYoutubeCaption}
+        hasVideoExport={readiness.hasVideoExport}
+        connected={readiness.connected}
+        alreadyPublished={readiness.alreadyPublished || Boolean(publishedUrl)}
+      />
+
       {readiness.connection ? (
         <p className="mb-4 text-xs text-foreground">
           Channel:{" "}

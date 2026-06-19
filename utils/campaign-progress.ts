@@ -1,3 +1,21 @@
+export type CampaignJourneyStepId =
+  | "copy"
+  | "images"
+  | "captions"
+  | "video"
+  | "youtube";
+
+export type CampaignJourneyStepStatus = "done" | "current" | "locked";
+
+export interface CampaignJourneyStep {
+  id: CampaignJourneyStepId;
+  label: string;
+  status: CampaignJourneyStepStatus;
+  scrollTargetId: string;
+  detail?: string;
+}
+
+/** @deprecated Use `CampaignJourneyStepId` */
 export type CampaignProgressStepId = "copy" | "images" | "captions" | "export";
 
 export interface CampaignProgressInput {
@@ -46,6 +64,41 @@ export interface CampaignNextStep {
   secondaries?: CampaignNextStepButton[];
 }
 
+export interface CampaignJourneyInput {
+  slideCount: number;
+  imagesReadyCount: number;
+  imagesComplete: boolean;
+  canGenerateImages: boolean;
+  isGeneratingImages: boolean;
+  isStartingImages: boolean;
+  captionsCount: number;
+  canGenerateCaptions: boolean;
+  isGeneratingCaptions: boolean;
+  isExporting: boolean;
+  isExportingAudio?: boolean;
+  hasVoiceoverScripts?: boolean;
+  isNativeApp?: boolean;
+  isSavingAllPhotos?: boolean;
+  saveAllPhotosProgress?: { saved: number; total: number } | null;
+  videoExportReady?: boolean;
+  hasVideoCredits?: boolean;
+  hasVideoExport?: boolean;
+  youtubeAlreadyPublished?: boolean;
+  youtubeWatchUrl?: string | null;
+  isExportingVideo?: boolean;
+  copiedAllCaptions?: boolean;
+  savedAllPhotos?: boolean;
+}
+
+export interface CampaignJourney {
+  steps: CampaignJourneyStep[];
+  description: string;
+  primary: CampaignNextStepButton | null;
+  secondaries: CampaignNextStepButton[];
+  isFullyComplete: boolean;
+  youtubeWatchUrl: string | null;
+}
+
 export function formatImageProgressLabel(
   imagesReadyCount: number,
   slideCount: number
@@ -73,89 +126,248 @@ export function formatSlidesImageStatus(options: {
   return "Ready for image generation";
 }
 
-export function getCampaignProgressSteps(
-  input: CampaignProgressInput
-): CampaignProgressStep[] {
-  const copyComplete = input.slideCount > 0;
-  const captionsComplete = input.captionsCount > 0;
-  const exportReady = input.imagesComplete;
+function buildJourneySteps(input: {
+  slideCount: number;
+  imagesReadyCount: number;
+  imagesComplete: boolean;
+  isGeneratingImages: boolean;
+  captionsCount: number;
+  hasVideoExport: boolean;
+  youtubeAlreadyPublished: boolean;
+}): CampaignJourneyStep[] {
+  const copyDone = input.slideCount > 0;
+  const imagesDone = input.imagesComplete;
+  const captionsDone = input.captionsCount > 0;
+  const videoDone = input.hasVideoExport;
+  const youtubeDone = input.youtubeAlreadyPublished;
 
-  let currentStep: CampaignProgressStepId = "copy";
-  if (copyComplete && !input.imagesComplete) {
-    currentStep = "images";
-  } else if (copyComplete && input.imagesComplete && !captionsComplete) {
-    currentStep = "captions";
-  } else if (copyComplete && input.imagesComplete && captionsComplete) {
-    currentStep = "export";
-  }
+  const stepCompletions: Record<CampaignJourneyStepId, boolean> = {
+    copy: copyDone,
+    images: imagesDone,
+    captions: captionsDone,
+    video: videoDone,
+    youtube: youtubeDone,
+  };
+
+  const order: CampaignJourneyStepId[] = [
+    "copy",
+    "images",
+    "captions",
+    "video",
+    "youtube",
+  ];
+
+  const currentIndex = order.findIndex((id) => !stepCompletions[id]);
 
   const imagesDetail = input.imagesComplete
-    ? "All ready"
+    ? undefined
     : input.isGeneratingImages || input.imagesReadyCount > 0
       ? formatImageProgressLabel(input.imagesReadyCount, input.slideCount)
       : undefined;
 
-  return [
-    {
-      id: "copy",
-      label: "Copy",
-      complete: copyComplete,
-      current: currentStep === "copy",
-      scrollTargetId: "section-slides",
-    },
-    {
-      id: "images",
-      label: "Images",
-      complete: input.imagesComplete,
-      current: currentStep === "images",
-      detail: imagesDetail,
-      scrollTargetId: "section-slides",
-    },
-    {
-      id: "captions",
-      label: "Captions",
-      complete: captionsComplete,
-      current: currentStep === "captions",
-      scrollTargetId: "section-publish",
-    },
-    {
-      id: "export",
-      label: "Export",
-      complete: exportReady && captionsComplete,
-      current: currentStep === "export",
-      detail:
-        currentStep === "export"
-          ? captionsComplete
-            ? "Video & post"
-            : "Needs captions"
-          : undefined,
-      scrollTargetId: "section-publish",
-    },
-  ];
+  const scrollTargets: Record<CampaignJourneyStepId, string> = {
+    copy: "section-slides",
+    images: "section-slides",
+    captions: "section-publish-captions",
+    video: "section-publish-video",
+    youtube: "section-youtube-publish",
+  };
+
+  const labels: Record<CampaignJourneyStepId, string> = {
+    copy: "Copy",
+    images: "Images",
+    captions: "Captions",
+    video: "Video",
+    youtube: "YouTube",
+  };
+
+  return order.map((id, index) => {
+    const complete = stepCompletions[id];
+    const isCurrent = currentIndex === index;
+    const locked = !complete && index > currentIndex;
+
+    const status: CampaignJourneyStepStatus = complete
+      ? "done"
+      : isCurrent
+        ? "current"
+        : locked
+          ? "locked"
+          : "current";
+
+    return {
+      id,
+      label: labels[id],
+      status,
+      scrollTargetId: scrollTargets[id],
+      detail: id === "images" && isCurrent ? imagesDetail : undefined,
+    };
+  });
 }
 
-export function getCampaignNextStep(options: {
-  slideCount: number;
-  imagesReadyCount: number;
-  imagesComplete: boolean;
-  canGenerateImages: boolean;
-  isGeneratingImages: boolean;
-  isStartingImages: boolean;
-  captionsCount: number;
-  canGenerateCaptions: boolean;
-  isGeneratingCaptions: boolean;
-  isExporting: boolean;
-  isExportingAudio?: boolean;
-  hasVoiceoverScripts?: boolean;
-  isNativeApp?: boolean;
-  isSavingAllPhotos?: boolean;
-  saveAllPhotosProgress?: { saved: number; total: number } | null;
-  videoExportReady?: boolean;
-  hasVideoCredits?: boolean;
-  hasVideoExport?: boolean;
-  youtubeAlreadyPublished?: boolean;
-  isExportingVideo?: boolean;
-}): CampaignNextStep {
+function buildJourneyActions(
+  options: CampaignJourneyInput,
+): Pick<CampaignJourney, "description" | "primary" | "secondaries"> {
+  const nextStep = getCampaignNextStepFromInput(options);
+
+  return {
+    description:
+      options.savedAllPhotos && options.isNativeApp
+        ? "Your slides are in Photos — open the Photos app to post."
+        : nextStep.description,
+    primary: {
+      action: nextStep.action,
+      label:
+        nextStep.action === "copy_captions" && options.copiedAllCaptions
+          ? "Copied all"
+          : nextStep.action === "save_all_photos" && options.savedAllPhotos
+            ? "Saved to Photos"
+            : nextStep.label,
+      disabled: nextStep.disabled,
+      loading: nextStep.loading,
+    },
+    secondaries: (nextStep.secondaries ??
+      (nextStep.secondary ? [nextStep.secondary] : [])
+    ).map((button) => ({
+      ...button,
+      label:
+        button.action === "copy_captions" && options.copiedAllCaptions
+          ? "Copied all"
+          : button.action === "save_all_photos" && options.savedAllPhotos
+            ? "Saved to Photos"
+            : button.label,
+    })),
+  };
+}
+
+export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney {
+  const {
+    slideCount,
+    imagesComplete,
+    captionsCount,
+    hasVideoExport = false,
+    youtubeAlreadyPublished = false,
+    youtubeWatchUrl = null,
+    isNativeApp = false,
+  } = input;
+
+  const copyDone = slideCount > 0;
+  const captionsDone = captionsCount > 0;
+
+  const isFullyComplete = isNativeApp
+    ? copyDone && imagesComplete && captionsDone
+    : youtubeAlreadyPublished;
+
+  const actions = buildJourneyActions(input);
+
+  if (isFullyComplete) {
+    const completeSecondaries: CampaignNextStepButton[] = [];
+
+    if (isNativeApp) {
+      completeSecondaries.push({
+        action: "copy_captions",
+        label: input.copiedAllCaptions ? "Copied all" : "Copy all captions",
+        disabled: false,
+        loading: false,
+      });
+      completeSecondaries.push({
+        action: "save_all_photos",
+        label: input.savedAllPhotos ? "Saved to Photos" : "Save all to Photos",
+        disabled: Boolean(input.isSavingAllPhotos),
+        loading: Boolean(input.isSavingAllPhotos),
+      });
+    } else {
+      completeSecondaries.push({
+        action: "copy_captions",
+        label: input.copiedAllCaptions ? "Copied all" : "Copy all captions",
+        disabled: false,
+        loading: false,
+      });
+      completeSecondaries.push({
+        action: "download_zip",
+        label: input.isExporting ? "Preparing zip…" : "Download zip",
+        disabled: Boolean(input.isExporting),
+        loading: Boolean(input.isExporting),
+      });
+    }
+
+    return {
+      steps: buildJourneySteps({
+        slideCount,
+        imagesReadyCount: input.imagesReadyCount,
+        imagesComplete,
+        isGeneratingImages: input.isGeneratingImages,
+        captionsCount,
+        hasVideoExport,
+        youtubeAlreadyPublished,
+      }),
+      description: isNativeApp
+        ? "Slides and captions are ready."
+        : "Posted to YouTube — copy captions or download assets anytime.",
+      primary: youtubeWatchUrl
+        ? {
+            action: "focus_youtube",
+            label: "View on YouTube",
+            disabled: false,
+            loading: false,
+          }
+        : null,
+      secondaries: completeSecondaries,
+      isFullyComplete: true,
+      youtubeWatchUrl,
+    };
+  }
+
+  return {
+    steps: buildJourneySteps({
+      slideCount,
+      imagesReadyCount: input.imagesReadyCount,
+      imagesComplete,
+      isGeneratingImages: input.isGeneratingImages,
+      captionsCount,
+      hasVideoExport,
+      youtubeAlreadyPublished,
+    }),
+    ...actions,
+    isFullyComplete: false,
+    youtubeWatchUrl,
+  };
+}
+
+/** @deprecated Use `getCampaignJourney` */
+export function getCampaignProgressSteps(
+  input: CampaignProgressInput
+): CampaignProgressStep[] {
+  const journey = getCampaignJourney({
+    slideCount: input.slideCount,
+    imagesReadyCount: input.imagesReadyCount,
+    imagesComplete: input.imagesComplete,
+    isGeneratingImages: input.isGeneratingImages,
+    isStartingImages: false,
+    captionsCount: input.captionsCount,
+    canGenerateImages: false,
+    canGenerateCaptions: false,
+    isGeneratingCaptions: false,
+    isExporting: false,
+  });
+
+  return journey.steps
+    .filter((step) => step.id !== "youtube")
+    .map((step) => ({
+      id:
+        step.id === "video"
+          ? "export"
+          : (step.id as Exclude<CampaignProgressStepId, "export">),
+      label: step.id === "video" ? "Export" : step.label,
+      complete: step.status === "done",
+      current: step.status === "current",
+      detail: step.detail,
+      scrollTargetId: step.scrollTargetId,
+    }));
+}
+
+function getCampaignNextStepFromInput(
+  options: CampaignJourneyInput,
+): CampaignNextStep {
   const {
     slideCount,
     imagesReadyCount,
@@ -380,7 +592,38 @@ export function getCampaignNextStep(options: {
   };
 }
 
-export const CAMPAIGN_NEXT_STEP_BAR_ID = "campaign-next-step-bar";
+/** @deprecated Use `getCampaignJourney` */
+export function getCampaignNextStep(
+  options: CampaignJourneyInput,
+): CampaignNextStep {
+  return getCampaignNextStepFromInput(options);
+}
+
+export const CAMPAIGN_JOURNEY_STRIP_ID = "campaign-journey-strip";
+
+/** @deprecated Use `CAMPAIGN_JOURNEY_STRIP_ID` */
+export const CAMPAIGN_NEXT_STEP_BAR_ID = CAMPAIGN_JOURNEY_STRIP_ID;
+
+export function scrollTargetForNextStepAction(action: NextStepAction): string {
+  if (action === "export_video") {
+    return "section-publish-video";
+  }
+
+  if (action === "focus_youtube") {
+    return "section-youtube-publish";
+  }
+
+  if (
+    action === "copy_captions" ||
+    action === "generate_captions" ||
+    action === "download_zip" ||
+    action === "download_narration"
+  ) {
+    return "section-publish";
+  }
+
+  return "section-slides";
+}
 
 export function scrollToCampaignSection(
   sectionId: string,
@@ -400,10 +643,14 @@ export function scrollToSlideCard(slideId: string) {
 }
 
 export function scrollToCampaignNextStep() {
-  document.getElementById(CAMPAIGN_NEXT_STEP_BAR_ID)?.scrollIntoView({
+  document.getElementById(CAMPAIGN_JOURNEY_STRIP_ID)?.scrollIntoView({
     behavior: "auto",
     block: "start",
   });
+}
+
+export function scrollToCampaignJourney() {
+  scrollToCampaignNextStep();
 }
 
 export function scrollToCampaignTop() {
@@ -411,107 +658,4 @@ export function scrollToCampaignTop() {
     behavior: "smooth",
     block: "start",
   });
-}
-
-export type PublishChecklistStepId = "captions" | "video" | "youtube" | "posted";
-
-export type PublishChecklistStepStatus = "done" | "current" | "locked";
-
-export interface PublishChecklistStep {
-  id: PublishChecklistStepId;
-  label: string;
-  status: PublishChecklistStepStatus;
-  helperText: string;
-  scrollTargetId?: string;
-}
-
-export function getCampaignPublishChecklist(input: {
-  imagesComplete: boolean;
-  captionsReady: boolean;
-  isGeneratingCaptions: boolean;
-  videoExportReady: boolean;
-  hasVideoCredits: boolean;
-  hasVideoExport: boolean;
-  youtubeAlreadyPublished: boolean;
-  isExportingVideo: boolean;
-  isPublishingYoutube?: boolean;
-}): PublishChecklistStep[] {
-  if (!input.imagesComplete) {
-    return [];
-  }
-
-  const captionsDone = input.captionsReady;
-  const captionsCurrent =
-    !captionsDone && !input.isGeneratingCaptions;
-  const videoDone = input.hasVideoExport || input.youtubeAlreadyPublished;
-  const videoCurrent =
-    captionsDone && !videoDone && !input.isExportingVideo;
-  const youtubeDone = input.youtubeAlreadyPublished;
-  const youtubeCurrent =
-    captionsDone &&
-    videoDone &&
-    !youtubeDone &&
-    !input.isPublishingYoutube;
-
-  const captionsStatus: PublishChecklistStepStatus = captionsDone
-    ? "done"
-    : captionsCurrent
-      ? "current"
-      : "locked";
-
-  const videoStatus: PublishChecklistStepStatus = videoDone
-    ? "done"
-    : videoCurrent
-      ? "current"
-      : "locked";
-
-  const youtubeStatus: PublishChecklistStepStatus = youtubeDone
-    ? "done"
-    : youtubeCurrent
-      ? "current"
-      : "locked";
-
-  return [
-    {
-      id: "captions",
-      label: "Captions",
-      status: captionsStatus,
-      helperText: captionsDone
-        ? "Post copy ready for TikTok, Instagram, and YouTube."
-        : input.isGeneratingCaptions
-          ? "Writing platform captions…"
-          : "Generate hooks, hashtags, and YouTube title.",
-      scrollTargetId: "section-publish-captions",
-    },
-    {
-      id: "video",
-      label: "9:16 video",
-      status: videoStatus,
-      helperText: videoDone
-        ? "Quick Reel export completed."
-        : !captionsDone
-          ? "Unlocks after captions."
-          : !input.videoExportReady
-            ? "Finish slide images and voiceover scripts first."
-            : !input.hasVideoCredits
-              ? "Video credits needed — upgrade in Settings."
-              : input.isExportingVideo
-                ? "Rendering your video…"
-                : "Export your Quick Reel for YouTube Shorts.",
-      scrollTargetId: "section-publish-video",
-    },
-    {
-      id: "youtube",
-      label: "YouTube Shorts",
-      status: youtubeStatus,
-      helperText: youtubeDone
-        ? "Posted to your channel."
-        : !videoDone
-          ? "Unlocks after video export."
-          : input.isPublishingYoutube
-            ? "Publishing to YouTube…"
-            : "Connect YouTube and post your Short.",
-      scrollTargetId: "section-youtube-publish",
-    },
-  ];
 }
