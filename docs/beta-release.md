@@ -7,10 +7,21 @@ Use this before **TestFlight** (iOS) and **Play internal testing** (Android).
 ## Pre-flight (web)
 
 - [ ] Latest `main` deployed to Vercel (`https://www.slidepress.co`)
-- [ ] Supabase migrations applied on production
-- [ ] `/privacy` and `/terms` live (required for App Store / Play listing)
+- [ ] Supabase migrations applied on production (`platform_connections`, `platform_posts`, `platform_posts_export_unique`)
+- [ ] `/privacy` and `/terms` live (required for App Store / Play listing; includes YouTube section)
 - [ ] `/api/health` returns `{ "ok": true }` (native connectivity checks)
 - [ ] Smoke test: sign in, create campaign, generate images, save to Photos (native)
+- [ ] YouTube (optional): connect channel, publish 9:16 Short — see `docs/youtube-phase3-runbook.md`
+
+---
+
+## YouTube Shorts (direct publish)
+
+Before marketing direct posting:
+
+- [ ] Apply `20260619000003_platform_posts_export_unique.sql` (dedupes + unique index)
+- [ ] Submit Google OAuth verification for `youtube.upload` — runbook: `docs/youtube-phase3-runbook.md`
+- [ ] Request YouTube Data API quota increase if needed (~6 uploads/day on default quota)
 
 ---
 

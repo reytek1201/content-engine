@@ -1,9 +1,10 @@
 "use client";
 
+import { getYouTubePublishErrorMessage } from "@/utils/youtube/publish-errors";
 import type { PlatformConnectionPublic } from "@/types/platform-connection";
 import type { PlatformPostPublic } from "@/types/platform-post";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface PublishReadinessResponse {
   success: boolean;
@@ -11,13 +12,17 @@ interface PublishReadinessResponse {
   connection: PlatformConnectionPublic | null;
   hasYoutubeCaption: boolean;
   hasVideoExport: boolean;
+  currentExportId: string | null;
+  alreadyPublished: boolean;
+  isUploading: boolean;
   canPublish: boolean;
-  latestPost: PlatformPostPublic | null;
+  postForCurrentExport: PlatformPostPublic | null;
   error?: string;
 }
 
 interface PublishResponse {
   success: boolean;
+  alreadyPublished?: boolean;
   error?: string;
   code?: string;
   authorizeUrl?: string;
@@ -62,6 +67,7 @@ export default function CampaignYouTubePublishPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const publishInFlightRef = useRef(false);
 
   const loadReadiness = useCallback(async () => {
     setLoading(true);
@@ -79,8 +85,13 @@ export default function CampaignYouTubePublishPanel({
 
       setReadiness(data);
 
-      if (data.latestPost?.status === "published" && data.latestPost.externalUrl) {
-        setPublishedUrl(data.latestPost.externalUrl);
+      if (
+        data.postForCurrentExport?.status === "published" &&
+        data.postForCurrentExport.externalUrl
+      ) {
+        setPublishedUrl(data.postForCurrentExport.externalUrl);
+      } else if (!data.alreadyPublished) {
+        setPublishedUrl(null);
       }
     } catch (loadError) {
       setError(
@@ -98,6 +109,11 @@ export default function CampaignYouTubePublishPanel({
   }, [loadReadiness, refreshKey]);
 
   async function handlePublish() {
+    if (publishInFlightRef.current || isPublishing) {
+      return;
+    }
+
+    publishInFlightRef.current = true;
     setIsPublishing(true);
     setError(null);
     setMessage(null);
@@ -119,23 +135,38 @@ export default function CampaignYouTubePublishPanel({
         return;
       }
 
+      if (response.status === 409 && data.code === "PUBLISH_IN_PROGRESS") {
+        setMessage("This export is already being published to YouTube.");
+        await loadReadiness();
+        return;
+      }
+
       if (!response.ok || !data.success) {
-        throw new Error(data.error ?? "Failed to publish to YouTube");
+        throw new Error(
+          getYouTubePublishErrorMessage(
+            data.error ?? "Failed to publish to YouTube",
+          ),
+        );
       }
 
       const shortsUrl =
         data.video?.shortsUrl ?? data.post?.externalUrl ?? null;
 
       setPublishedUrl(shortsUrl);
-      setMessage("Published to YouTube Shorts.");
+      setMessage(
+        data.alreadyPublished
+          ? "This export is already on YouTube."
+          : "Published to YouTube Shorts.",
+      );
       await loadReadiness();
     } catch (publishError) {
-      setError(
+      const raw =
         publishError instanceof Error
           ? publishError.message
-          : "Failed to publish to YouTube",
-      );
+          : "Failed to publish to YouTube";
+      setError(getYouTubePublishErrorMessage(raw));
     } finally {
+      publishInFlightRef.current = false;
       setIsPublishing(false);
     }
   }
@@ -166,12 +197,20 @@ export default function CampaignYouTubePublishPanel({
   } else if (!readiness.hasVideoExport) {
     helperText =
       "Export a 9:16 video above first, then post directly to YouTube.";
-  } else if (publishedUrl) {
-    helperText = "Your latest Short is on YouTube. Post again after a new export.";
+  } else if (readiness.isUploading || isPublishing) {
+    helperText = "Publishing in progress. Keep this page open until it finishes.";
+  } else if (readiness.alreadyPublished || publishedUrl) {
+    helperText =
+      "This export is already on YouTube. Export a new 9:16 video to post again.";
   }
 
   const canClickPublish =
-    readiness.canPublish && !disabled && !isPublishing && !needsUploadScope;
+    readiness.canPublish &&
+    !disabled &&
+    !isPublishing &&
+    !readiness.isUploading &&
+    !readiness.alreadyPublished &&
+    !needsUploadScope;
 
   return (
     <div className="rounded-lg border border-border bg-background/40 p-4 sm:rounded-xl sm:p-5">
@@ -220,7 +259,11 @@ export default function CampaignYouTubePublishPanel({
             onClick={() => void handlePublish()}
             className="btn-primary w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
           >
-            {isPublishing ? "Publishing to YouTube…" : "Post to YouTube Shorts"}
+            {isPublishing || readiness.isUploading
+              ? "Publishing to YouTube…"
+              : readiness.alreadyPublished
+                ? "Already on YouTube"
+                : "Post to YouTube Shorts"}
           </button>
         )}
 
@@ -236,7 +279,7 @@ export default function CampaignYouTubePublishPanel({
         ) : null}
       </div>
 
-      {isPublishing ? (
+      {isPublishing || readiness.isUploading ? (
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
           Uploading and processing on YouTube. This can take a few minutes —
           keep this page open.

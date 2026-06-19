@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
 };
 
-const LAST_UPDATED = "June 18, 2026";
+const LAST_UPDATED = "June 19, 2026";
 const CONTACT_EMAIL = "hello@slidepress.co";
 
 interface PrivacyPageProps {
@@ -73,6 +73,13 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
             RevenueCat. We do not store payment card or bank account details.
           </li>
           <li>
+            <strong className="text-foreground">Connected social accounts (optional)</strong>{" "}
+            — if you connect YouTube in Settings, we store OAuth tokens and
+            your channel display name so SlidePress can upload videos to your
+            channel on your behalf. We also record publish status (video id,
+            URL, errors) per campaign.
+          </li>
+          <li>
             <strong className="text-foreground">Device tokens (optional)</strong>{" "}
             — if you use the native app and allow notifications, we store a
             push token to notify you when slide images finish generating.
@@ -102,6 +109,10 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
             Process subscriptions, apply plan entitlements, and manage billing
             status across web and mobile.
           </li>
+          <li>
+            Post campaign videos to YouTube Shorts when you connect a channel
+            and choose to publish.
+          </li>
           <li>Send optional push notifications in the native app.</li>
         </ul>
       </section>
@@ -114,12 +125,48 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           We use trusted processors to run SlidePress, including Supabase
           (database and auth), Vercel (hosting), Google Gemini (slide text),
           Fal.ai (image generation), ElevenLabs (text-to-speech / AI voice
-          narration, when you use those features), Stripe (web subscriptions),
+          narration, when you use those features), Google YouTube Data API
+          (when you connect YouTube and publish Shorts), Stripe (web subscriptions),
           RevenueCat (mobile subscription status), Apple App Store and Google
           Play (in-app purchases on native apps), and Firebase Cloud Messaging
           (push delivery, when enabled). Voiceover text is sent to ElevenLabs
-          only when you preview or export narration. Processors handle data only
-          to provide the service.
+          only when you preview or export narration. YouTube access is used only
+          to read your channel name at connect time and to upload videos you
+          explicitly publish. Processors handle data only to provide the service.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-base font-semibold text-foreground">
+          YouTube connection &amp; publishing
+        </h2>
+        <p className="mt-3">
+          If you connect a YouTube channel, SlidePress requests read access to
+          show your channel name and upload access when you publish a Short.
+          We store OAuth tokens securely on our servers (not in the mobile app)
+          and use them only to upload videos you choose to publish from a
+          campaign. We record publish metadata (status, YouTube video id and
+          URL) in your account.
+        </p>
+        <p className="mt-3">
+          SlidePress&apos;s use of information received from Google APIs
+          adheres to the{" "}
+          <a
+            href="https://developers.google.com/terms/api-services-user-data-policy"
+            className="text-primary underline-offset-2 hover:underline"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Google API Services User Data Policy
+          </a>
+          , including the Limited Use requirements.
+        </p>
+        <p className="mt-3">
+          You can disconnect YouTube anytime in Settings → Connected accounts.
+          Disconnecting revokes our access tokens. Deleting your SlidePress
+          account also revokes YouTube access and removes connection and publish
+          records from our database. Videos already uploaded to YouTube remain
+          on your channel until you remove them in YouTube Studio.
         </p>
       </section>
 
@@ -130,8 +177,8 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
         <p className="mt-3">
           We keep your data while your account is active. You can delete your
           account anytime in Settings → Account → Account deletion. Deletion
-          removes your campaigns, brand library, usage history, and sign-in
-          access.
+          removes your campaigns, brand library, connected platform accounts,
+          publish history, usage history, and sign-in access.
         </p>
       </section>
 

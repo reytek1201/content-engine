@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Terms of Service",
 };
 
-const LAST_UPDATED = "June 18, 2026";
+const LAST_UPDATED = "June 19, 2026";
 const CONTACT_EMAIL = "hello@slidepress.co";
 
 interface TermsPageProps {
@@ -69,6 +69,20 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
             create deceptive synthetic media.
           </li>
         </ul>
+      </section>
+
+      <section>
+        <h2 className="text-base font-semibold text-foreground">
+          Connected platforms
+        </h2>
+        <p className="mt-3">
+          If you connect a social account (for example YouTube), you authorize
+          SlidePress to act on your behalf only for actions you initiate, such
+          as publishing a campaign video. You remain responsible for content
+          you publish and for complying with each platform&apos;s terms (including
+          YouTube&apos;s Community Guidelines and monetization rules). Disconnect
+          anytime in Settings.
+        </p>
       </section>
 
       <section>

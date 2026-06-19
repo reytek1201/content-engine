@@ -135,6 +135,17 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 - **Copy all** (via Next step bar) or **copy one platform** to clipboard
 - **Regenerate captions only** — updates publish copy without touching slide images
 
+### Post to YouTube Shorts
+
+- **Settings → Connected accounts** — connect your YouTube channel (OAuth)
+- **Campaign → Publish** — **Post to YouTube Shorts** when you have YouTube captions and a completed **9:16** video export
+- Upload uses your campaign title, description, and hashtags; videos publish as **unlisted** by default
+- **Grant upload permission** on first publish (separate from connect)
+- **View on YouTube** link after publish; same export cannot be posted twice (duplicate guard)
+- Disconnect YouTube anytime in Settings; account deletion revokes tokens and removes publish history
+
+*Google OAuth verification for public users is in progress — see `docs/youtube-phase3-runbook.md`.*
+
 ### Export
 
 - **Download zip** when all slide images are ready (via Next step bar)
@@ -153,6 +164,7 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 - **Settings → Brands** — manage all brands; edit kit and products per brand
 - **Campaigns header** — switch active brand, edit kit, add a brand (returns to campaigns when done)
 - **Usage** — campaigns, regenerations, voice previews, narration exports, and video exports this month with beta limits (resets monthly)
+- **Connected accounts** — connect or disconnect YouTube for direct Shorts posting
 - **Security** (native) — optional Face ID / fingerprint app unlock
 - **Account deletion** — type `DELETE` to confirm; removes all campaigns, brands, usage data, and auth access
 
@@ -207,8 +219,8 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 6. Preview carousel → fix any slide (edit headline → **Fix this slide** regenerate)
 7. Optional: add the other format (4:5 or 9:16) when primary images are ready
 8. Generate captions
-9. Publish: copy captions, download zip, export narration ZIP, or export video MP4 (per format)
-10. Post to TikTok, Instagram, YouTube
+9. Publish: copy captions, download zip, export narration ZIP, export video MP4, or **post to YouTube Shorts** (9:16 + captions + connected channel)
+10. Post to TikTok or Instagram manually, or use YouTube direct publish from SlidePress
 ```
 
 **Goal:** Fewest steps between idea and publish-ready assets — carousel, narration, or video from one campaign.
@@ -221,7 +233,7 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 |------|--------|
 | **Paid tiers & billing** | Stripe subscriptions, higher video/narration limits — [Epic #14](https://github.com/reytek1201/SlidePress.co/issues/14) |
 | **On-screen video captions** | Deferred — export MP4 + platform captions; burned-in captions not in current build |
-| **Direct platform posting** | Export MP4 + copy caption today — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) (YouTube first) |
+| **Direct platform posting** | **YouTube Shorts** live (connect + publish); TikTok / Instagram next — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md) |
 | **Voice library browser** | Curated personas today (warm / energetic / professional) |
 
 ### Why video export matters (marketing angle)
@@ -235,7 +247,8 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 ### What we’re not promising in v1 of video
 
 - Full voice library browser (we’ll curate a small set of great voices)
-- Direct upload to TikTok / Instagram / YouTube (export MP4 + captions; you post)
+- Direct upload to TikTok / Instagram (export MP4 + captions; you post manually today)
+- YouTube posting for users outside Google OAuth test list until verification completes
 - 4:5 video before 9:16 Reels quality is solid
 
 *Internal tracking: GitHub epic [#1](https://github.com/reytek1201/SlidePress.co/issues/1) (ElevenLabs: Narration & Video Export).*
@@ -305,10 +318,11 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 - Per-aspect image storage and workspace format toggle
 - Zip folders per format; video export per format (one credit each)
 
-**6C — Business scale** *(next)*
+**6C — Business scale** *(in progress)*
 
 - **Usage tiers & billing** — paid plans with higher caps (Stripe) — [Epic #14](https://github.com/reytek1201/SlidePress.co/issues/14)
-- **Direct platform posting** — YouTube Shorts first, then TikTok / Instagram — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/platform-posting.md`](platform-posting.md)
+- **Direct platform posting** — **YouTube Shorts** ✅ (Phases 0–2); verification & launch 🚧 — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/platform-posting.md`](platform-posting.md) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md)
+- **TikTok / Instagram** — after YouTube verification ([#32](https://github.com/reytek1201/SlidePress.co/issues/32)–[#34](https://github.com/reytek1201/SlidePress.co/issues/34))
 - **On-screen video captions** — burned-in captions (deferred from beta)
 
 ### Not planned for v1
@@ -333,6 +347,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | Slide images | Fal.ai Nano Banana 2 |
 | Platform captions | Google Gemini |
 | Narration & video | ElevenLabs TTS + FFmpeg compose + Fal merge pipeline |
+| YouTube posting | YouTube Data API v3 (OAuth + resumable upload) |
 | Realtime | Supabase Realtime on slides, slide images & campaigns |
 
 Approximate **variable cost per 5-slide campaign** today (images + AI text): **~$0.45–0.65** depending on regenerations. **Video export** adds roughly **~$0.10–0.30** per Reel (TTS + render) at beta scale. End-user pricing will include tier limits above these costs.

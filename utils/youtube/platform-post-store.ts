@@ -101,3 +101,38 @@ export async function getLatestYouTubePostForCampaign(
 
   return data ? toPlatformPostPublic(data as PlatformPostRow) : null;
 }
+
+export async function getPlatformPostForCampaignExport(
+  userId: string,
+  campaignId: string,
+  exportId: string,
+): Promise<PlatformPostPublic | null> {
+  const admin = createAdminClient();
+
+  const { data, error } = await admin
+    .from("platform_posts")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("campaign_id", campaignId)
+    .eq("export_id", exportId)
+    .eq("platform", "youtube")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ? toPlatformPostPublic(data as PlatformPostRow) : null;
+}
+
+const IN_FLIGHT_POST_STATUSES: PlatformPostStatus[] = [
+  "pending",
+  "uploading",
+  "processing",
+];
+
+export function isPlatformPostInFlight(status: PlatformPostStatus): boolean {
+  return IN_FLIGHT_POST_STATUSES.includes(status);
+}

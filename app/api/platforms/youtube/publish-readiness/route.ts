@@ -1,4 +1,7 @@
-import { getLatestYouTubePostForCampaign } from "@/utils/youtube/platform-post-store";
+import {
+  getPlatformPostForCampaignExport,
+  isPlatformPostInFlight,
+} from "@/utils/youtube/platform-post-store";
 import { getYouTubeConnectionPublic } from "@/utils/youtube/connection-store";
 import { resolveYouTubeVideoExport } from "@/utils/youtube/resolve-video-export";
 import { createClient } from "@/utils/supabase/server";
@@ -53,15 +56,29 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     let hasVideoExport = false;
+    let currentExportId: string | null = null;
+    let postForCurrentExport = null;
+    let alreadyPublished = false;
+    let isUploading = false;
 
     try {
-      await resolveYouTubeVideoExport(supabase, campaignId);
+      const videoExport = await resolveYouTubeVideoExport(supabase, campaignId);
       hasVideoExport = true;
+      currentExportId = videoExport.id;
+
+      postForCurrentExport = await getPlatformPostForCampaignExport(
+        user.id,
+        campaignId,
+        videoExport.id,
+      );
+
+      alreadyPublished = postForCurrentExport?.status === "published";
+      isUploading = postForCurrentExport
+        ? isPlatformPostInFlight(postForCurrentExport.status)
+        : false;
     } catch {
       hasVideoExport = false;
     }
-
-    const latestPost = await getLatestYouTubePostForCampaign(user.id, campaignId);
 
     return NextResponse.json({
       success: true,
@@ -69,9 +86,16 @@ export async function GET(request: Request) {
       connection,
       hasYoutubeCaption: Boolean(caption),
       hasVideoExport,
+      currentExportId,
+      alreadyPublished,
+      isUploading,
       canPublish:
-        Boolean(connection) && Boolean(caption) && hasVideoExport,
-      latestPost,
+        Boolean(connection) &&
+        Boolean(caption) &&
+        hasVideoExport &&
+        !alreadyPublished &&
+        !isUploading,
+      postForCurrentExport,
     });
   } catch (error) {
     const message =

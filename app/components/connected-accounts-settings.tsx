@@ -168,8 +168,8 @@ export default function ConnectedAccountsSettings() {
             </div>
 
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Connect your YouTube channel to post Shorts from SlidePress. Upload
-              permission is requested when you publish (after Google app verification).
+              Connect your YouTube channel to post Shorts from SlidePress.
+              Upload permission is requested the first time you publish.
             </p>
 
             {connection ? (

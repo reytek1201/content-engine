@@ -4,7 +4,7 @@
 
 **GitHub epic:** [Epic — Direct Platform Posting](https://github.com/reytek1201/SlidePress.co/issues/27)
 
-**Current state (v1):** Export MP4 / images + copy captions → user posts manually via share sheet or Photos. See `docs/client-features.md`.
+**Current state:** Export MP4 / images + copy captions, plus **direct YouTube Shorts posting** (connect in Settings, publish from campaign). TikTok and Instagram remain manual export. See `docs/client-features.md`.
 
 **Platform order (easiest → hardest):**
 
@@ -45,7 +45,7 @@ These pieces are reused by TikTok and Instagram later:
 
 YouTube is first because: single MP4 asset, mature resumable upload API, caption fields already match `youtube_shorts` in `types/captions.ts` (`title`, `caption`, `hashtags`).
 
-### Phase 0 — OAuth & connection storage ([#28](https://github.com/reytek1201/SlidePress.co/issues/28))
+### Phase 0 — OAuth & connection storage ([#28](https://github.com/reytek1201/SlidePress.co/issues/28)) ✅
 
 **Goal:** User can connect a YouTube channel from Settings; tokens stored securely server-side.
 
@@ -63,7 +63,7 @@ YouTube is first because: single MP4 asset, mature resumable upload API, caption
 
 **Exit criteria:** Settings shows connected channel; tokens refresh automatically; disconnect works.
 
-### Phase 1 — Resumable upload pipeline ([#29](https://github.com/reytek1201/SlidePress.co/issues/29))
+### Phase 1 — Resumable upload pipeline ([#29](https://github.com/reytek1201/SlidePress.co/issues/29)) ✅
 
 **Goal:** Server can upload a completed campaign video export to the user’s YouTube channel.
 
@@ -79,7 +79,7 @@ YouTube is first because: single MP4 asset, mature resumable upload API, caption
 
 **Exit criteria:** API route uploads MP4 and returns YouTube video id + watch URL (manual/curl test OK).
 
-### Phase 2 — Publish UI & orchestration ([#30](https://github.com/reytek1201/SlidePress.co/issues/30))
+### Phase 2 — Publish UI & orchestration ([#30](https://github.com/reytek1201/SlidePress.co/issues/30)) ✅
 
 **Goal:** One-tap “Post to YouTube” from the campaign Publish panel.
 
@@ -94,18 +94,21 @@ YouTube is first because: single MP4 asset, mature resumable upload API, caption
 
 **Exit criteria:** User completes full flow from campaign workspace without leaving SlidePress (except to view published Short on YouTube).
 
-### Phase 3 — Verification & launch ([#31](https://github.com/reytek1201/SlidePress.co/issues/31))
+### Phase 3 — Verification & launch ([#31](https://github.com/reytek1201/SlidePress.co/issues/31)) 🚧
 
 **Goal:** Production-ready for TestFlight / web users.
 
-| Task | Notes |
-|------|-------|
-| Google OAuth verification | Submit app for `youtube.upload` sensitive scope review |
-| Quota | Request quota increase if default 10k units/day is tight (~1600 units per upload) |
-| Privacy policy | Document YouTube data access, retention, deletion on account delete |
-| Account deletion | Revoke YouTube tokens + delete `platform_connections` in existing delete-account flow |
-| QA checklist | Connect, publish, disconnect, token refresh, error paths |
-| Docs | Update `docs/client-features.md` when live |
+**Runbook:** [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md) — QA checklist, OAuth verification steps, quota increase.
+
+| Task | Status |
+|------|--------|
+| Google OAuth verification | Submit `youtube.upload` for review |
+| Quota | Request increase if default 10k units/day is tight (~1600 units per upload) |
+| Privacy policy | ✅ YouTube data access documented at `/privacy` |
+| Account deletion | ✅ Revokes YouTube tokens + deletes `platform_connections` |
+| Duplicate publish guard | ✅ Idempotent per campaign export |
+| QA checklist | See runbook |
+| Docs | ✅ `docs/client-features.md` updated |
 
 **Exit criteria:** OAuth verification approved (or in review with staging test users); QA checklist signed off.
 

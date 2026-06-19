@@ -1,5 +1,7 @@
 import {
   createPlatformPost,
+  getPlatformPostForCampaignExport,
+  isPlatformPostInFlight,
   updatePlatformPost,
 } from "@/utils/youtube/platform-post-store";
 import {
@@ -108,13 +110,91 @@ export async function POST(request: Request) {
       exportId,
     );
 
-    const post = await createPlatformPost({
-      userId: user.id,
+    const existingPost = await getPlatformPostForCampaignExport(
+      user.id,
       campaignId,
-      platform: "youtube",
-      exportId: videoExport.id,
-      status: "uploading",
-    });
+      videoExport.id,
+    );
+
+    if (existingPost?.status === "published") {
+      return NextResponse.json({
+        success: true,
+        alreadyPublished: true,
+        post: existingPost,
+        video: existingPost.externalId
+          ? {
+              id: existingPost.externalId,
+              watchUrl: buildYouTubeWatchUrl(existingPost.externalId),
+              shortsUrl:
+                existingPost.externalUrl ??
+                buildYouTubeShortsUrl(existingPost.externalId),
+              privacyStatus: getYouTubePublishPrivacyStatus(),
+            }
+          : undefined,
+      });
+    }
+
+    if (existingPost && isPlatformPostInFlight(existingPost.status)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "This export is already being published to YouTube",
+          code: "PUBLISH_IN_PROGRESS",
+          post: existingPost,
+        },
+        { status: 409 },
+      );
+    }
+
+    let post;
+
+    try {
+      post = await createPlatformPost({
+        userId: user.id,
+        campaignId,
+        platform: "youtube",
+        exportId: videoExport.id,
+        status: "uploading",
+      });
+    } catch (createError) {
+      const racedPost = await getPlatformPostForCampaignExport(
+        user.id,
+        campaignId,
+        videoExport.id,
+      );
+
+      if (racedPost?.status === "published") {
+        return NextResponse.json({
+          success: true,
+          alreadyPublished: true,
+          post: racedPost,
+          video: racedPost.externalId
+            ? {
+                id: racedPost.externalId,
+                watchUrl: buildYouTubeWatchUrl(racedPost.externalId),
+                shortsUrl:
+                  racedPost.externalUrl ??
+                  buildYouTubeShortsUrl(racedPost.externalId),
+                privacyStatus: getYouTubePublishPrivacyStatus(),
+              }
+            : undefined,
+        });
+      }
+
+      if (racedPost && isPlatformPostInFlight(racedPost.status)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "This export is already being published to YouTube",
+            code: "PUBLISH_IN_PROGRESS",
+            post: racedPost,
+          },
+          { status: 409 },
+        );
+      }
+
+      throw createError;
+    }
 
     postId = post.id;
 
