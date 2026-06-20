@@ -1,5 +1,6 @@
 "use client";
 
+import CampaignTikTokReadinessChecklist from "@/app/campaign/[id]/campaign-tiktok-readiness-checklist";
 import { getTikTokPublishErrorMessage } from "@/utils/tiktok/publish-errors";
 import { buildPlatformAuthorizeUrl } from "@/utils/platforms/oauth-return";
 import type { PlatformConnectionPublic } from "@/types/platform-connection";
@@ -418,18 +419,13 @@ export default function CampaignTikTokPublishPanel({
 
   return (
     <TikTokPanelShell helperText={helperText}>
-      <ul className="mb-4 space-y-1.5 text-xs text-muted-foreground">
-        <li>{readiness.hasTiktokCaption ? "✓" : "○"} TikTok caption ready</li>
-        <li>{readiness.hasVideoExport ? "✓" : "○"} 9:16 video export ready</li>
-        <li>{readiness.connected ? "✓" : "○"} TikTok account connected</li>
-        <li>
-          {readiness.hasPublishScope ? "✓" : "○"} TikTok posting permission
-        </li>
-        <li>
-          {readiness.alreadyPublished || publishedUrl ? "✓" : "○"} Posted to
-          TikTok
-        </li>
-      </ul>
+      <CampaignTikTokReadinessChecklist
+        hasCaptions={readiness.hasTiktokCaption}
+        hasVideoExport={readiness.hasVideoExport}
+        connected={readiness.connected}
+        hasPublishScope={readiness.hasPublishScope}
+        alreadyPublished={readiness.alreadyPublished || Boolean(publishedUrl)}
+      />
 
       {creator ? (
         <p className="mb-4 text-xs text-foreground">
