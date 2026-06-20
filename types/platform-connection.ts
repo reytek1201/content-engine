@@ -1,4 +1,4 @@
-export type PlatformConnectionPlatform = "youtube";
+export type PlatformConnectionPlatform = "youtube" | "tiktok";
 
 export interface PlatformConnectionPublic {
   platform: PlatformConnectionPlatform;

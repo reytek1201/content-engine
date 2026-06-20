@@ -74,10 +74,10 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           </li>
           <li>
             <strong className="text-foreground">Connected social accounts (optional)</strong>{" "}
-            — if you connect YouTube in Settings, we store OAuth tokens and
-            your channel display name so SlidePress can upload videos to your
-            channel on your behalf. We also record publish status (video id,
-            URL, errors) per campaign.
+            — if you connect YouTube or TikTok in Settings, we store OAuth
+            tokens and your account display name so SlidePress can post on your
+            behalf when you choose to publish. For YouTube we also record
+            publish status (video id, URL, errors) per campaign.
           </li>
           <li>
             <strong className="text-foreground">Device tokens (optional)</strong>{" "}
@@ -167,6 +167,24 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           account also revokes YouTube access and removes connection and publish
           records from our database. Videos already uploaded to YouTube remain
           on your channel until you remove them in YouTube Studio.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-base font-semibold text-foreground">
+          TikTok connection
+        </h2>
+        <p className="mt-3">
+          If you connect a TikTok account, SlidePress requests basic profile
+          access to show your display name. We store OAuth tokens securely on
+          our servers (not in the mobile app). Direct video posting will request
+          additional permissions when that feature is enabled.
+        </p>
+        <p className="mt-3">
+          You can disconnect TikTok anytime in Settings → Connected accounts.
+          Disconnecting revokes our access tokens. Deleting your SlidePress
+          account also revokes TikTok access and removes the connection from our
+          database.
         </p>
       </section>
 
