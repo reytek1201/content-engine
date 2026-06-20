@@ -86,7 +86,7 @@ export default function SettingsDesktop({
 
             <SettingsAboutContent variant="card" />
 
-            <DeleteAccountSection alignEnd />
+            <DeleteAccountSection />
           </div>
         </div>
       </main>

@@ -5,14 +5,7 @@ import { clearBiometricSession } from "@/utils/biometric-session";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-interface DeleteAccountSectionProps {
-  /** Pin the collapsed trigger to the bottom-right (desktop settings). */
-  alignEnd?: boolean;
-}
-
-export default function DeleteAccountSection({
-  alignEnd = false,
-}: DeleteAccountSectionProps) {
+export default function DeleteAccountSection() {
   const supabase = createClient();
   const router = useRouter();
 
@@ -22,6 +15,12 @@ export default function DeleteAccountSection({
   const [error, setError] = useState<string | null>(null);
 
   const canDelete = confirmText === "DELETE";
+
+  function handleCancel() {
+    setExpanded(false);
+    setConfirmText("");
+    setError(null);
+  }
 
   async function handleDeleteAccount() {
     if (!canDelete || isDeleting) {
@@ -61,32 +60,34 @@ export default function DeleteAccountSection({
   }
 
   return (
-    <section
-      className={`border-t border-border pt-6 md:pt-8 ${
-        alignEnd ? "flex flex-col items-end" : ""
-      }`}
-    >
-      {!expanded ? (
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="text-sm font-medium text-muted-foreground underline-offset-2 transition hover:text-foreground hover:underline"
-        >
-          Account deletion…
-        </button>
-      ) : (
-        <div
-          className={`rounded-2xl border border-red-900/40 bg-red-950/10 p-6 sm:p-8 ${
-            alignEnd ? "w-full" : ""
-          }`}
-        >
-          <h2 className="text-sm font-semibold text-foreground">Danger zone</h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-            Permanently delete your SlidePress account, all campaigns, brand
-            library assets, and usage history. This cannot be undone.{" "}
+    <section className="rounded-2xl border border-red-900/30 bg-red-950/5 p-6 sm:p-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-lg font-semibold text-foreground">Delete account</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Permanently remove your account, campaigns, brand library, and usage
+            history. This cannot be undone.
+          </p>
+        </div>
+
+        {!expanded ? (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="inline-flex shrink-0 items-center justify-center rounded-xl border border-red-900/60 bg-red-950/20 px-5 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-700 hover:bg-red-950/40 active:scale-[0.97] active:opacity-80 sm:self-center"
+          >
+            Delete account
+          </button>
+        ) : null}
+      </div>
+
+      {expanded ? (
+        <div className="mt-6 border-t border-red-900/20 pt-6">
+          <p className="text-sm leading-6 text-muted-foreground">
+            The following will be permanently removed.{" "}
             <span className="text-secondary-foreground">
-              Sign out only ends your session — your data stays until you delete
-              your account.
+              Signing out only ends your session — your data stays until you
+              delete your account.
             </span>
           </p>
 
@@ -119,34 +120,30 @@ export default function DeleteAccountSection({
               type="button"
               onClick={() => void handleDeleteAccount()}
               disabled={!canDelete || isDeleting}
-              className="inline-flex items-center justify-center rounded-xl border border-red-900/60 bg-red-950/20 px-4 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-700 hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-xl border border-red-900/60 bg-red-950/20 px-4 py-2.5 text-sm font-semibold text-red-200 transition hover:border-red-700 hover:bg-red-950/40 active:scale-[0.97] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isDeleting ? "Deleting account…" : "Permanently delete account"}
             </button>
             <button
               type="button"
               disabled={isDeleting}
-              onClick={() => {
-                setExpanded(false);
-                setConfirmText("");
-                setError(null);
-              }}
-              className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={handleCancel}
+              className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-ring/60 hover:text-foreground active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
           </div>
 
-          {error && (
+          {error ? (
             <div
               role="alert"
               className="mt-4 rounded-xl border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-200"
             >
               {error}
             </div>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
     </section>
   );
 }
