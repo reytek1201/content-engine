@@ -10,6 +10,7 @@ import {
   useCreateSheet,
 } from "@/app/components/create-sheet-context";
 import { createClient } from "@/utils/supabase/client";
+import { hapticImpact, hapticSelection } from "@/utils/haptics";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -181,15 +182,28 @@ function MobileBottomNav({
     isCampaignsActive && !isCreateActive && !isSettingsActive;
   const settingsActive = isSettingsActive && !isCreateActive;
 
+  function handleCampaignsTap() {
+    if (!campaignsActive) {
+      void hapticSelection();
+    }
+  }
+
+  function handleSettingsTap() {
+    if (!settingsActive) {
+      void hapticSelection();
+    }
+  }
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="Main navigation"
     >
-      <div className="mx-auto grid max-w-lg grid-cols-3 px-2 pb-2 pt-3">
+      <div className="mx-auto grid max-w-lg grid-cols-3 px-2 pb-2 pt-2">
         <CampaignsNavLink
-          className={`flex flex-col items-center gap-1 transition active:opacity-80 ${
+          onClick={handleCampaignsTap}
+          className={`flex min-h-11 flex-col items-center justify-center gap-1 transition active:scale-[0.97] ${
             campaignsActive ? "text-primary" : "text-muted-foreground"
           }`}
         >
@@ -201,10 +215,13 @@ function MobileBottomNav({
 
         <button
           type="button"
-          onClick={onOpenCreate}
+          onClick={() => {
+            void hapticImpact("light");
+            onOpenCreate();
+          }}
           aria-label="Create new campaign"
           aria-expanded={isCreateActive}
-          className={`flex flex-col items-center gap-1 transition active:opacity-90 ${
+          className={`flex min-h-11 flex-col items-center justify-center gap-1 transition active:scale-[0.97] ${
             isCreateActive ? "text-primary" : "text-muted-foreground"
           }`}
         >
@@ -224,7 +241,8 @@ function MobileBottomNav({
 
         <Link
           href="/settings"
-          className={`flex flex-col items-center gap-1 transition active:opacity-80 ${
+          onClick={handleSettingsTap}
+          className={`flex min-h-11 flex-col items-center justify-center gap-1 transition active:scale-[0.97] ${
             settingsActive ? "text-primary" : "text-muted-foreground"
           }`}
         >

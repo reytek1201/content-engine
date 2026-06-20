@@ -1,8 +1,10 @@
 "use client";
 
+import BottomSheet from "@/app/components/bottom-sheet";
 import { useActiveBrandOptional } from "@/app/components/active-brand-provider";
 import type { Brand } from "@/types/brand";
-import { useEffect, useState } from "react";
+import { hapticSelection } from "@/utils/haptics";
+import { useState } from "react";
 
 function ChevronDownIcon() {
   return (
@@ -55,95 +57,54 @@ function BrandPickerSheet({
   onClose,
   onSelect,
 }: BrandPickerSheetProps) {
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [open, onClose]);
-
-  if (!open) {
-    return null;
-  }
-
   return (
-    <div className="fixed inset-0 z-[70]" role="presentation">
-      <button
-        type="button"
-        aria-label="Close brand picker"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/60"
-      />
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title="Switch brand"
+      titleId="brand-picker-title"
+      description="Campaigns and references are scoped to the brand you choose."
+      zIndexClass="z-[70]"
+      maxHeightClass="max-h-[min(70vh,28rem)]"
+    >
+      <ul className="space-y-2">
+        {brands.map((brand) => {
+          const isActive = brand.id === activeBrandId;
 
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="brand-picker-title"
-        className="absolute inset-x-0 bottom-0 max-h-[min(70vh,28rem)] overflow-y-auto rounded-t-2xl border-t border-border bg-card px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] pt-4 shadow-2xl"
-      >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" aria-hidden />
-
-        <h2
-          id="brand-picker-title"
-          className="text-base font-semibold text-foreground"
-        >
-          Switch brand
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Campaigns and references are scoped to the brand you choose.
-        </p>
-
-        <ul className="mt-4 space-y-2">
-          {brands.map((brand) => {
-            const isActive = brand.id === activeBrandId;
-
-            return (
-              <li key={brand.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSelect(brand.id);
-                    onClose();
-                  }}
-                  className={`flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                    isActive
-                      ? "border-primary/40 bg-primary/10"
-                      : "border-border bg-background hover:border-ring/60"
-                  }`}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-foreground">
-                      {brand.name}
-                    </span>
-                    {brand.is_default ? (
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        Primary brand
-                      </span>
-                    ) : null}
+          return (
+            <li key={brand.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isActive) {
+                    void hapticSelection();
+                  }
+                  onSelect(brand.id);
+                  onClose();
+                }}
+                className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition active:scale-[0.99] ${
+                  isActive
+                    ? "border-primary/40 bg-primary/10"
+                    : "border-border bg-background hover:border-ring/60"
+                }`}
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-foreground">
+                    {brand.name}
                   </span>
-                  {isActive ? <CheckIcon /> : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </div>
+                  {brand.is_default ? (
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Primary brand
+                    </span>
+                  ) : null}
+                </span>
+                {isActive ? <CheckIcon /> : null}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </BottomSheet>
   );
 }
 
@@ -172,7 +133,7 @@ export default function BrandSwitcher({
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
           aria-expanded={open}
-          className="mt-2 flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card/60 px-4 py-3 text-left transition hover:border-ring/60 active:opacity-90"
+          className="mt-2 flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-border bg-card/60 px-4 py-3 text-left transition hover:border-ring/60 active:scale-[0.98]"
         >
           <span className="min-w-0 truncate text-sm font-medium text-foreground">
             {activeBrand?.name ?? "Select brand"}

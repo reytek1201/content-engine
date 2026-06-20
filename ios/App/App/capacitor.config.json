@@ -26,6 +26,8 @@
 		"CAPBrowserPlugin",
 		"CAPCameraPlugin",
 		"FilesystemPlugin",
+		"HapticsPlugin",
+		"KeyboardPlugin",
 		"PushNotificationsPlugin",
 		"SharePlugin",
 		"StatusBarPlugin",

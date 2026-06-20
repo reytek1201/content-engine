@@ -8,6 +8,7 @@ import {
   formatCampaignDate,
   getCampaignPreviewImage,
 } from "@/utils/campaign-display";
+import { hapticSelection } from "@/utils/haptics";
 import Link from "next/link";
 
 interface CampaignListProps {
@@ -30,7 +31,8 @@ export default function CampaignList({ campaigns, statuses }: CampaignListProps)
           <Link
             key={campaign.id}
             href={`/campaign/${campaign.id}`}
-            className="group overflow-hidden rounded-2xl border border-border bg-card/50 transition hover:border-ring/40 hover:bg-card/80"
+            onClick={() => void hapticSelection()}
+            className="group overflow-hidden rounded-2xl border border-border bg-card/50 transition hover:border-ring/40 hover:bg-card/80 active:scale-[0.995]"
           >
             <div className="flex flex-col sm:flex-row">
               <div className="flex h-40 w-full items-center justify-center border-b border-border bg-background sm:h-auto sm:w-40 sm:border-b-0 sm:border-r">

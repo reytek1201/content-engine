@@ -1,3 +1,6 @@
+"use client";
+
+import { hapticSelection } from "@/utils/haptics";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -51,7 +54,8 @@ export function SettingsListRow({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-4 py-3.5 transition active:bg-secondary/50"
+      onClick={() => void hapticSelection()}
+      className="flex min-h-11 items-center gap-3 px-4 py-3 transition active:bg-secondary/50"
     >
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background/60 text-muted-foreground">
         {icon}
@@ -81,7 +85,8 @@ export function SettingsListExternalRow({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-4 py-3.5 transition active:bg-secondary/50"
+      onClick={() => void hapticSelection()}
+      className="flex min-h-11 items-center gap-3 px-4 py-3 transition active:bg-secondary/50"
     >
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background/60 text-muted-foreground">
         {icon}

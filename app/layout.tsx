@@ -6,6 +6,7 @@ import NativeAuthListener from "@/app/components/native-auth-listener";
 import NativeConnectivity from "@/app/components/native-connectivity";
 import NativePushListener from "@/app/components/native-push-listener";
 import NativeShell from "@/app/components/native-shell";
+import { NativeOverlayProvider } from "@/app/contexts/native-overlay-context";
 import {
   brandLogoSrc,
   defaultDescription,
@@ -56,12 +57,14 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">
-        <NativeAuthListener />
-        <NativePushListener />
-        <NativeShell />
-        <NativeConnectivity />
-        <BiometricGate />
-        <AppNavLayout>{children}</AppNavLayout>
+        <NativeOverlayProvider>
+          <NativeAuthListener />
+          <NativePushListener />
+          <NativeShell />
+          <NativeConnectivity />
+          <BiometricGate />
+          <AppNavLayout>{children}</AppNavLayout>
+        </NativeOverlayProvider>
       </body>
     </html>
   );

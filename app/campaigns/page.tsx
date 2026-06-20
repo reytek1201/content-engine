@@ -1,4 +1,5 @@
 import CampaignList from "@/app/campaigns/campaign-list";
+import CampaignsRefreshShell from "@/app/campaigns/campaigns-refresh-shell";
 import CampaignsPageHeader from "@/app/components/campaigns-page-header";
 import NewCampaignButton from "@/app/components/new-campaign-button";
 import { listUserBrands } from "@/utils/brands-server";
@@ -67,33 +68,35 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
   );
 
   return (
-    <div className="min-h-full bg-background text-foreground">
-      <main className="page-main">
-        <CampaignsPageHeader
-          campaignCount={typedCampaigns.length}
-          hasMultipleBrands={hasMultipleBrands}
-          activeBrandId={activeBrand?.id ?? null}
-        />
+    <CampaignsRefreshShell>
+      <div className="min-h-full bg-background text-foreground">
+        <main className="page-main">
+          <CampaignsPageHeader
+            campaignCount={typedCampaigns.length}
+            hasMultipleBrands={hasMultipleBrands}
+            activeBrandId={activeBrand?.id ?? null}
+          />
 
-        {typedCampaigns.length === 0 ? (
-          <section className="mt-12 rounded-2xl border border-border bg-card/50 p-10 text-center">
-            <h2 className="text-xl font-semibold text-foreground">
-              No campaigns yet
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Create your first campaign to generate slides, copy, and images.
-            </p>
-            <NewCampaignButton className="mt-6" label="Create campaign" />
-          </section>
-        ) : (
-          <div className="mt-8">
-            <CampaignList
-              campaigns={typedCampaigns}
-              statuses={campaignStatuses}
-            />
-          </div>
-        )}
-      </main>
-    </div>
+          {typedCampaigns.length === 0 ? (
+            <section className="mt-12 rounded-2xl border border-border bg-card/50 p-10 text-center">
+              <h2 className="text-xl font-semibold text-foreground">
+                No campaigns yet
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Create your first campaign to generate slides, copy, and images.
+              </p>
+              <NewCampaignButton className="mt-6" label="Create campaign" />
+            </section>
+          ) : (
+            <div className="mt-8">
+              <CampaignList
+                campaigns={typedCampaigns}
+                statuses={campaignStatuses}
+              />
+            </div>
+          )}
+        </main>
+      </div>
+    </CampaignsRefreshShell>
   );
 }

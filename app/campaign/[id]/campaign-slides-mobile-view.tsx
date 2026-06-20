@@ -6,8 +6,10 @@ import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspac
 import SlideCard from "@/app/campaign/[id]/slide-card";
 import CampaignGenerationPanel from "@/app/campaign/[id]/campaign-generation-panel";
 import CampaignSlidesFilmstrip from "@/app/campaign/[id]/campaign-slides-filmstrip";
+import { useHorizontalSwipe } from "@/app/hooks/use-horizontal-swipe";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
-import { useCallback, useRef } from "react";
+import { hapticSelection } from "@/utils/haptics";
+import { useCallback } from "react";
 
 interface JustFinishedSlide {
   slideIndex: number;
@@ -37,8 +39,6 @@ interface CampaignSlidesMobileViewProps {
   userId: string;
 }
 
-const SWIPE_THRESHOLD_PX = 48;
-
 export default function CampaignSlidesMobileView({
   slides,
   activeSlideIndex,
@@ -61,7 +61,6 @@ export default function CampaignSlidesMobileView({
   onError,
   userId,
 }: CampaignSlidesMobileViewProps) {
-  const touchStartXRef = useRef<number | null>(null);
   const activeSlide =
     slides.find((slide) => slide.slide_index === activeSlideIndex) ?? slides[0];
 
@@ -70,6 +69,7 @@ export default function CampaignSlidesMobileView({
       return;
     }
 
+    void hapticSelection();
     onActiveSlideIndexChange(activeSlideIndex - 1);
   }, [activeSlideIndex, onActiveSlideIndexChange]);
 
@@ -78,34 +78,23 @@ export default function CampaignSlidesMobileView({
       return;
     }
 
+    void hapticSelection();
     onActiveSlideIndexChange(activeSlideIndex + 1);
   }, [activeSlideIndex, onActiveSlideIndexChange, slides.length]);
 
-  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
-    touchStartXRef.current = event.changedTouches[0]?.clientX ?? null;
-  }
+  const atFirstSlide = activeSlideIndex <= 0;
+  const atLastSlide = activeSlideIndex >= slides.length - 1;
 
-  function handleTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
-    const startX = touchStartXRef.current;
-    touchStartXRef.current = null;
+  const slideSwipe = useHorizontalSwipe({
+    onSwipeLeft: atLastSlide ? undefined : goToNext,
+    onSwipeRight: atFirstSlide ? undefined : goToPrevious,
+  });
 
-    if (startX === null) {
-      return;
+  function handleFilmstripSelect(slideIndex: number) {
+    if (slideIndex !== activeSlideIndex) {
+      void hapticSelection();
     }
-
-    const endX = event.changedTouches[0]?.clientX ?? startX;
-    const deltaX = endX - startX;
-
-    if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX) {
-      return;
-    }
-
-    if (deltaX < 0) {
-      goToNext();
-      return;
-    }
-
-    goToPrevious();
+    onActiveSlideIndexChange(slideIndex);
   }
 
   if (!activeSlide) {
@@ -130,7 +119,7 @@ export default function CampaignSlidesMobileView({
         activeSlideIndex={activeSlideIndex}
         aspectRatio={aspectRatio}
         isGeneratingImages={journeyProps.isGeneratingImages}
-        onSelect={onActiveSlideIndexChange}
+        onSelect={handleFilmstripSelect}
       />
 
       <div className="mt-3 flex items-center justify-between gap-3">
@@ -140,7 +129,7 @@ export default function CampaignSlidesMobileView({
             aria-label="Previous slide"
             disabled={activeSlideIndex <= 0}
             onClick={goToPrevious}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border text-secondary-foreground transition hover:border-ring/60 hover:text-foreground active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -164,7 +153,7 @@ export default function CampaignSlidesMobileView({
             aria-label="Next slide"
             disabled={activeSlideIndex >= slides.length - 1}
             onClick={goToNext}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border text-secondary-foreground transition hover:border-ring/60 hover:text-foreground active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -186,7 +175,7 @@ export default function CampaignSlidesMobileView({
           <button
             type="button"
             onClick={() => onOpenPreview(activeSlideIndex)}
-            className="inline-flex shrink-0 items-center justify-center rounded-xl border border-border px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl border border-border px-3 py-2.5 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground active:scale-[0.97]"
           >
             Preview
           </button>
@@ -194,9 +183,10 @@ export default function CampaignSlidesMobileView({
       </div>
 
       <div
-        className="mt-4"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        className="mt-4 touch-pan-y"
+        onTouchStart={slideSwipe.onTouchStart}
+        onTouchMove={slideSwipe.onTouchMove}
+        onTouchEnd={slideSwipe.onTouchEnd}
       >
         <SlideCard
           slide={activeSlide}
@@ -213,6 +203,7 @@ export default function CampaignSlidesMobileView({
           onRegenerate={onRegenerate}
           onError={onError}
           userId={userId}
+          consumeSwipeTap={slideSwipe.consumeSwipeTap}
         />
       </div>
     </div>

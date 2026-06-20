@@ -37,6 +37,7 @@ interface SlideCardProps {
     options?: SlideRegenerateOptions,
   ) => void | Promise<void>;
   onError: (message: string) => void;
+  consumeSwipeTap?: () => boolean;
 }
 
 const SlideCard = memo(function SlideCard({
@@ -54,6 +55,7 @@ const SlideCard = memo(function SlideCard({
   onSlideUpdated,
   onRegenerate,
   onError,
+  consumeSwipeTap,
 }: SlideCardProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -170,8 +172,11 @@ const SlideCard = memo(function SlideCard({
   );
 
   const handleOpenPreview = useCallback(() => {
+    if (consumeSwipeTap?.()) {
+      return;
+    }
     onOpenPreview(slide.slide_index);
-  }, [slide.slide_index, onOpenPreview]);
+  }, [consumeSwipeTap, slide.slide_index, onOpenPreview]);
 
   function openRegenerateSheet() {
     setRegenerateSheetOpen(true);

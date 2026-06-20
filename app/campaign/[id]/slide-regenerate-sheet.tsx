@@ -1,9 +1,11 @@
 "use client";
 
+import BottomSheet from "@/app/components/bottom-sheet";
 import {
   REGENERATE_FEEDBACK_CHIPS,
   type RegenerateFeedbackChipId,
 } from "@/types/regenerate-feedback";
+import { hapticSelection } from "@/utils/haptics";
 import {
   blobToFile,
   captureReferencePhoto,
@@ -90,20 +92,8 @@ export default function SlideRegenerateSheet({
     }
   }, [open, reset]);
 
-  useEffect(() => {
-    if (!open) return;
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isRegenerating && !isSnapping) {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose, isRegenerating, isSnapping]);
-
   function handleToggleChip(chipId: RegenerateFeedbackChipId) {
+    void hapticSelection();
     setSelectedChipIds((current) =>
       current.includes(chipId)
         ? current.filter((id) => id !== chipId)
@@ -166,169 +156,19 @@ export default function SlideRegenerateSheet({
   const showLayoutHint = selectedChipIds.includes("different_layout");
   const showHeadlineHint = selectedChipIds.includes("fix_headline_text");
 
-  if (!open) {
-    return null;
-  }
-
   return (
-    <div
-      className="fixed inset-0 z-[70] md:flex md:items-center md:justify-center md:p-8"
-      role="presentation"
-    >
-      <button
-        type="button"
-        aria-label="Close regenerate"
-        onClick={onClose}
-        disabled={isRegenerating || isSnapping}
-        className="absolute inset-0 bg-black/60 md:bg-black/70"
-      />
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="slide-regenerate-title"
-        className="absolute inset-x-0 bottom-0 flex max-h-[min(90dvh,680px)] flex-col rounded-t-2xl border-t border-border bg-card shadow-2xl md:relative md:max-h-[min(85vh,600px)] md:w-full md:max-w-md md:rounded-2xl md:border"
-      >
-        <div className="shrink-0 px-5 pb-3 pt-4 md:px-6 md:pt-5">
-          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border md:hidden" />
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2
-                id="slide-regenerate-title"
-                className="text-base font-semibold text-foreground"
-              >
-                Fix this slide
-              </h2>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Edit the headline first if the on-slide text should change, then
-                pick what to adjust. Unsaved headline edits are saved when you
-                regenerate.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isRegenerating || isSnapping}
-              className="rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground disabled:opacity-60"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 md:px-6">
-          {headline.trim() ? (
-            <p className="mb-4 rounded-xl border border-border bg-background/60 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              Headline:{" "}
-              <span className="font-medium text-secondary-foreground">
-                {headline.trim()}
-              </span>
-            </p>
-          ) : null}
-
-          {isNativeApp ? (
-            <div className="mb-4">
-              {snapPhotoUrl ? (
-                <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={snapPhotoUrl}
-                    alt="New product reference"
-                    className="h-10 w-10 shrink-0 rounded-md object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-foreground">
-                      New product photo
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Used for this regen only
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={controlsDisabled}
-                    onClick={handleClearSnapPhoto}
-                    className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-60"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  disabled={controlsDisabled}
-                  onClick={() => void handleSnapPhoto()}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border px-3 py-2.5 text-xs font-medium text-muted-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <CameraIcon />
-                  {isSnapping ? "Opening camera…" : "Snap new product photo"}
-                </button>
-              )}
-            </div>
-          ) : null}
-
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            What should change?
-          </p>
-          <ul className="mt-2 space-y-2">
-            {REGENERATE_FEEDBACK_CHIPS.map((chip) => {
-              const isSelected = selectedChipIds.includes(chip.id);
-
-              return (
-                <li key={chip.id}>
-                  <button
-                    type="button"
-                    disabled={controlsDisabled}
-                    onClick={() => handleToggleChip(chip.id)}
-                    className={`w-full rounded-xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                      isSelected
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                        : "border-border bg-background/60 hover:border-ring/60 hover:bg-card/60"
-                    }`}
-                  >
-                    <span className="block text-sm font-semibold text-foreground">
-                      {chip.label}
-                    </span>
-                    <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-                      {chip.description}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          {showHeadlineHint ? (
-            <p className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs leading-5 text-secondary-foreground">
-              Save the corrected headline above, then regenerate. The image will
-              re-render all on-slide text from your headline.
-            </p>
-          ) : null}
-
-          {showLayoutHint ? (
-            <p className="mt-3 rounded-xl border border-border bg-background/60 px-3 py-2 text-xs leading-5 text-muted-foreground">
-              For a bigger layout change, add specific notes (e.g. product left,
-              headline bottom third).
-            </p>
-          ) : null}
-
-          <label className="mt-4 block">
-            <span className="text-xs font-medium text-muted-foreground">
-              Extra notes (optional)
-            </span>
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              disabled={controlsDisabled}
-              rows={2}
-              maxLength={300}
-              placeholder="e.g. warmer tones, less text on the image"
-              className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/80 focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60"
-            />
-          </label>
-        </div>
-
-        <div className="shrink-0 border-t border-border px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] md:px-6 md:pb-5">
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title="Fix this slide"
+      titleId="slide-regenerate-title"
+      description="Edit the headline first if the on-slide text should change, then pick what to adjust. Unsaved headline edits are saved when you regenerate."
+      dismissDisabled={isRegenerating || isSnapping}
+      zIndexClass="z-[70]"
+      maxHeightClass="max-h-[min(90dvh,680px)]"
+      desktopModal
+      footer={
+        <>
           <button
             type="button"
             disabled={controlsDisabled}
@@ -340,8 +180,118 @@ export default function SlideRegenerateSheet({
           <p className="mt-2 text-center text-[11px] leading-5 text-muted-foreground">
             Uses one slide regeneration from your monthly limit.
           </p>
+        </>
+      }
+    >
+      {headline.trim() ? (
+        <p className="mb-4 rounded-xl border border-border bg-background/60 px-3 py-2 text-xs leading-5 text-muted-foreground">
+          Headline:{" "}
+          <span className="font-medium text-secondary-foreground">
+            {headline.trim()}
+          </span>
+        </p>
+      ) : null}
+
+      {isNativeApp ? (
+        <div className="mb-4">
+          {snapPhotoUrl ? (
+            <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={snapPhotoUrl}
+                alt="New product reference"
+                className="h-10 w-10 shrink-0 rounded-md object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-foreground">
+                  New product photo
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Used for this regen only
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={controlsDisabled}
+                onClick={handleClearSnapPhoto}
+                className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-60"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={controlsDisabled}
+              onClick={() => void handleSnapPhoto()}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border px-3 py-2.5 text-xs font-medium text-muted-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <CameraIcon />
+              {isSnapping ? "Opening camera…" : "Snap new product photo"}
+            </button>
+          )}
         </div>
-      </div>
-    </div>
+      ) : null}
+
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        What should change?
+      </p>
+      <ul className="mt-2 space-y-2">
+        {REGENERATE_FEEDBACK_CHIPS.map((chip) => {
+          const isSelected = selectedChipIds.includes(chip.id);
+
+          return (
+            <li key={chip.id}>
+              <button
+                type="button"
+                disabled={controlsDisabled}
+                onClick={() => handleToggleChip(chip.id)}
+                className={`w-full rounded-xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  isSelected
+                    ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                    : "border-border bg-background/60 hover:border-ring/60 hover:bg-card/60"
+                }`}
+              >
+                <span className="block text-sm font-semibold text-foreground">
+                  {chip.label}
+                </span>
+                <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                  {chip.description}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      {showHeadlineHint ? (
+        <p className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs leading-5 text-secondary-foreground">
+          Save the corrected headline above, then regenerate. The image will
+          re-render all on-slide text from your headline.
+        </p>
+      ) : null}
+
+      {showLayoutHint ? (
+        <p className="mt-3 rounded-xl border border-border bg-background/60 px-3 py-2 text-xs leading-5 text-muted-foreground">
+          For a bigger layout change, add specific notes (e.g. product left,
+          headline bottom third).
+        </p>
+      ) : null}
+
+      <label className="mt-4 block">
+        <span className="text-xs font-medium text-muted-foreground">
+          Extra notes (optional)
+        </span>
+        <textarea
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          disabled={controlsDisabled}
+          rows={2}
+          maxLength={300}
+          placeholder="e.g. warmer tones, less text on the image"
+          className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/80 focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60"
+        />
+      </label>
+    </BottomSheet>
   );
 }

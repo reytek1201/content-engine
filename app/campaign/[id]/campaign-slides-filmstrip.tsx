@@ -75,7 +75,7 @@ export default function CampaignSlidesFilmstrip({
 
   return (
     <div>
-      <div className="-mx-1 overflow-x-auto px-1 pb-1">
+      <div className="-mx-1 overflow-x-auto scroll-smooth px-1 pb-1 snap-x snap-mandatory">
         <div className="flex gap-2">
           {slides.map((slide) => {
             const isActive = slide.slide_index === activeSlideIndex;
@@ -89,7 +89,7 @@ export default function CampaignSlidesFilmstrip({
                 aria-label={stateLabel(state, slide.slide_index)}
                 aria-current={isActive ? "true" : undefined}
                 onClick={() => onSelect(slide.slide_index)}
-                className={`relative w-14 shrink-0 overflow-hidden rounded-lg border transition ${
+                className={`relative w-14 shrink-0 snap-center overflow-hidden rounded-lg border transition ${
                   isActive
                     ? "border-primary ring-2 ring-primary/40"
                     : state === "generating"
