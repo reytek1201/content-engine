@@ -76,10 +76,15 @@ Then **rebuild** in Xcode / Android Studio (web deploy alone is not enough for n
    - **TestFlight** → add internal testers (up to 100) or external group
 7. Wait for processing (~5–30 min), then invite testers
 
-### App Store review notes (when you add external testers)
+### App Store review notes
 
-- Demo account credentials if login required
-- Explain: app loads web content from slidepress.co; biometrics optional in Settings → Security
+Full copy-paste drafts (reviewer notes, listing description, Play Console, demo account template): **[`docs/app-store-review-notes.md`](app-store-review-notes.md)**
+
+Quick reminders:
+
+- Create a **demo account** before external TestFlight or App Store submit
+- Explain: native shell loads `https://www.slidepress.co`; Sign in with Apple; optional Face ID in Settings → Security
+- YouTube/TikTok posting is optional for review while platform audits are pending
 
 ---
 

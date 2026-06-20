@@ -53,6 +53,8 @@ interface CampaignPublishPanelProps {
   videoExportMessage: string | null;
   publishRefreshKey?: number;
   onPublishComplete?: () => void;
+  onYouTubePublishingChange?: (publishing: boolean) => void;
+  onTikTokPublishingChange?: (publishing: boolean) => void;
   publishTabHint?: string | null;
   hasVideoExport?: boolean;
   youtubeAlreadyPublished?: boolean;
@@ -110,6 +112,8 @@ export default function CampaignPublishPanel({
   videoExportMessage,
   publishRefreshKey = 0,
   onPublishComplete,
+  onYouTubePublishingChange,
+  onTikTokPublishingChange,
   publishTabHint = null,
   hasVideoExport = false,
   youtubeAlreadyPublished = false,
@@ -326,6 +330,7 @@ export default function CampaignPublishPanel({
             canGenerateCaptions={canGenerateCaptions}
             isGeneratingCaptions={isGeneratingCaptions}
             onPublishComplete={onPublishComplete}
+            onPublishingChange={onYouTubePublishingChange}
           />
         </div>
       )}
@@ -348,6 +353,7 @@ export default function CampaignPublishPanel({
             verticalFormatPublishState={verticalFormatPublishState}
             onAddVerticalFormat={onAddVerticalFormat}
             onPublishComplete={onPublishComplete}
+            onPublishingChange={onTikTokPublishingChange}
           />
         </div>
       )}

@@ -31,7 +31,8 @@ import {
   CampaignActionsSheet,
 } from "@/app/campaign/[id]/campaign-actions-sheet";
 import CampaignPublishPanel from "@/app/campaign/[id]/campaign-publish-panel";
-import CampaignVideoExportOverlay from "@/app/campaign/[id]/campaign-video-export-overlay";
+import CampaignOperationOverlay from "@/app/campaign/[id]/campaign-operation-overlay";
+import { pickActiveCampaignOperation } from "@/utils/campaign-operation-overlay";
 import CampaignCaptionsPrompt, {
   shouldShowCaptionsPrompt,
 } from "@/app/campaign/[id]/campaign-captions-prompt";
@@ -115,6 +116,8 @@ export default function CampaignWorkspace({
   const [captions, setCaptions] = useState(initialCaptions);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingCaptions, setIsGeneratingCaptions] = useState(false);
+  const [isPublishingYouTube, setIsPublishingYouTube] = useState(false);
+  const [isPublishingTikTok, setIsPublishingTikTok] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingAudio, setIsExportingAudio] = useState(false);
   const [isExportingVideo, setIsExportingVideo] = useState(false);
@@ -1106,6 +1109,30 @@ export default function CampaignWorkspace({
     }
   }
 
+  const activeCampaignOperation = useMemo(
+    () =>
+      pickActiveCampaignOperation({
+        videoExportError,
+        isExportingVideo,
+        isPublishingYouTube,
+        isPublishingTikTok,
+        isGeneratingCaptions,
+        isGeneratingFormat,
+        isExportingAudio,
+        isExporting,
+      }),
+    [
+      videoExportError,
+      isExportingVideo,
+      isPublishingYouTube,
+      isPublishingTikTok,
+      isGeneratingCaptions,
+      isGeneratingFormat,
+      isExportingAudio,
+      isExporting,
+    ],
+  );
+
   const publishPanelProps = {
     campaignId: campaign.id,
     sortedCaptions,
@@ -1146,6 +1173,8 @@ export default function CampaignWorkspace({
     hasVideoExport: publishFlow.hasVideoExport,
     youtubeAlreadyPublished: publishFlow.youtubeAlreadyPublished,
     onPublishComplete: () => setPublishRefreshKey((current) => current + 1),
+    onYouTubePublishingChange: setIsPublishingYouTube,
+    onTikTokPublishingChange: setIsPublishingTikTok,
     campaignStatus: campaign.status,
     onGenerateCaptions: handleGenerateCaptions,
     onCopyCaptionField: handleCopyCaptionField,
@@ -1164,6 +1193,10 @@ export default function CampaignWorkspace({
     setError(null);
     setCaptionsMessage(null);
     setIsGeneratingCaptions(true);
+    setWorkspaceTab("publish");
+    requestAnimationFrame(() => {
+      scrollToCampaignSection("section-publish-captions");
+    });
 
     try {
       const response = await fetch("/api/generate-captions", {
@@ -1802,15 +1835,17 @@ export default function CampaignWorkspace({
         isGenerating={isGeneratingFormat}
         onConfirm={() => void handleGenerateFormatVariant()}
       />
-      <CampaignVideoExportOverlay
-        open={isExportingVideo || Boolean(videoExportError)}
-        campaignTitle={campaign.title ?? ""}
-        campaignTopic={campaign.topic}
+      <CampaignOperationOverlay
+        open={activeCampaignOperation !== null}
+        kind={activeCampaignOperation ?? "captions"}
+        headline={campaign.title?.trim() || campaign.topic}
+        videoStage={videoExportStage}
+        videoPreset={videoPreset}
         aspectRatio={videoExportAspectRatio}
         slideCount={slides.length}
-        stage={videoExportStage}
-        videoPreset={videoPreset}
-        error={videoExportError}
+        error={
+          activeCampaignOperation === "video_export" ? videoExportError : null
+        }
         onDismiss={() => {
           setVideoExportError(null);
           setVideoExportStage("preparing");

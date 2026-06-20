@@ -71,6 +71,7 @@ interface CampaignTikTokPublishPanelProps {
   verticalFormatPublishState?: VerticalFormatPublishState;
   onAddVerticalFormat?: () => void;
   onPublishComplete?: () => void;
+  onPublishingChange?: (publishing: boolean) => void;
 }
 
 const EMPTY_FORM: TikTokPublishFormSettings = {
@@ -164,6 +165,7 @@ export default function CampaignTikTokPublishPanel({
   hasCaptions = false,
   verticalFormatPublishState = "not_applicable",
   onPublishComplete,
+  onPublishingChange,
 }: CampaignTikTokPublishPanelProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -229,6 +231,18 @@ export default function CampaignTikTokPublishPanel({
   useEffect(() => {
     void loadReadiness();
   }, [loadReadiness, refreshKey]);
+
+  useEffect(() => {
+    onPublishingChange?.(
+      isPublishing || Boolean(readiness?.isUploading),
+    );
+  }, [isPublishing, readiness?.isUploading, onPublishingChange]);
+
+  useEffect(() => {
+    return () => {
+      onPublishingChange?.(false);
+    };
+  }, [onPublishingChange]);
 
   useEffect(() => {
     const scopeGranted = searchParams.get("tiktok_scope") === "granted";

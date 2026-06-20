@@ -50,6 +50,7 @@ interface CampaignYouTubePublishPanelProps {
   canGenerateCaptions?: boolean;
   isGeneratingCaptions?: boolean;
   onPublishComplete?: () => void;
+  onPublishingChange?: (publishing: boolean) => void;
 }
 
 function YouTubeIcon() {
@@ -105,6 +106,7 @@ export default function CampaignYouTubePublishPanel({
   canGenerateCaptions = false,
   isGeneratingCaptions = false,
   onPublishComplete,
+  onPublishingChange,
 }: CampaignYouTubePublishPanelProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -165,6 +167,18 @@ export default function CampaignYouTubePublishPanel({
   useEffect(() => {
     void loadReadiness();
   }, [loadReadiness, refreshKey]);
+
+  useEffect(() => {
+    onPublishingChange?.(
+      isPublishing || Boolean(readiness?.isUploading),
+    );
+  }, [isPublishing, readiness?.isUploading, onPublishingChange]);
+
+  useEffect(() => {
+    return () => {
+      onPublishingChange?.(false);
+    };
+  }, [onPublishingChange]);
 
   useEffect(() => {
     const scopeGranted = searchParams.get("youtube_scope") === "granted";
