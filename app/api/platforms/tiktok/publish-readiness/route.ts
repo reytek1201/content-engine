@@ -1,5 +1,6 @@
-import { getTikTokConnectionPublic, getTikTokConnectionRow } from "@/utils/tiktok/connection-store";
+import { getTikTokConnectionPublic, getTikTokConnectionRow, clearTikTokPublishScope } from "@/utils/tiktok/connection-store";
 import { hasTikTokPublishScope } from "@/utils/platforms/scopes";
+import { verifyTikTokPublishScopeLive } from "@/utils/tiktok/publish-scope";
 import { resolveVerticalVideoExport } from "@/utils/platforms/resolve-video-export";
 import {
   getPlatformPostForCampaignExport,
@@ -49,7 +50,19 @@ export async function GET(request: Request) {
 
     const connection = await getTikTokConnectionPublic(user.id);
     const connectionRow = await getTikTokConnectionRow(user.id);
-    const hasPublishScope = hasTikTokPublishScope(connectionRow?.scopes);
+    let hasPublishScope = hasTikTokPublishScope(connectionRow?.scopes);
+
+    if (connectionRow && hasPublishScope) {
+      try {
+        hasPublishScope = await verifyTikTokPublishScopeLive(connectionRow);
+
+        if (!hasPublishScope) {
+          await clearTikTokPublishScope(user.id);
+        }
+      } catch {
+        // Keep stored scope on transient TikTok API errors.
+      }
+    }
 
     const { data: caption } = await supabase
       .from("platform_captions")

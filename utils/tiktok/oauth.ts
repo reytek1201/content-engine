@@ -7,7 +7,7 @@ export const TIKTOK_CONNECT_SCOPES = ["user.info.basic"] as const;
 export const TIKTOK_PUBLISH_SCOPE = "video.publish";
 
 function tiktokConnectScopeString(): string {
-  return TIKTOK_CONNECT_SCOPES.join(",");
+  return tiktokPublishScopeString();
 }
 
 function tiktokPublishScopeString(): string {

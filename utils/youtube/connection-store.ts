@@ -2,7 +2,7 @@ import type {
   PlatformConnectionPublic,
   PlatformConnectionRow,
 } from "@/types/platform-connection";
-import { mergeScopeStrings } from "@/utils/platforms/scopes";
+import { mergeScopeStrings, resolveScopesAfterRefresh, withoutYouTubeUploadScope } from "@/utils/platforms/scopes";
 import { createAdminClient } from "@/utils/supabase/admin";
 import {
   refreshYouTubeAccessToken,
@@ -66,7 +66,9 @@ export async function upsertYouTubeConnection(input: {
 
   const refreshToken =
     input.refreshToken ?? input.existingRefreshToken ?? null;
-  const scopes = mergeScopeStrings(input.existingScopes, input.scopes);
+  const scopes = input.scopes?.trim()
+    ? input.scopes.trim()
+    : mergeScopeStrings(input.existingScopes) || null;
 
   const { data, error } = await admin
     .from("platform_connections")
@@ -131,7 +133,7 @@ export async function ensureFreshYouTubeAccessToken(
     .update({
       access_token: refreshed.access_token,
       refresh_token: refreshed.refresh_token ?? row.refresh_token,
-      scopes: mergeScopeStrings(row.scopes, refreshed.scope) || null,
+      scopes: resolveScopesAfterRefresh(row.scopes, refreshed.scope),
       expires_at: expiresAt,
     })
     .eq("id", row.id)
@@ -143,6 +145,31 @@ export async function ensureFreshYouTubeAccessToken(
   }
 
   return data as PlatformConnectionRow;
+}
+
+export async function clearYouTubeUploadScope(userId: string): Promise<void> {
+  const row = await getYouTubeConnectionRow(userId);
+
+  if (!row) {
+    return;
+  }
+
+  const scopes = withoutYouTubeUploadScope(row.scopes);
+
+  if (scopes === row.scopes) {
+    return;
+  }
+
+  const admin = createAdminClient();
+
+  const { error } = await admin
+    .from("platform_connections")
+    .update({ scopes })
+    .eq("id", row.id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 export async function revokeAndDeleteYouTubeConnection(

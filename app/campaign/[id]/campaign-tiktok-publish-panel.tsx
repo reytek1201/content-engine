@@ -200,6 +200,7 @@ export default function CampaignTikTokPublishPanel({
         setError(
           "Posting permission required. Grant access to publish to TikTok.",
         );
+        await loadReadiness();
         return;
       }
 

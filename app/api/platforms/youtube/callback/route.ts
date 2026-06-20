@@ -1,5 +1,4 @@
 import {
-  ensureFreshYouTubeAccessToken,
   getYouTubeConnectionRow,
   upsertYouTubeConnection,
 } from "@/utils/youtube/connection-store";
@@ -92,13 +91,7 @@ export async function GET(request: NextRequest) {
 
     let saved = await getYouTubeConnectionRow(userId);
 
-    if (saved) {
-      saved = await ensureFreshYouTubeAccessToken(saved);
-    }
-
-    const mergedScopes = saved?.scopes ?? tokens.scope;
-
-    if (intent === "publish" && !hasYouTubeUploadScope(mergedScopes)) {
+    if (intent === "publish" && !hasYouTubeUploadScope(saved?.scopes ?? tokens.scope)) {
       return NextResponse.redirect(
         buildOAuthErrorRedirect({
           platform: "youtube",

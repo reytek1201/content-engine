@@ -8,6 +8,7 @@ import { resolveVerticalVideoExport } from "@/utils/platforms/resolve-video-expo
 import {
   ensureFreshTikTokAccessToken,
   getTikTokConnectionRow,
+  clearTikTokPublishScope,
 } from "@/utils/tiktok/connection-store";
 import { TikTokPublishScopeError } from "@/utils/tiktok/publish-video";
 import { publishTikTokVideo } from "@/utils/tiktok/publish-video";
@@ -29,6 +30,7 @@ const RequestSchema = z.object({
 
 export async function POST(request: Request) {
   let postId: string | null = null;
+  let userId: string | null = null;
 
   try {
     const supabase = await createClient();
@@ -44,6 +46,8 @@ export async function POST(request: Request) {
         { status: 401 },
       );
     }
+
+    userId = user.id;
 
     const body = await request.json();
     const parsed = RequestSchema.safeParse(body);
@@ -230,6 +234,14 @@ export async function POST(request: Request) {
     }
 
     if (error instanceof TikTokPublishScopeError) {
+      if (userId) {
+        try {
+          await clearTikTokPublishScope(userId);
+        } catch (clearError) {
+          console.error("Failed to clear TikTok publish scope:", clearError);
+        }
+      }
+
       return NextResponse.json(
         {
           success: false,

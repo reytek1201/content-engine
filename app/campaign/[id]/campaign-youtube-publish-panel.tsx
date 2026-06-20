@@ -210,6 +210,7 @@ export default function CampaignYouTubePublishPanel({
         setError(
           "Upload permission required. Grant access to publish Shorts to YouTube.",
         );
+        await loadReadiness();
         return;
       }
 

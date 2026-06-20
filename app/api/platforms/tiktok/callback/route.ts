@@ -1,5 +1,4 @@
 import {
-  ensureFreshTikTokAccessToken,
   getTikTokConnectionRow,
   upsertTikTokConnection,
 } from "@/utils/tiktok/connection-store";
@@ -93,11 +92,7 @@ export async function GET(request: NextRequest) {
       existingScopes: existing?.scopes,
     });
 
-    let saved = await getTikTokConnectionRow(userId);
-
-    if (saved) {
-      saved = await ensureFreshTikTokAccessToken(saved);
-    }
+    const saved = await getTikTokConnectionRow(userId);
 
     if (intent === "publish" && !hasTikTokPublishScope(saved?.scopes ?? tokens.scope)) {
       return NextResponse.redirect(

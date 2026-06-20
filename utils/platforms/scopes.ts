@@ -30,3 +30,35 @@ export function hasTikTokPublishScope(scopes: string | null | undefined): boolea
 export function hasYouTubeUploadScope(scopes: string | null | undefined): boolean {
   return parseScopeString(scopes).includes(YOUTUBE_UPLOAD_SCOPE);
 }
+
+/** After token refresh, trust the provider response over stored scopes. */
+export function resolveScopesAfterRefresh(
+  stored: string | null | undefined,
+  refreshed: string | null | undefined,
+): string | null {
+  if (refreshed?.trim()) {
+    return refreshed.trim();
+  }
+
+  return stored?.trim() || null;
+}
+
+export function withoutTikTokPublishScope(
+  scopes: string | null | undefined,
+): string | null {
+  const filtered = parseScopeString(scopes).filter(
+    (scope) => scope !== TIKTOK_PUBLISH_SCOPE,
+  );
+
+  return filtered.length > 0 ? filtered.join(",") : null;
+}
+
+export function withoutYouTubeUploadScope(
+  scopes: string | null | undefined,
+): string | null {
+  const filtered = parseScopeString(scopes).filter(
+    (scope) => scope !== YOUTUBE_UPLOAD_SCOPE,
+  );
+
+  return filtered.length > 0 ? filtered.join(",") : null;
+}
