@@ -22,6 +22,7 @@ export function formatCampaignDetailsProgress(input: {
   captionsCount: number;
   hasVideoExport: boolean;
   youtubeAlreadyPublished: boolean;
+  tiktokAlreadyPublished?: boolean;
 }): string {
   const parts: string[] = [];
 
@@ -41,8 +42,14 @@ export function formatCampaignDetailsProgress(input: {
     parts.push("Video exported");
   }
 
-  if (input.youtubeAlreadyPublished) {
+  const tiktokAlreadyPublished = input.tiktokAlreadyPublished ?? false;
+
+  if (input.youtubeAlreadyPublished && tiktokAlreadyPublished) {
+    parts.push("Published");
+  } else if (input.youtubeAlreadyPublished) {
     parts.push("On YouTube");
+  } else if (tiktokAlreadyPublished) {
+    parts.push("On TikTok");
   }
 
   return parts.length > 0 ? parts.join(" · ") : "Getting started";

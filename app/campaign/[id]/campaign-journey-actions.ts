@@ -25,7 +25,9 @@ export function runJourneyAction(
       handlers.onSaveAllToPhotos();
       break;
     case "export_video":
-    case "focus_youtube":
+    case "focus_publish":
+    case "view_youtube":
+    case "view_tiktok":
       break;
   }
 }

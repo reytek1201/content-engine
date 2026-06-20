@@ -8,6 +8,8 @@ import {
   type CampaignWorkspaceTab,
 } from "@/app/campaign/[id]/campaign-workspace-tab";
 import {
+  isPlatformViewAction,
+  platformViewUrlForAction,
   scrollTargetForNextStepAction,
   scrollToCampaignSection,
   type CampaignNextStepButton,
@@ -59,10 +61,17 @@ export default function CampaignInlineNextStepActions({
 
     if (
       journey.isFullyComplete &&
-      journey.youtubeWatchUrl &&
-      primary.action === "focus_youtube"
+      isPlatformViewAction(primary.action)
     ) {
-      window.open(journey.youtubeWatchUrl, "_blank", "noopener,noreferrer");
+      const url = platformViewUrlForAction(primary.action, {
+        youtubeWatchUrl: journey.youtubeWatchUrl,
+        tiktokProfileUrl: journey.tiktokProfileUrl,
+      });
+
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+
       return;
     }
 
@@ -72,6 +81,19 @@ export default function CampaignInlineNextStepActions({
 
   function handleSecondaryClick(button: CampaignNextStepButton) {
     if (button.disabled || button.loading) {
+      return;
+    }
+
+    if (journey.isFullyComplete && isPlatformViewAction(button.action)) {
+      const url = platformViewUrlForAction(button.action, {
+        youtubeWatchUrl: journey.youtubeWatchUrl,
+        tiktokProfileUrl: journey.tiktokProfileUrl,
+      });
+
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+
       return;
     }
 

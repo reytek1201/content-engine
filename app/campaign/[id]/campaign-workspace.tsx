@@ -123,12 +123,15 @@ export default function CampaignWorkspace({
   const [videoExportError, setVideoExportError] = useState<string | null>(null);
   const [videoExportStage, setVideoExportStage] =
     useState<VideoExportUiStage>("preparing");
-  const [youtubePublishRefreshKey, setYoutubePublishRefreshKey] = useState(0);
-  const [youtubePublishFlow, setYoutubePublishFlow] = useState({
+  const [publishRefreshKey, setPublishRefreshKey] = useState(0);
+  const [publishFlow, setPublishFlow] = useState({
     hasVideoExport: false,
-    alreadyPublished: false,
-    watchUrl: null as string | null,
-    connected: false,
+    youtubeAlreadyPublished: false,
+    youtubeWatchUrl: null as string | null,
+    youtubeConnected: false,
+    tiktokAlreadyPublished: false,
+    tiktokProfileUrl: null as string | null,
+    tiktokConnected: false,
   });
   const [captionsMessage, setCaptionsMessage] = useState<string | null>(null);
   const [justFinishedSlide, setJustFinishedSlide] = useState<{
@@ -307,23 +310,29 @@ export default function CampaignWorkspace({
 
   useEffect(() => {
     if (captions.length === 0 || !imagesComplete) {
-      setYoutubePublishFlow({
+      setPublishFlow({
         hasVideoExport: false,
-        alreadyPublished: false,
-        watchUrl: null,
-        connected: false,
+        youtubeAlreadyPublished: false,
+        youtubeWatchUrl: null,
+        youtubeConnected: false,
+        tiktokAlreadyPublished: false,
+        tiktokProfileUrl: null,
+        tiktokConnected: false,
       });
       return;
     }
 
     let cancelled = false;
 
-    async function loadYoutubePublishFlow() {
+    async function loadPublishFlow() {
       try {
-        const response = await fetch(
-          `/api/platforms/youtube/publish-readiness?campaignId=${encodeURIComponent(campaign.id)}`,
-        );
-        const data = (await response.json()) as {
+        const campaignId = encodeURIComponent(campaign.id);
+        const [youtubeResponse, tiktokResponse] = await Promise.all([
+          fetch(`/api/platforms/youtube/publish-readiness?campaignId=${campaignId}`),
+          fetch(`/api/platforms/tiktok/publish-readiness?campaignId=${campaignId}`),
+        ]);
+
+        const youtubeData = (await youtubeResponse.json()) as {
           success?: boolean;
           hasVideoExport?: boolean;
           alreadyPublished?: boolean;
@@ -331,12 +340,37 @@ export default function CampaignWorkspace({
           connected?: boolean;
         };
 
-        if (!cancelled && response.ok && data.success) {
-          setYoutubePublishFlow({
-            hasVideoExport: Boolean(data.hasVideoExport),
-            alreadyPublished: Boolean(data.alreadyPublished),
-            watchUrl: data.watchUrl ?? null,
-            connected: Boolean(data.connected),
+        const tiktokData = (await tiktokResponse.json()) as {
+          success?: boolean;
+          hasVideoExport?: boolean;
+          alreadyPublished?: boolean;
+          profileUrl?: string | null;
+          connected?: boolean;
+        };
+
+        if (cancelled) {
+          return;
+        }
+
+        const youtubeOk = youtubeResponse.ok && youtubeData.success;
+        const tiktokOk = tiktokResponse.ok && tiktokData.success;
+
+        if (youtubeOk || tiktokOk) {
+          setPublishFlow({
+            hasVideoExport: Boolean(
+              (youtubeOk && youtubeData.hasVideoExport) ||
+                (tiktokOk && tiktokData.hasVideoExport),
+            ),
+            youtubeAlreadyPublished: youtubeOk
+              ? Boolean(youtubeData.alreadyPublished)
+              : false,
+            youtubeWatchUrl: youtubeOk ? (youtubeData.watchUrl ?? null) : null,
+            youtubeConnected: youtubeOk ? Boolean(youtubeData.connected) : false,
+            tiktokAlreadyPublished: tiktokOk
+              ? Boolean(tiktokData.alreadyPublished)
+              : false,
+            tiktokProfileUrl: tiktokOk ? (tiktokData.profileUrl ?? null) : null,
+            tiktokConnected: tiktokOk ? Boolean(tiktokData.connected) : false,
           });
         }
       } catch {
@@ -344,12 +378,12 @@ export default function CampaignWorkspace({
       }
     }
 
-    void loadYoutubePublishFlow();
+    void loadPublishFlow();
 
     return () => {
       cancelled = true;
     };
-  }, [campaign.id, captions.length, imagesComplete, youtubePublishRefreshKey]);
+  }, [campaign.id, captions.length, imagesComplete, publishRefreshKey]);
 
   useEffect(() => {
     slideIdsRef.current = new Set(slides.map((slide) => slide.id));
@@ -1006,10 +1040,10 @@ export default function CampaignWorkspace({
 
       const outputUrl = await pollVideoExport(data.exportId, setVideoExportStage);
       if (videoExportAspectRatio === "9:16") {
-        setYoutubePublishRefreshKey((current) => current + 1);
+        setPublishRefreshKey((current) => current + 1);
         setWorkspaceTab("publish");
         requestAnimationFrame(() => {
-          scrollToCampaignSection("section-youtube-publish");
+          scrollToCampaignSection("section-publish");
         });
       }
       setVideoExportStage("downloading");
@@ -1087,10 +1121,11 @@ export default function CampaignWorkspace({
     audioExportMessage,
     isExportingVideo,
     videoExportMessage,
-    youtubePublishRefreshKey,
+    publishRefreshKey,
     publishTabHint,
-    hasVideoExport: youtubePublishFlow.hasVideoExport,
-    youtubeAlreadyPublished: youtubePublishFlow.alreadyPublished,
+    hasVideoExport: publishFlow.hasVideoExport,
+    youtubeAlreadyPublished: publishFlow.youtubeAlreadyPublished,
+    onPublishComplete: () => setPublishRefreshKey((current) => current + 1),
     campaignStatus: campaign.status,
     onGenerateCaptions: handleGenerateCaptions,
     onCopyCaptionField: handleCopyCaptionField,
@@ -1393,9 +1428,11 @@ export default function CampaignWorkspace({
     copiedAllCaptions: copiedCopyKey === "all",
     videoExportReady,
     hasVideoCredits,
-    hasVideoExport: youtubePublishFlow.hasVideoExport,
-    youtubeAlreadyPublished: youtubePublishFlow.alreadyPublished,
-    youtubeWatchUrl: youtubePublishFlow.watchUrl,
+    hasVideoExport: publishFlow.hasVideoExport,
+    youtubeAlreadyPublished: publishFlow.youtubeAlreadyPublished,
+    youtubeWatchUrl: publishFlow.youtubeWatchUrl,
+    tiktokAlreadyPublished: publishFlow.tiktokAlreadyPublished,
+    tiktokProfileUrl: publishFlow.tiktokProfileUrl,
     isExportingVideo,
     onGenerateImages: handleGenerateImages,
     onGenerateCaptions: handleGenerateCaptions,
@@ -1685,9 +1722,9 @@ export default function CampaignWorkspace({
             showYouTubeConnectHint={
               isNativeApp !== true &&
               captions.length > 0 &&
-              youtubePublishFlow.hasVideoExport &&
-              !youtubePublishFlow.alreadyPublished &&
-              !youtubePublishFlow.connected
+              publishFlow.hasVideoExport &&
+              !publishFlow.youtubeAlreadyPublished &&
+              !publishFlow.youtubeConnected
             }
             onTitleSaved={(title) =>
               setCampaign((current) => ({ ...current, title }))

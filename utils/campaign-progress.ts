@@ -3,7 +3,7 @@ export type CampaignJourneyStepId =
   | "images"
   | "captions"
   | "video"
-  | "youtube";
+  | "publish";
 
 export type CampaignJourneyStepStatus = "done" | "current" | "locked";
 
@@ -39,7 +39,9 @@ export type NextStepAction =
   | "generate_images"
   | "generate_captions"
   | "export_video"
-  | "focus_youtube"
+  | "focus_publish"
+  | "view_youtube"
+  | "view_tiktok"
   | "download_zip"
   | "download_narration"
   | "copy_captions"
@@ -85,6 +87,8 @@ export interface CampaignJourneyInput {
   hasVideoExport?: boolean;
   youtubeAlreadyPublished?: boolean;
   youtubeWatchUrl?: string | null;
+  tiktokAlreadyPublished?: boolean;
+  tiktokProfileUrl?: string | null;
   isExportingVideo?: boolean;
   copiedAllCaptions?: boolean;
   savedAllPhotos?: boolean;
@@ -97,6 +101,97 @@ export interface CampaignJourney {
   secondaries: CampaignNextStepButton[];
   isFullyComplete: boolean;
   youtubeWatchUrl: string | null;
+  tiktokProfileUrl: string | null;
+}
+
+export function isAnyPlatformPublished(input: {
+  youtubeAlreadyPublished?: boolean;
+  tiktokAlreadyPublished?: boolean;
+}): boolean {
+  return Boolean(input.youtubeAlreadyPublished || input.tiktokAlreadyPublished);
+}
+
+export function formatPublishedPlatformsDescription(input: {
+  youtubeAlreadyPublished?: boolean;
+  tiktokAlreadyPublished?: boolean;
+}): string {
+  const platforms: string[] = [];
+
+  if (input.youtubeAlreadyPublished) {
+    platforms.push("YouTube");
+  }
+
+  if (input.tiktokAlreadyPublished) {
+    platforms.push("TikTok");
+  }
+
+  if (platforms.length === 0) {
+    return "Post copy is ready — copy captions or download assets below.";
+  }
+
+  if (platforms.length === 1) {
+    return `Posted to ${platforms[0]} — copy captions or download assets anytime.`;
+  }
+
+  return `Posted to ${platforms.join(" and ")} — copy captions or download assets anytime.`;
+}
+
+export function isPlatformViewAction(action: NextStepAction): boolean {
+  return action === "view_youtube" || action === "view_tiktok";
+}
+
+export function platformViewUrlForAction(
+  action: NextStepAction,
+  urls: {
+    youtubeWatchUrl?: string | null;
+    tiktokProfileUrl?: string | null;
+  },
+): string | null {
+  if (action === "view_youtube") {
+    return urls.youtubeWatchUrl ?? null;
+  }
+
+  if (action === "view_tiktok") {
+    return urls.tiktokProfileUrl ?? null;
+  }
+
+  return null;
+}
+
+function buildPublishedViewButtons(input: {
+  youtubeAlreadyPublished?: boolean;
+  youtubeWatchUrl?: string | null;
+  tiktokAlreadyPublished?: boolean;
+  tiktokProfileUrl?: string | null;
+}): {
+  primary: CampaignNextStepButton | null;
+  viewSecondaries: CampaignNextStepButton[];
+} {
+  const views: CampaignNextStepButton[] = [];
+
+  if (input.youtubeAlreadyPublished && input.youtubeWatchUrl) {
+    views.push({
+      action: "view_youtube",
+      label: "View on YouTube",
+      disabled: false,
+      loading: false,
+    });
+  }
+
+  if (input.tiktokAlreadyPublished && input.tiktokProfileUrl) {
+    views.push({
+      action: "view_tiktok",
+      label: "View on TikTok",
+      disabled: false,
+      loading: false,
+    });
+  }
+
+  if (views.length === 1) {
+    return { primary: views[0], viewSecondaries: [] };
+  }
+
+  return { primary: null, viewSecondaries: views };
 }
 
 export function formatImageProgressLabel(
@@ -133,20 +228,20 @@ function buildJourneySteps(input: {
   isGeneratingImages: boolean;
   captionsCount: number;
   hasVideoExport: boolean;
-  youtubeAlreadyPublished: boolean;
+  anyPlatformPublished: boolean;
 }): CampaignJourneyStep[] {
   const copyDone = input.slideCount > 0;
   const imagesDone = input.imagesComplete;
   const captionsDone = input.captionsCount > 0;
   const videoDone = input.hasVideoExport;
-  const youtubeDone = input.youtubeAlreadyPublished;
+  const publishDone = input.anyPlatformPublished;
 
   const stepCompletions: Record<CampaignJourneyStepId, boolean> = {
     copy: copyDone,
     images: imagesDone,
     captions: captionsDone,
     video: videoDone,
-    youtube: youtubeDone,
+    publish: publishDone,
   };
 
   const order: CampaignJourneyStepId[] = [
@@ -154,7 +249,7 @@ function buildJourneySteps(input: {
     "images",
     "captions",
     "video",
-    "youtube",
+    "publish",
   ];
 
   const currentIndex = order.findIndex((id) => !stepCompletions[id]);
@@ -170,7 +265,7 @@ function buildJourneySteps(input: {
     images: "section-slides",
     captions: "section-publish-captions",
     video: "section-publish-video",
-    youtube: "section-youtube-publish",
+    publish: "section-publish",
   };
 
   const labels: Record<CampaignJourneyStepId, string> = {
@@ -178,7 +273,7 @@ function buildJourneySteps(input: {
     images: "Images",
     captions: "Captions",
     video: "Video",
-    youtube: "YouTube",
+    publish: "Publish",
   };
 
   return order.map((id, index) => {
@@ -247,20 +342,41 @@ export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney
     hasVideoExport = false,
     youtubeAlreadyPublished = false,
     youtubeWatchUrl = null,
+    tiktokAlreadyPublished = false,
+    tiktokProfileUrl = null,
     isNativeApp = false,
   } = input;
 
   const copyDone = slideCount > 0;
   const captionsDone = captionsCount > 0;
+  const anyPlatformPublished = isAnyPlatformPublished({
+    youtubeAlreadyPublished,
+    tiktokAlreadyPublished,
+  });
 
   const isFullyComplete = isNativeApp
     ? copyDone && imagesComplete && captionsDone
-    : youtubeAlreadyPublished;
+    : anyPlatformPublished;
 
   const actions = buildJourneyActions(input);
+  const journeyStepsInput = {
+    slideCount,
+    imagesReadyCount: input.imagesReadyCount,
+    imagesComplete,
+    isGeneratingImages: input.isGeneratingImages,
+    captionsCount,
+    hasVideoExport,
+    anyPlatformPublished,
+  };
 
   if (isFullyComplete) {
     const completeSecondaries: CampaignNextStepButton[] = [];
+    const { primary, viewSecondaries } = buildPublishedViewButtons({
+      youtubeAlreadyPublished,
+      youtubeWatchUrl,
+      tiktokAlreadyPublished,
+      tiktokProfileUrl,
+    });
 
     if (isNativeApp) {
       completeSecondaries.push({
@@ -276,6 +392,7 @@ export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney
         loading: Boolean(input.isSavingAllPhotos),
       });
     } else {
+      completeSecondaries.push(...viewSecondaries);
       completeSecondaries.push({
         action: "copy_captions",
         label: input.copiedAllCaptions ? "Copied all" : "Copy all captions",
@@ -291,45 +408,27 @@ export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney
     }
 
     return {
-      steps: buildJourneySteps({
-        slideCount,
-        imagesReadyCount: input.imagesReadyCount,
-        imagesComplete,
-        isGeneratingImages: input.isGeneratingImages,
-        captionsCount,
-        hasVideoExport,
-        youtubeAlreadyPublished,
-      }),
+      steps: buildJourneySteps(journeyStepsInput),
       description: isNativeApp
         ? "Slides and captions are ready."
-        : "Posted to YouTube — copy captions or download assets anytime.",
-      primary: youtubeWatchUrl
-        ? {
-            action: "focus_youtube",
-            label: "View on YouTube",
-            disabled: false,
-            loading: false,
-          }
-        : null,
+        : formatPublishedPlatformsDescription({
+            youtubeAlreadyPublished,
+            tiktokAlreadyPublished,
+          }),
+      primary,
       secondaries: completeSecondaries,
       isFullyComplete: true,
       youtubeWatchUrl,
+      tiktokProfileUrl,
     };
   }
 
   return {
-    steps: buildJourneySteps({
-      slideCount,
-      imagesReadyCount: input.imagesReadyCount,
-      imagesComplete,
-      isGeneratingImages: input.isGeneratingImages,
-      captionsCount,
-      hasVideoExport,
-      youtubeAlreadyPublished,
-    }),
+    steps: buildJourneySteps(journeyStepsInput),
     ...actions,
     isFullyComplete: false,
     youtubeWatchUrl,
+    tiktokProfileUrl,
   };
 }
 
@@ -351,7 +450,7 @@ export function getCampaignProgressSteps(
   });
 
   return journey.steps
-    .filter((step) => step.id !== "youtube")
+    .filter((step) => step.id !== "publish")
     .map((step) => ({
       id:
         step.id === "video"
@@ -388,8 +487,14 @@ function getCampaignNextStepFromInput(
     hasVideoCredits = false,
     hasVideoExport = false,
     youtubeAlreadyPublished = false,
+    tiktokAlreadyPublished = false,
     isExportingVideo = false,
   } = options;
+
+  const anyPlatformPublished = isAnyPlatformPublished({
+    youtubeAlreadyPublished,
+    tiktokAlreadyPublished,
+  });
 
   const imageProgressLabel = formatImageProgressLabel(
     imagesReadyCount,
@@ -476,7 +581,7 @@ function getCampaignNextStepFromInput(
       videoExportReady &&
       hasVideoCredits &&
       !hasVideoExport &&
-      !youtubeAlreadyPublished
+      !anyPlatformPublished
     ) {
       const secondaries: CampaignNextStepButton[] = [
         copyCaptionsSecondary,
@@ -491,7 +596,7 @@ function getCampaignNextStepFromInput(
         action: "export_video",
         label: isExportingVideo ? "Exporting video…" : "Export 9:16 video",
         description:
-          "Export your Quick Reel next — required before posting to YouTube Shorts.",
+          "Export your Quick Reel next — required before posting to platforms.",
         disabled: isExportingVideo,
         loading: isExportingVideo,
         scrollTargetId: "section-publish-video",
@@ -499,11 +604,7 @@ function getCampaignNextStepFromInput(
       };
     }
 
-    if (
-      !isNativeApp &&
-      hasVideoExport &&
-      !youtubeAlreadyPublished
-    ) {
+    if (!isNativeApp && hasVideoExport && !anyPlatformPublished) {
       const secondaries: CampaignNextStepButton[] = [
         copyCaptionsSecondary,
         downloadZipSecondary,
@@ -514,13 +615,13 @@ function getCampaignNextStepFromInput(
       }
 
       return {
-        action: "focus_youtube",
-        label: "Post to YouTube Shorts",
+        action: "focus_publish",
+        label: "Post to platforms",
         description:
-          "Your video export is ready — connect YouTube if needed, then post below.",
+          "Your video export is ready — post to YouTube, TikTok, or both below.",
         disabled: false,
         loading: false,
-        scrollTargetId: "section-youtube-publish",
+        scrollTargetId: "section-publish",
         secondaries,
       };
     }
@@ -572,8 +673,11 @@ function getCampaignNextStepFromInput(
     return {
       action: "copy_captions",
       label: "Copy all captions",
-      description: youtubeAlreadyPublished
-        ? "Posted to YouTube — copy captions or download assets below."
+      description: anyPlatformPublished
+        ? formatPublishedPlatformsDescription({
+            youtubeAlreadyPublished,
+            tiktokAlreadyPublished,
+          })
         : "Post copy is ready — copy captions or download assets below.",
       disabled: false,
       loading: false,
@@ -609,8 +713,12 @@ export function scrollTargetForNextStepAction(action: NextStepAction): string {
     return "section-publish-video";
   }
 
-  if (action === "focus_youtube") {
-    return "section-youtube-publish";
+  if (
+    action === "focus_publish" ||
+    action === "view_youtube" ||
+    action === "view_tiktok"
+  ) {
+    return "section-publish";
   }
 
   if (

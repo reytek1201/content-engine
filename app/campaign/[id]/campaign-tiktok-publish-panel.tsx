@@ -42,6 +42,7 @@ interface CampaignTikTokPublishPanelProps {
   refreshKey?: number;
   imagesComplete?: boolean;
   hasCaptions?: boolean;
+  onPublishComplete?: () => void;
 }
 
 function TikTokIcon() {
@@ -89,6 +90,7 @@ export default function CampaignTikTokPublishPanel({
   refreshKey = 0,
   imagesComplete = false,
   hasCaptions = false,
+  onPublishComplete,
 }: CampaignTikTokPublishPanelProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -228,6 +230,7 @@ export default function CampaignTikTokPublishPanel({
           : "Published to TikTok.",
       );
       await loadReadiness();
+      onPublishComplete?.();
     } catch (publishError) {
       const raw =
         publishError instanceof Error

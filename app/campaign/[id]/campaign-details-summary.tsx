@@ -11,6 +11,8 @@ import {
 import { getCampaignListStatus } from "@/utils/campaign-list-status";
 import { formatCampaignDetailsProgress } from "@/utils/campaign-status-display";
 import {
+  isPlatformViewAction,
+  platformViewUrlForAction,
   scrollTargetForNextStepAction,
   scrollToCampaignSection,
 } from "@/utils/campaign-progress";
@@ -37,6 +39,7 @@ export default function CampaignDetailsSummary({
     hasCaptions: journeyInput.captionsCount > 0,
     hasVideoExport: journeyInput.hasVideoExport ?? false,
     youtubePublished: journeyInput.youtubeAlreadyPublished ?? false,
+    tiktokPublished: journeyInput.tiktokAlreadyPublished ?? false,
   });
 
   const progressLine = formatCampaignDetailsProgress({
@@ -46,6 +49,7 @@ export default function CampaignDetailsSummary({
     captionsCount: journeyInput.captionsCount,
     hasVideoExport: journeyInput.hasVideoExport ?? false,
     youtubeAlreadyPublished: journeyInput.youtubeAlreadyPublished ?? false,
+    tiktokAlreadyPublished: journeyInput.tiktokAlreadyPublished ?? false,
   });
 
   const handlers = {
@@ -65,10 +69,17 @@ export default function CampaignDetailsSummary({
 
     if (
       journey.isFullyComplete &&
-      journey.youtubeWatchUrl &&
-      primary.action === "focus_youtube"
+      isPlatformViewAction(primary.action)
     ) {
-      window.open(journey.youtubeWatchUrl, "_blank", "noopener,noreferrer");
+      const url = platformViewUrlForAction(primary.action, {
+        youtubeWatchUrl: journey.youtubeWatchUrl,
+        tiktokProfileUrl: journey.tiktokProfileUrl,
+      });
+
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+
       return;
     }
 
@@ -126,6 +137,17 @@ export default function CampaignDetailsSummary({
             className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground sm:w-auto"
           >
             View on YouTube
+          </a>
+        ) : null}
+
+        {journey.tiktokProfileUrl && journey.isFullyComplete ? (
+          <a
+            href={journey.tiktokProfileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground sm:w-auto"
+          >
+            View on TikTok
           </a>
         ) : null}
 

@@ -46,6 +46,7 @@ interface CampaignYouTubePublishPanelProps {
   onGenerateCaptions?: () => void;
   canGenerateCaptions?: boolean;
   isGeneratingCaptions?: boolean;
+  onPublishComplete?: () => void;
 }
 
 function YouTubeIcon() {
@@ -99,6 +100,7 @@ export default function CampaignYouTubePublishPanel({
   onGenerateCaptions,
   canGenerateCaptions = false,
   isGeneratingCaptions = false,
+  onPublishComplete,
 }: CampaignYouTubePublishPanelProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -238,6 +240,7 @@ export default function CampaignYouTubePublishPanel({
           : "Published to YouTube Shorts.",
       );
       await loadReadiness();
+      onPublishComplete?.();
     } catch (publishError) {
       const raw =
         publishError instanceof Error

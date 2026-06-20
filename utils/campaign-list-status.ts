@@ -5,7 +5,9 @@ export type CampaignListStatusId =
   | "needs_captions"
   | "needs_video"
   | "ready_to_post"
-  | "on_youtube";
+  | "on_youtube"
+  | "on_tiktok"
+  | "published";
 
 export interface CampaignListStatus {
   id: CampaignListStatusId;
@@ -20,8 +22,10 @@ export function getCampaignListStatus(input: {
   hasCaptions: boolean;
   hasVideoExport: boolean;
   youtubePublished: boolean;
+  tiktokPublished?: boolean;
 }): CampaignListStatus {
   const { campaignStatus, slideCount, imagesReadyCount, hasCaptions } = input;
+  const tiktokPublished = input.tiktokPublished ?? false;
 
   if (campaignStatus === "failed") {
     return { id: "failed", label: "Failed", tone: "red" };
@@ -45,8 +49,16 @@ export function getCampaignListStatus(input: {
     return { id: "needs_captions", label: "Needs captions", tone: "amber" };
   }
 
+  if (input.youtubePublished && tiktokPublished) {
+    return { id: "published", label: "Published", tone: "emerald" };
+  }
+
   if (input.youtubePublished) {
     return { id: "on_youtube", label: "On YouTube", tone: "emerald" };
+  }
+
+  if (tiktokPublished) {
+    return { id: "on_tiktok", label: "On TikTok", tone: "emerald" };
   }
 
   if (!input.hasVideoExport) {

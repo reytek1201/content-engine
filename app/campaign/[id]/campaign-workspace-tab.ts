@@ -33,7 +33,9 @@ export function tabForNextStepAction(
     action === "download_zip" ||
     action === "download_narration" ||
     action === "export_video" ||
-    action === "focus_youtube"
+    action === "focus_publish" ||
+    action === "view_youtube" ||
+    action === "view_tiktok"
   ) {
     return "publish";
   }

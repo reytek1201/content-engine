@@ -47,7 +47,8 @@ interface CampaignPublishPanelProps {
   audioExportMessage: string | null;
   isExportingVideo: boolean;
   videoExportMessage: string | null;
-  youtubePublishRefreshKey?: number;
+  publishRefreshKey?: number;
+  onPublishComplete?: () => void;
   publishTabHint?: string | null;
   hasVideoExport?: boolean;
   youtubeAlreadyPublished?: boolean;
@@ -101,7 +102,8 @@ export default function CampaignPublishPanel({
   audioExportMessage,
   isExportingVideo,
   videoExportMessage,
-  youtubePublishRefreshKey = 0,
+  publishRefreshKey = 0,
+  onPublishComplete,
   publishTabHint = null,
   hasVideoExport = false,
   youtubeAlreadyPublished = false,
@@ -132,7 +134,7 @@ export default function CampaignPublishPanel({
             Publish
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6 md:max-w-2xl">
-            Post to platforms here: captions → 9:16 video → YouTube Shorts.
+            Post to platforms here: captions → 9:16 video → YouTube or TikTok.
             File downloads (zip, narration) are at the bottom.
           </p>
         </div>
@@ -167,7 +169,7 @@ export default function CampaignPublishPanel({
           <div className="mt-3 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3">
             <p className="text-sm font-semibold text-emerald-200">Captions ready</p>
             <p className="mt-1 text-sm leading-6 text-emerald-200/90">
-              Export your video next, then post to YouTube Shorts.
+              Export your video next, then post to YouTube or TikTok.
             </p>
             <button
               type="button"
@@ -296,12 +298,13 @@ export default function CampaignPublishPanel({
           <CampaignYouTubePublishPanel
             campaignId={campaignId}
             disabled={disabled}
-            refreshKey={youtubePublishRefreshKey}
+            refreshKey={publishRefreshKey}
             imagesComplete={imagesComplete}
             hasYoutubeCaptions={captionsReady}
             onGenerateCaptions={onGenerateCaptions}
             canGenerateCaptions={canGenerateCaptions}
             isGeneratingCaptions={isGeneratingCaptions}
+            onPublishComplete={onPublishComplete}
           />
         </div>
       )}
@@ -318,9 +321,10 @@ export default function CampaignPublishPanel({
           <CampaignTikTokPublishPanel
             campaignId={campaignId}
             disabled={disabled}
-            refreshKey={youtubePublishRefreshKey}
+            refreshKey={publishRefreshKey}
             imagesComplete={imagesComplete}
             hasCaptions={captionsReady}
+            onPublishComplete={onPublishComplete}
           />
         </div>
       )}

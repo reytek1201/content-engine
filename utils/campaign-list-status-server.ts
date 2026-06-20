@@ -37,10 +37,10 @@ export async function loadCampaignListStatuses(
       .not("output_url", "is", null),
     supabase
       .from("platform_posts")
-      .select("campaign_id")
+      .select("campaign_id, platform")
       .in("campaign_id", campaignIds)
-      .eq("platform", "youtube")
-      .eq("status", "published"),
+      .eq("status", "published")
+      .in("platform", ["youtube", "tiktok"]),
   ]);
 
   const captionsByCampaign = new Set(
@@ -56,9 +56,20 @@ export async function loadCampaignListStatuses(
       .map((row) => row.campaign_id as string),
   );
 
-  const youtubePublishedByCampaign = new Set(
-    (postsResult.data ?? []).map((row) => row.campaign_id as string),
-  );
+  const youtubePublishedByCampaign = new Set<string>();
+  const tiktokPublishedByCampaign = new Set<string>();
+
+  for (const row of postsResult.data ?? []) {
+    const campaignId = row.campaign_id as string;
+
+    if (row.platform === "youtube") {
+      youtubePublishedByCampaign.add(campaignId);
+    }
+
+    if (row.platform === "tiktok") {
+      tiktokPublishedByCampaign.add(campaignId);
+    }
+  }
 
   const statuses: Record<string, CampaignListStatus> = {};
 
@@ -75,6 +86,7 @@ export async function loadCampaignListStatuses(
       hasCaptions: captionsByCampaign.has(campaign.id),
       hasVideoExport: videoExportByCampaign.has(campaign.id),
       youtubePublished: youtubePublishedByCampaign.has(campaign.id),
+      tiktokPublished: tiktokPublishedByCampaign.has(campaign.id),
     });
   }
 

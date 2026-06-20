@@ -10,6 +10,8 @@ import {
 import {
   CAMPAIGN_JOURNEY_STRIP_ID,
   getCampaignJourney,
+  isPlatformViewAction,
+  platformViewUrlForAction,
   scrollTargetForNextStepAction,
   scrollToCampaignSection,
   type CampaignJourneyStep,
@@ -113,6 +115,8 @@ export function useCampaignJourney(input: CampaignJourneyStripInput) {
       hasVideoExport: input.hasVideoExport,
       youtubeAlreadyPublished: input.youtubeAlreadyPublished,
       youtubeWatchUrl: input.youtubeWatchUrl,
+      tiktokAlreadyPublished: input.tiktokAlreadyPublished,
+      tiktokProfileUrl: input.tiktokProfileUrl,
       isExportingVideo: input.isExportingVideo,
       copiedAllCaptions: input.copiedAllCaptions,
       savedAllPhotos: input.savedAllPhotos,
@@ -182,21 +186,32 @@ export default function CampaignJourneyStrip({
     scrollToCampaignSection(step.scrollTargetId);
   }
 
+  function openPlatformView(action: NextStepAction) {
+    const url = platformViewUrlForAction(action, {
+      youtubeWatchUrl: journey.youtubeWatchUrl,
+      tiktokProfileUrl: journey.tiktokProfileUrl,
+    });
+
+    if (!url) {
+      return false;
+    }
+
+    if (layout === "sheet") {
+      onSheetClose?.();
+    }
+
+    window.open(url, "_blank", "noopener,noreferrer");
+    return true;
+  }
+
   function handlePrimaryClick() {
     const primary = journey.primary;
     if (!primary || primary.disabled || primary.loading) {
       return;
     }
 
-    if (
-      journey.isFullyComplete &&
-      journey.youtubeWatchUrl &&
-      primary.action === "focus_youtube"
-    ) {
-      if (layout === "sheet") {
-        onSheetClose?.();
-      }
-      window.open(journey.youtubeWatchUrl, "_blank", "noopener,noreferrer");
+    if (journey.isFullyComplete && isPlatformViewAction(primary.action)) {
+      openPlatformView(primary.action);
       return;
     }
 
@@ -206,6 +221,11 @@ export default function CampaignJourneyStrip({
 
   function handleSecondaryClick(button: CampaignNextStepButton) {
     if (button.disabled || button.loading) {
+      return;
+    }
+
+    if (journey.isFullyComplete && isPlatformViewAction(button.action)) {
+      openPlatformView(button.action);
       return;
     }
 
