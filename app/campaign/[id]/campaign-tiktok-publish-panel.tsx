@@ -277,6 +277,9 @@ export default function CampaignTikTokPublishPanel({
   } else if (readiness.alreadyPublished || publishedUrl) {
     helperText =
       "This export is already on TikTok. Export a new 9:16 video to post again.";
+  } else if (readiness.connected && readiness.hasPublishScope) {
+    helperText =
+      "Sandbox note: your TikTok account must be set to Private in the TikTok app before posting. Posts are only visible to you until app review passes.";
   }
 
   const canClickPublish =

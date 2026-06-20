@@ -12,8 +12,13 @@ export function getTikTokPublishErrorMessage(error: string): string {
     return "TikTok rejected the video upload. Try again — SlidePress now uploads the file directly.";
   }
 
-  if (normalized.includes("unaudited_client") || normalized.includes("only post privately")) {
-    return "TikTok sandbox apps can only post privately. Posts will appear as visible only to you until app review passes.";
+  if (
+    normalized.includes("unaudited_client") ||
+    normalized.includes("only post privately") ||
+    normalized.includes("account is public") ||
+    normalized.includes("private account")
+  ) {
+    return error;
   }
 
   if (normalized.includes("spam_risk") || normalized.includes("daily post limit")) {

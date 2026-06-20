@@ -6,9 +6,14 @@ export class TikTokPublishScopeError extends Error {
 }
 
 export class TikTokUnauditedPrivacyError extends Error {
-  constructor() {
-    super("TikTok unaudited apps require SELF_ONLY privacy");
+  readonly privacyLevel: string;
+  readonly privacyOptions: readonly string[];
+
+  constructor(privacyLevel: string, privacyOptions: readonly string[]) {
+    super("TikTok unaudited apps require a private account and SELF_ONLY posts");
     this.name = "TikTokUnauditedPrivacyError";
+    this.privacyLevel = privacyLevel;
+    this.privacyOptions = privacyOptions;
   }
 }
 
@@ -39,7 +44,7 @@ function assertTikTokApiOk<T>(
     }
 
     if (code === "unaudited_client_can_only_post_to_private_accounts") {
-      throw new TikTokUnauditedPrivacyError();
+      throw new TikTokUnauditedPrivacyError("unknown", []);
     }
 
     if (code && code !== "ok") {
@@ -152,16 +157,34 @@ export async function queryTikTokCreatorInfo(
   };
 }
 
+function formatUnauditedPrivacyError(
+  privacyLevel: string,
+  privacyOptions: readonly string[],
+): string {
+  if (privacyLevel === "SELF_ONLY") {
+    return (
+      "TikTok sandbox blocked this post because your TikTok account is public. " +
+      "In the TikTok app, go to Profile → Menu → Settings and privacy → Privacy → turn on Private account, then try again. " +
+      "Posts stay visible only to you until SlidePress passes TikTok app review."
+    );
+  }
+
+  return (
+    "TikTok sandbox apps can only post with private visibility. " +
+    "Set your TikTok account to Private in the TikTok app, then try again."
+  );
+}
+
 function pickPrivacyLevel(
   options: string[],
   preferred: string,
 ): string {
-  if (options.includes(preferred)) {
-    return preferred;
-  }
-
   if (options.includes("SELF_ONLY")) {
     return "SELF_ONLY";
+  }
+
+  if (options.includes(preferred)) {
+    return preferred;
   }
 
   return options[0]!;
@@ -209,7 +232,50 @@ async function initTikTokFileUploadPost(input: {
     upload_url?: string;
   }> | null;
 
-  assertTikTokApiOk(response, body);
+  if (!response.ok || body?.error?.code !== "ok" || !body.data) {
+    const code = body?.error?.code;
+    const message = body?.error?.message ?? "TikTok API request failed";
+
+    console.error("TikTok video/init failed", {
+      httpStatus: response.status,
+      code,
+      message,
+      privacyLevel: input.privacyLevel,
+      privacyOptions: input.creator.privacyLevelOptions,
+      videoSize: input.videoSize,
+    });
+
+    if (code === "scope_not_authorized") {
+      throw new TikTokPublishScopeError();
+    }
+
+    if (code === "spam_risk_too_many_posts") {
+      throw new Error("TikTok daily post limit reached. Try again tomorrow.");
+    }
+
+    if (code === "unaudited_client_can_only_post_to_private_accounts") {
+      throw new TikTokUnauditedPrivacyError(
+        input.privacyLevel,
+        input.creator.privacyLevelOptions,
+      );
+    }
+
+    if (code === "privacy_level_option_mismatch") {
+      throw new Error(
+        `TikTok rejected privacy level "${input.privacyLevel}". Allowed: ${input.creator.privacyLevelOptions.join(", ")}`,
+      );
+    }
+
+    if (code && code !== "ok") {
+      throw new Error(
+        message === "TikTok API request failed"
+          ? `TikTok API error: ${code}`
+          : `${message} (${code})`,
+      );
+    }
+
+    throw new Error(message);
+  }
 
   if (!body.data.publish_id || !body.data.upload_url) {
     throw new Error("TikTok did not return publish upload details");
@@ -346,20 +412,32 @@ export async function publishTikTokVideo(input: {
   } catch (error) {
     if (
       error instanceof TikTokUnauditedPrivacyError &&
-      privacyLevel !== "SELF_ONLY" &&
-      creator.privacyLevelOptions.includes("SELF_ONLY")
+      privacyLevel !== "SELF_ONLY"
     ) {
       privacyLevel = "SELF_ONLY";
-      ({ publishId, uploadUrl } = await initTikTokFileUploadPost({
-        accessToken: input.accessToken,
-        videoSize: videoBuffer.byteLength,
-        title: input.title,
-        creator,
-        privacyLevel,
-      }));
+      try {
+        ({ publishId, uploadUrl } = await initTikTokFileUploadPost({
+          accessToken: input.accessToken,
+          videoSize: videoBuffer.byteLength,
+          title: input.title,
+          creator,
+          privacyLevel,
+        }));
+      } catch (retryError) {
+        if (retryError instanceof TikTokUnauditedPrivacyError) {
+          throw new Error(
+            formatUnauditedPrivacyError(
+              retryError.privacyLevel,
+              retryError.privacyOptions,
+            ),
+          );
+        }
+
+        throw retryError;
+      }
     } else if (error instanceof TikTokUnauditedPrivacyError) {
       throw new Error(
-        "TikTok sandbox apps can only post privately. Posts will appear as visible only to you until app review passes.",
+        formatUnauditedPrivacyError(error.privacyLevel, error.privacyOptions),
       );
     } else {
       throw error;
