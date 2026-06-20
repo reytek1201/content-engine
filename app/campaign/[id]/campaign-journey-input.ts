@@ -7,6 +7,7 @@ export interface CampaignJourneyHandlers {
   onDownloadNarration: () => void;
   onCopyAllCaptions: () => void;
   onSaveAllToPhotos: () => void;
+  onAddVerticalFormat: () => void;
 }
 
 export interface CampaignJourneyStripInput

@@ -32,6 +32,7 @@ export function tabForNextStepAction(
     action === "copy_captions" ||
     action === "download_zip" ||
     action === "download_narration" ||
+    action === "add_vertical_format" ||
     action === "export_video" ||
     action === "focus_publish" ||
     action === "view_youtube" ||

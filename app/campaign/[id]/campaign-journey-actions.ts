@@ -24,6 +24,9 @@ export function runJourneyAction(
     case "save_all_photos":
       handlers.onSaveAllToPhotos();
       break;
+    case "add_vertical_format":
+      handlers.onAddVerticalFormat();
+      break;
     case "export_video":
     case "focus_publish":
     case "view_youtube":

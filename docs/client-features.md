@@ -53,7 +53,7 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 ### Campaign workspace
 
-- **Campaign journey strip** — one guided flow: Copy → Images → Captions → Video → YouTube, with honest checkmarks, next-step CTA, and step navigation (hidden on Details tab)
+- **Campaign journey strip** — one guided flow: Copy → Images → Captions → Video → **Publish**, with honest checkmarks, next-step CTA, and step navigation (hidden on Details tab). The Publish step turns green when posted to **YouTube, TikTok, or both**
 - **Captions prompt** — after all images finish, a modal offers one-tap **Generate captions** (dismissible per session)
 - **First-time workspace tour** — three coach marks (journey strip, Publish tab, publish sections); dismiss once via localStorage
 - **Inline campaign rename** — edit title from the workspace header
@@ -127,11 +127,11 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 
 **Beta limit:** 3 video exports per month (configurable). Counts **one export per successful render request** — exporting both 4:5 and 9:16 from the same campaign uses two credits.
 
-### Publish copy
+### Publish copy & direct posting
 
 - **Platform captions** for TikTok, Instagram, and YouTube Shorts
-- Publish section in the **Publish** tab — captions for TikTok, Instagram, and YouTube Shorts; **9:16 video export**; **Post to YouTube Shorts**; file **downloads** (zip, narration) at the bottom
-- **Copy all** (via journey strip) or **copy one platform** to clipboard
+- Publish section in the **Publish** tab — captions; **9:16 video export**; **Post to YouTube Shorts** and **Post to TikTok**; file **downloads** (zip, narration) at the bottom
+- **Copy all** (via journey strip) or **copy per field** (title, caption, hashtags) to clipboard
 - **Regenerate captions only** — updates publish copy without touching slide images
 
 ### Post to YouTube Shorts
@@ -144,6 +144,17 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 - Disconnect YouTube anytime in Settings; account deletion revokes tokens and removes publish history
 
 *Google OAuth verification submitted (June 2026) — public users until approved must be added as OAuth **test users** in Google Cloud. See `docs/youtube-phase3-runbook.md`.*
+
+### Post to TikTok
+
+- **Settings → Connected accounts** — connect your TikTok account (Login Kit OAuth)
+- **Campaign → Publish** — **Post to TikTok** when you have a TikTok caption and a completed **9:16** video export
+- Upload uses your TikTok caption and hashtags from the campaign
+- **Grant posting permission** on first publish (separate from connect)
+- **View on TikTok** link after publish; same export cannot be posted twice (duplicate guard)
+- Disconnect TikTok anytime in Settings; account deletion revokes tokens and removes publish history
+
+*TikTok sandbox (June 2026) — app is unaudited; your TikTok account must be set to **Private** in the TikTok app before posting. Posts are `SELF_ONLY` until TikTok app review passes. See Epic [#27](https://github.com/reytek1201/SlidePress.co/issues/27).*
 
 ### Export
 
@@ -163,13 +174,13 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 - **Settings → Brands** — manage all brands; edit kit and products per brand
 - **Campaigns header** — switch active brand, edit kit, add a brand (returns to campaigns when done)
 - **Usage** — campaigns, regenerations, voice previews, narration exports, and video exports this month with beta limits (resets monthly)
-- **Connected accounts** — connect or disconnect YouTube for direct Shorts posting
+- **Connected accounts** — connect or disconnect **YouTube** and **TikTok** for direct posting
 - **Security** (native) — optional Face ID / fingerprint app unlock
 - **Account deletion** — type `DELETE` to confirm; removes all campaigns, brands, usage data, and auth access
 
 ### Campaign management
 
-- **My campaigns** list with preview thumbnails, format, date, and **publish-status badges** (e.g. Needs captions, Ready to post, On YouTube) — scoped to the active brand
+- **My campaigns** list with preview thumbnails, format, date, and **publish-status badges** (e.g. Needs captions, Ready to post, On YouTube, On TikTok, Published) — scoped to the active brand
 - **Duplicate campaign** — from the workspace (not the list)
 - **Delete campaign** — hidden in workspace Danger zone only
 
@@ -218,8 +229,8 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 6. Preview carousel → fix any slide (edit headline → **Fix this slide** regenerate)
 7. Optional: add the other format (4:5 or 9:16) when primary images are ready
 8. Generate captions
-9. Publish: copy captions, download zip, export narration ZIP, export video MP4, or **post to YouTube Shorts** (9:16 + captions + connected channel)
-10. Post to TikTok or Instagram manually, or use YouTube direct publish from SlidePress
+9. Publish: copy captions, download zip, export narration ZIP, export video MP4, or **post to YouTube Shorts and/or TikTok** (9:16 + captions + connected account)
+10. Post to Instagram manually, or use direct publish from SlidePress for YouTube and TikTok
 ```
 
 **Goal:** Fewest steps between idea and publish-ready assets — carousel, narration, or video from one campaign.
@@ -232,7 +243,7 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 |------|--------|
 | **Paid tiers & billing** | Stripe subscriptions, higher video/narration limits — [Epic #14](https://github.com/reytek1201/SlidePress.co/issues/14) |
 | **On-screen video captions** | Deferred — export MP4 + platform captions; burned-in captions not in current build |
-| **Direct platform posting** | **YouTube Shorts** shipped; OAuth verification under review; TikTok / Instagram next — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md) |
+| **Direct platform posting** | **YouTube Shorts** + **TikTok** shipped; Google OAuth verification under review; TikTok app audit pending; Instagram next — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md) |
 | **Voice library browser** | Curated personas today (warm / energetic / professional) |
 
 ### Why video export matters (marketing angle)
@@ -246,11 +257,12 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 ### What we’re not promising in v1 of video
 
 - Full voice library browser (we’ll curate a small set of great voices)
-- Direct upload to TikTok / Instagram (export MP4 + captions; you post manually today)
+- Direct upload to **Instagram** (export MP4 + captions; post manually today)
 - YouTube posting for users outside Google OAuth **test users** list until Google verification completes
+- TikTok **public** posting until TikTok app audit passes (sandbox / private account today)
 - 4:5 video before 9:16 Reels quality is solid
 
-*Internal tracking: GitHub epic [#1](https://github.com/reytek1201/SlidePress.co/issues/1) (ElevenLabs: Narration & Video Export).*
+*Internal tracking: ElevenLabs narration & video export epic [#1](https://github.com/reytek1201/SlidePress.co/issues/1) ✅ closed.*
 
 ---
 
@@ -272,6 +284,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | **6A+** | **Voiceover editing** — inline script edit, AI rewrite sheet, regenerate slide sheet |
 | **6B** | **Dual format** — one campaign, optional second aspect (confirm upsell), per-format preview/export |
 | **6C** | **YouTube Shorts posting** — connect, upload API, Publish UI ✅; Google OAuth verification 🚧 |
+| **6D** | **TikTok posting** — connect, FILE_UPLOAD API, Publish UI ✅; app audit 🚧 |
 
 ### Phase 5 — Mobile app (Capacitor) ✅ (largely complete)
 
@@ -324,8 +337,8 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 **6C — Business scale** *(in progress)*
 
 - **Usage tiers & billing** — paid plans with higher caps (Stripe) — [Epic #14](https://github.com/reytek1201/SlidePress.co/issues/14)
-- **Direct platform posting** — **YouTube Shorts** ✅ Phases 0–2 shipped; Phase 3 🚧 OAuth under review — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/platform-posting.md`](platform-posting.md) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md)
-- **TikTok / Instagram** — after YouTube verification ([#32](https://github.com/reytek1201/SlidePress.co/issues/32)–[#34](https://github.com/reytek1201/SlidePress.co/issues/34))
+- **Direct platform posting** — **YouTube Shorts** ✅ Phases 0–2 shipped; Phase 3 🚧 OAuth under review · **TikTok** ✅ Phases 0–1 shipped; app audit 🚧 — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/platform-posting.md`](platform-posting.md) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md)
+- **Instagram** — Reels + Carousel ([#33](https://github.com/reytek1201/SlidePress.co/issues/33)–[#34](https://github.com/reytek1201/SlidePress.co/issues/34))
 - **On-screen video captions** — burned-in captions (deferred from beta)
 
 ### Not planned for v1
@@ -351,6 +364,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | Platform captions | Google Gemini |
 | Narration & video | ElevenLabs TTS + FFmpeg compose + Fal merge pipeline |
 | YouTube posting | YouTube Data API v3 (OAuth + resumable upload) |
+| TikTok posting | TikTok Content Posting API (Login Kit OAuth + FILE_UPLOAD) |
 | Realtime | Supabase Realtime on slides, slide images & campaigns |
 
 Approximate **variable cost per 5-slide campaign** today (images + AI text): **~$0.45–0.65** depending on regenerations. **Video export** adds roughly **~$0.10–0.30** per Reel (TTS + render) at beta scale. End-user pricing will include tier limits above these costs.
@@ -359,7 +373,7 @@ Approximate **variable cost per 5-slide campaign** today (images + AI text): **~
 
 ## One-line pitch
 
-**Today:** Describe your offer once — get carousel slides, AI images with headlines, editable voiceover scripts, platform captions, AI narration, and Reel-ready MP4 export — optionally in both 4:5 and 9:16 from one campaign.
+**Today:** Describe your offer once — get carousel slides, AI images with headlines, editable voiceover scripts, platform captions, AI narration, and Reel-ready MP4 export — optionally in both 4:5 and 9:16 from one campaign. Post directly to **YouTube Shorts** and **TikTok** from the same workspace.
 
 **Same workflow:** One campaign → carousel zip, narration ZIP, or video — no second production pass.
 
@@ -367,7 +381,7 @@ Approximate **variable cost per 5-slide campaign** today (images + AI text): **~
 
 ## Elevator pitch (for sales / landing copy)
 
-SlidePress turns a topic into a full social campaign: headlines on every slide, AI-generated visuals, spoken scripts you can edit or rewrite with AI, and captions for TikTok, Instagram, and YouTube. Export **carousel zips** (one or both formats), **AI narration**, or **Reel-ready MP4** per format from the same workspace.
+SlidePress turns a topic into a full social campaign: headlines on every slide, AI-generated visuals, spoken scripts you can edit or rewrite with AI, and captions for TikTok, Instagram, and YouTube. Export **carousel zips** (one or both formats), **AI narration**, or **Reel-ready MP4** per format — then **post to YouTube Shorts and TikTok** without leaving the app.
 
 ---
 

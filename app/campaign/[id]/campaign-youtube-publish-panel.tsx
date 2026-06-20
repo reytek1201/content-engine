@@ -3,6 +3,7 @@
 import CampaignYouTubeReadinessChecklist from "@/app/campaign/[id]/campaign-youtube-readiness-checklist";
 import { getYouTubePublishErrorMessage } from "@/utils/youtube/publish-errors";
 import { buildPlatformAuthorizeUrl } from "@/utils/platforms/oauth-return";
+import type { VerticalFormatPublishState } from "@/utils/slide-aspect-images";
 import type { PlatformConnectionPublic } from "@/types/platform-connection";
 import type { PlatformPostPublic } from "@/types/platform-post";
 import Link from "next/link";
@@ -43,6 +44,8 @@ interface CampaignYouTubePublishPanelProps {
   refreshKey?: number;
   imagesComplete?: boolean;
   hasYoutubeCaptions?: boolean;
+  verticalFormatPublishState?: VerticalFormatPublishState;
+  onAddVerticalFormat?: () => void;
   onGenerateCaptions?: () => void;
   canGenerateCaptions?: boolean;
   isGeneratingCaptions?: boolean;
@@ -97,6 +100,7 @@ export default function CampaignYouTubePublishPanel({
   refreshKey = 0,
   imagesComplete = false,
   hasYoutubeCaptions = false,
+  verticalFormatPublishState = "not_applicable",
   onGenerateCaptions,
   canGenerateCaptions = false,
   isGeneratingCaptions = false,
@@ -303,6 +307,12 @@ export default function CampaignYouTubePublishPanel({
 
   if (!readiness.connected) {
     helperText = "Step 3: Connect YouTube in Settings, then post your Short.";
+  } else if (verticalFormatPublishState === "needs_add") {
+    helperText =
+      "Add 9:16 slides first (banner above), then export a vertical Quick Reel.";
+  } else if (verticalFormatPublishState === "generating") {
+    helperText =
+      "9:16 slides are generating — export a vertical Quick Reel once they finish.";
   } else if (!readiness.hasVideoExport) {
     helperText =
       "Step 2: Export a 9:16 Quick Reel above, then post directly to YouTube.";

@@ -16,6 +16,7 @@ import {
   type TikTokPublishFormSettings,
   validateTikTokPublishSettings,
 } from "@/utils/tiktok/publish-settings";
+import type { VerticalFormatPublishState } from "@/utils/slide-aspect-images";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -66,6 +67,8 @@ interface CampaignTikTokPublishPanelProps {
   refreshKey?: number;
   imagesComplete?: boolean;
   hasCaptions?: boolean;
+  verticalFormatPublishState?: VerticalFormatPublishState;
+  onAddVerticalFormat?: () => void;
   onPublishComplete?: () => void;
 }
 
@@ -158,6 +161,7 @@ export default function CampaignTikTokPublishPanel({
   refreshKey = 0,
   imagesComplete = false,
   hasCaptions = false,
+  verticalFormatPublishState = "not_applicable",
   onPublishComplete,
 }: CampaignTikTokPublishPanelProps) {
   const router = useRouter();
@@ -378,6 +382,12 @@ export default function CampaignTikTokPublishPanel({
 
   if (!readiness.connected) {
     helperText = "Connect TikTok in Settings, then post your video.";
+  } else if (verticalFormatPublishState === "needs_add") {
+    helperText =
+      "Add 9:16 slides first (banner above), then export a vertical Quick Reel.";
+  } else if (verticalFormatPublishState === "generating") {
+    helperText =
+      "9:16 slides are generating — export a vertical Quick Reel once they finish.";
   } else if (!readiness.hasVideoExport) {
     helperText =
       "Export a 9:16 Quick Reel above, then post directly to TikTok.";

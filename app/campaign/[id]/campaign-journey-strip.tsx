@@ -118,6 +118,8 @@ export function useCampaignJourney(input: CampaignJourneyStripInput) {
       tiktokAlreadyPublished: input.tiktokAlreadyPublished,
       tiktokProfileUrl: input.tiktokProfileUrl,
       isExportingVideo: input.isExportingVideo,
+      verticalFormatPublishState: input.verticalFormatPublishState,
+      verticalVideoExportReady: input.verticalVideoExportReady,
       copiedAllCaptions: input.copiedAllCaptions,
       savedAllPhotos: input.savedAllPhotos,
     }),
@@ -142,6 +144,7 @@ export default function CampaignJourneyStrip({
     onDownloadNarration: input.onDownloadNarration,
     onCopyAllCaptions: input.onCopyAllCaptions,
     onSaveAllToPhotos: input.onSaveAllToPhotos,
+    onAddVerticalFormat: input.onAddVerticalFormat,
   };
 
   function scrollAfterNavigate(action: NextStepAction) {

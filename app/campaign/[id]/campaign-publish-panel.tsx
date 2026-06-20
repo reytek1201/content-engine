@@ -1,5 +1,6 @@
 "use client";
 
+import CampaignVerticalFormatNotice from "@/app/campaign/[id]/campaign-vertical-format-notice";
 import CampaignLockedNotice from "@/app/campaign/[id]/campaign-locked-notice";
 import CampaignCaptionsAccordion from "@/app/campaign/[id]/campaign-captions-accordion";
 import CampaignExportPanel from "@/app/campaign/[id]/campaign-export-panel";
@@ -13,6 +14,7 @@ import type { VoicePersona } from "@/utils/tts/voice-catalog";
 import type { VoiceQuality } from "@/utils/tts/types";
 import type { AspectRatio } from "@/types/campaign";
 import type { VideoExportPreset } from "@/utils/video-export-presets";
+import type { VerticalFormatPublishState } from "@/utils/slide-aspect-images";
 
 interface CampaignPublishPanelProps {
   campaignId: string;
@@ -35,7 +37,9 @@ interface CampaignPublishPanelProps {
   videoPreset: VideoExportPreset;
   aspectRatioLabel: string;
   dualFormatVideoReady?: boolean;
+  verticalFormatPublishState?: VerticalFormatPublishState;
   videoExportAspectRatio?: AspectRatio;
+  onAddVerticalFormat?: () => void;
   brandId: string | null;
   isSavingVoicePersona: boolean;
   isExporting: boolean;
@@ -90,7 +94,9 @@ export default function CampaignPublishPanel({
   videoPreset,
   aspectRatioLabel,
   dualFormatVideoReady = false,
+  verticalFormatPublishState = "not_applicable",
   videoExportAspectRatio,
+  onAddVerticalFormat,
   brandId,
   isSavingVoicePersona,
   isExporting,
@@ -154,6 +160,17 @@ export default function CampaignPublishPanel({
       {publishTabHint ? (
         <div className="mt-4 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-foreground sm:mt-5">
           {publishTabHint}
+        </div>
+      ) : null}
+
+      {(verticalFormatPublishState === "needs_add" ||
+        verticalFormatPublishState === "generating") &&
+      onAddVerticalFormat ? (
+        <div className="mt-4 sm:mt-5">
+          <CampaignVerticalFormatNotice
+            state={verticalFormatPublishState}
+            onAddVerticalFormat={onAddVerticalFormat}
+          />
         </div>
       ) : null}
 
@@ -267,8 +284,10 @@ export default function CampaignPublishPanel({
                   videoPreset={videoPreset}
                   voiceQuality={voiceQuality}
                   dualFormatEnabled={dualFormatVideoReady}
+                  verticalFormatState={verticalFormatPublishState}
                   videoExportAspectRatio={videoExportAspectRatio}
                   onVideoExportAspectRatioChange={onVideoExportAspectRatioChange}
+                  onAddVerticalFormat={onAddVerticalFormat}
                   onPresetChange={onVideoPresetChange}
                   onVoiceQualityChange={onVoiceQualityChange}
                   onExportVideo={onExportVideo}
@@ -301,6 +320,8 @@ export default function CampaignPublishPanel({
             refreshKey={publishRefreshKey}
             imagesComplete={imagesComplete}
             hasYoutubeCaptions={captionsReady}
+            verticalFormatPublishState={verticalFormatPublishState}
+            onAddVerticalFormat={onAddVerticalFormat}
             onGenerateCaptions={onGenerateCaptions}
             canGenerateCaptions={canGenerateCaptions}
             isGeneratingCaptions={isGeneratingCaptions}
@@ -324,6 +345,8 @@ export default function CampaignPublishPanel({
             refreshKey={publishRefreshKey}
             imagesComplete={imagesComplete}
             hasCaptions={captionsReady}
+            verticalFormatPublishState={verticalFormatPublishState}
+            onAddVerticalFormat={onAddVerticalFormat}
             onPublishComplete={onPublishComplete}
           />
         </div>

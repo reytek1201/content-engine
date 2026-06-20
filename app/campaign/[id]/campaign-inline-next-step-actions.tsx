@@ -35,6 +35,7 @@ export default function CampaignInlineNextStepActions({
     onDownloadNarration: input.onDownloadNarration,
     onCopyAllCaptions: input.onCopyAllCaptions,
     onSaveAllToPhotos: input.onSaveAllToPhotos,
+    onAddVerticalFormat: input.onAddVerticalFormat,
   };
 
   const showMoreActions =

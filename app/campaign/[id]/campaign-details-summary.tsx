@@ -59,6 +59,7 @@ export default function CampaignDetailsSummary({
     onDownloadNarration: journeyInput.onDownloadNarration,
     onCopyAllCaptions: journeyInput.onCopyAllCaptions,
     onSaveAllToPhotos: journeyInput.onSaveAllToPhotos,
+    onAddVerticalFormat: journeyInput.onAddVerticalFormat,
   };
 
   function handleContinue() {

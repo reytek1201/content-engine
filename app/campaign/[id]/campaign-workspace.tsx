@@ -70,6 +70,7 @@ import {
   type VideoExportUiStage,
 } from "@/utils/video-export-stages";
 import {
+  getVerticalFormatPublishState,
   indexSlideImages,
   mergeSlidesWithAspect,
   otherAspectRatio,
@@ -266,6 +267,23 @@ export default function CampaignWorkspace({
   const allSlidesHaveVoiceoverScripts =
     slides.length > 0 &&
     slides.every((slide) => Boolean(slide.voiceover_script?.trim()));
+  const verticalFormatPublishState = useMemo(
+    () =>
+      getVerticalFormatPublishState({
+        slides,
+        campaign,
+        imageIndex,
+        primaryImagesComplete,
+      }),
+    [slides, campaign, imageIndex, primaryImagesComplete],
+  );
+  const verticalVideoExportReady = useMemo(
+    () =>
+      slides.length > 0 &&
+      slidesCompleteForAspect(slides, "9:16", campaign, imageIndex) &&
+      allSlidesHaveVoiceoverScripts,
+    [slides, campaign, imageIndex, allSlidesHaveVoiceoverScripts],
+  );
   const videoExportReady =
     (videoExportAspectRatio === "9:16" || videoExportAspectRatio === "4:5") &&
     slidesCompleteForAspect(
@@ -1109,7 +1127,9 @@ export default function CampaignWorkspace({
     videoPreset,
     aspectRatioLabel: formatAspectRatio(videoExportAspectRatio),
     dualFormatVideoReady,
+    verticalFormatPublishState,
     videoExportAspectRatio,
+    onAddVerticalFormat: () => setAddFormatSheetOpen(true),
     brandId: campaign.brand_id,
     isSavingVoicePersona,
     isExporting,
@@ -1434,12 +1454,15 @@ export default function CampaignWorkspace({
     tiktokAlreadyPublished: publishFlow.tiktokAlreadyPublished,
     tiktokProfileUrl: publishFlow.tiktokProfileUrl,
     isExportingVideo,
+    verticalFormatPublishState,
+    verticalVideoExportReady,
     onGenerateImages: handleGenerateImages,
     onGenerateCaptions: handleGenerateCaptions,
     onDownloadZip: handleDownloadZip,
     onDownloadNarration: handleDownloadNarration,
     onCopyAllCaptions: handleCopyAllCaptions,
     onSaveAllToPhotos: handleSaveAllToPhotos,
+    onAddVerticalFormat: () => setAddFormatSheetOpen(true),
   };
 
   useEffect(() => {

@@ -6,6 +6,7 @@ import {
   TTS_VIDEO_EXPORT_SUCCESS_DISCLOSURE,
 } from "@/utils/tts/disclosure-copy";
 import type { AspectRatio } from "@/types/campaign";
+import type { VerticalFormatPublishState } from "@/utils/slide-aspect-images";
 import type { VoiceQuality } from "@/utils/tts/types";
 import {
   VIDEO_EXPORT_PRESETS,
@@ -21,8 +22,10 @@ interface CampaignVideoPanelProps {
   videoPreset: VideoExportPreset;
   voiceQuality: VoiceQuality;
   dualFormatEnabled?: boolean;
+  verticalFormatState?: VerticalFormatPublishState;
   videoExportAspectRatio?: AspectRatio;
   onVideoExportAspectRatioChange?: (aspectRatio: AspectRatio) => void;
+  onAddVerticalFormat?: () => void;
   onPresetChange: (preset: VideoExportPreset) => void;
   onVoiceQualityChange: (voiceQuality: VoiceQuality) => void;
   onExportVideo: () => void;
@@ -37,8 +40,10 @@ export default function CampaignVideoPanel({
   videoPreset,
   voiceQuality,
   dualFormatEnabled = false,
+  verticalFormatState = "not_applicable",
   videoExportAspectRatio,
   onVideoExportAspectRatioChange,
+  onAddVerticalFormat,
   onPresetChange,
   onVoiceQualityChange,
   onExportVideo,
@@ -48,6 +53,33 @@ export default function CampaignVideoPanel({
   }
 
   const isSilentPreset = videoPreset === "silent_captions";
+  const showFormatChooser =
+    (dualFormatEnabled && videoExportAspectRatio && onVideoExportAspectRatioChange) ||
+    (verticalFormatState === "needs_add" || verticalFormatState === "generating");
+
+  function handleFormatSelect(aspectRatio: AspectRatio) {
+    if (aspectRatio === "9:16" && verticalFormatState === "needs_add") {
+      onAddVerticalFormat?.();
+      return;
+    }
+
+    if (
+      aspectRatio === "9:16" &&
+      verticalFormatState === "generating"
+    ) {
+      return;
+    }
+
+    onVideoExportAspectRatioChange?.(aspectRatio);
+  }
+
+  function isFormatDisabled(aspectRatio: AspectRatio): boolean {
+    if (aspectRatio === "9:16") {
+      return verticalFormatState === "generating";
+    }
+
+    return false;
+  }
 
   return (
     <div className="rounded-lg border border-border bg-background/40 p-4 sm:rounded-xl sm:p-5">
@@ -59,19 +91,29 @@ export default function CampaignVideoPanel({
         </p>
       </div>
 
-      {dualFormatEnabled && videoExportAspectRatio && onVideoExportAspectRatioChange ? (
+      {showFormatChooser ? (
         <div className="mt-4">
           <p className="text-xs font-semibold text-foreground">Format</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {(["4:5", "9:16"] as const).map((aspectRatio) => {
               const isActive = videoExportAspectRatio === aspectRatio;
+              const formatDisabled =
+                disabled || isExportingVideo || isFormatDisabled(aspectRatio);
 
               return (
                 <button
                   key={aspectRatio}
                   type="button"
-                  disabled={disabled || isExportingVideo}
-                  onClick={() => onVideoExportAspectRatioChange(aspectRatio)}
+                  disabled={formatDisabled}
+                  onClick={() => handleFormatSelect(aspectRatio)}
+                  title={
+                    aspectRatio === "9:16" && verticalFormatState === "needs_add"
+                      ? "Add 9:16 slides to unlock vertical export for Reels and TikTok"
+                      : aspectRatio === "9:16" &&
+                          verticalFormatState === "generating"
+                        ? "9:16 images are still generating"
+                        : undefined
+                  }
                   className={`rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                     isActive
                       ? "border-primary bg-primary/10 text-foreground"
@@ -79,13 +121,23 @@ export default function CampaignVideoPanel({
                   }`}
                 >
                   {formatAspectRatio(aspectRatio)}
+                  {aspectRatio === "9:16" && verticalFormatState === "generating"
+                    ? " (generating…)"
+                    : ""}
                 </button>
               );
             })}
           </div>
-          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
-            Each video export uses one video credit.
-          </p>
+          {verticalFormatState === "needs_add" ? (
+            <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+              Add 9:16 slides to unlock vertical export for YouTube Shorts and
+              TikTok.
+            </p>
+          ) : dualFormatEnabled ? (
+            <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+              Each video export uses one video credit.
+            </p>
+          ) : null}
         </div>
       ) : null}
 

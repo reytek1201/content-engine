@@ -38,6 +38,7 @@ export interface CampaignProgressStep {
 export type NextStepAction =
   | "generate_images"
   | "generate_captions"
+  | "add_vertical_format"
   | "export_video"
   | "focus_publish"
   | "view_youtube"
@@ -83,6 +84,12 @@ export interface CampaignJourneyInput {
   isSavingAllPhotos?: boolean;
   saveAllPhotosProgress?: { saved: number; total: number } | null;
   videoExportReady?: boolean;
+  verticalFormatPublishState?:
+    | "ready"
+    | "needs_add"
+    | "generating"
+    | "not_applicable";
+  verticalVideoExportReady?: boolean;
   hasVideoCredits?: boolean;
   hasVideoExport?: boolean;
   youtubeAlreadyPublished?: boolean;
@@ -489,6 +496,8 @@ function getCampaignNextStepFromInput(
     youtubeAlreadyPublished = false,
     tiktokAlreadyPublished = false,
     isExportingVideo = false,
+    verticalFormatPublishState = "not_applicable",
+    verticalVideoExportReady = false,
   } = options;
 
   const anyPlatformPublished = isAnyPlatformPublished({
@@ -578,7 +587,59 @@ function getCampaignNextStepFromInput(
 
     if (
       !isNativeApp &&
-      videoExportReady &&
+      verticalFormatPublishState === "needs_add" &&
+      !anyPlatformPublished
+    ) {
+      const secondaries: CampaignNextStepButton[] = [
+        copyCaptionsSecondary,
+        downloadZipSecondary,
+      ];
+
+      if (narrationSecondary) {
+        secondaries.push(narrationSecondary);
+      }
+
+      return {
+        action: "add_vertical_format",
+        label: "Add 9:16 slides",
+        description:
+          "YouTube and TikTok need vertical slides before you can export a Quick Reel.",
+        disabled: false,
+        loading: false,
+        scrollTargetId: "section-publish-vertical-format",
+        secondaries,
+      };
+    }
+
+    if (
+      !isNativeApp &&
+      verticalFormatPublishState === "generating" &&
+      !anyPlatformPublished
+    ) {
+      const secondaries: CampaignNextStepButton[] = [
+        copyCaptionsSecondary,
+        downloadZipSecondary,
+      ];
+
+      if (narrationSecondary) {
+        secondaries.push(narrationSecondary);
+      }
+
+      return {
+        action: "focus_publish",
+        label: "Generating 9:16 slides…",
+        description:
+          "Vertical images are generating — export and post once they finish.",
+        disabled: true,
+        loading: true,
+        scrollTargetId: "section-publish-vertical-format",
+        secondaries,
+      };
+    }
+
+    if (
+      !isNativeApp &&
+      verticalVideoExportReady &&
       hasVideoCredits &&
       !hasVideoExport &&
       !anyPlatformPublished
@@ -709,6 +770,10 @@ export const CAMPAIGN_JOURNEY_STRIP_ID = "campaign-journey-strip";
 export const CAMPAIGN_NEXT_STEP_BAR_ID = CAMPAIGN_JOURNEY_STRIP_ID;
 
 export function scrollTargetForNextStepAction(action: NextStepAction): string {
+  if (action === "add_vertical_format") {
+    return "section-publish-vertical-format";
+  }
+
   if (action === "export_video") {
     return "section-publish-video";
   }

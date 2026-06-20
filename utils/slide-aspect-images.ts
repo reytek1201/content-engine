@@ -125,3 +125,44 @@ export function slidesGeneratingForAspect(
 export function aspectRatioFolderName(aspectRatio: AspectRatio): string {
   return aspectRatio === "4:5" ? "4x5" : "9x16";
 }
+
+export type VerticalFormatPublishState =
+  | "ready"
+  | "needs_add"
+  | "generating"
+  | "not_applicable";
+
+export function getVerticalFormatPublishState(input: {
+  slides: Slide[];
+  campaign: Pick<Campaign, "aspect_ratio" | "secondary_aspect_ratio">;
+  imageIndex: SlideImageIndex;
+  primaryImagesComplete: boolean;
+}): VerticalFormatPublishState {
+  const { slides, campaign, imageIndex, primaryImagesComplete } = input;
+
+  if (
+    slidesCompleteForAspect(slides, "9:16", campaign, imageIndex)
+  ) {
+    return "ready";
+  }
+
+  if (campaign.secondary_aspect_ratio === "9:16") {
+    return "generating";
+  }
+
+  if (
+    primaryImagesComplete &&
+    campaign.aspect_ratio === "4:5" &&
+    !campaign.secondary_aspect_ratio
+  ) {
+    return "needs_add";
+  }
+
+  return "not_applicable";
+}
+
+export function verticalFormatPublishBlocked(
+  state: VerticalFormatPublishState,
+): boolean {
+  return state === "needs_add" || state === "generating";
+}
