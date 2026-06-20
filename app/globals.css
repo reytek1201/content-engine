@@ -62,15 +62,15 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-primary to-ring px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/10 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-primary to-ring px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/10 transition hover:opacity-90 active:scale-[0.97] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .btn-primary-full {
-    @apply inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-primary to-ring px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/10 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-primary to-ring px-5 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/10 transition hover:opacity-90 active:scale-[0.97] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground active:scale-[0.97] active:bg-secondary/40 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .field-input {

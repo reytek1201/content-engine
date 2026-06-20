@@ -95,6 +95,8 @@ function LoginForm() {
   const isIosNative = useIsIosNative();
 
   const hasNavigated = useRef(false);
+  const signUpInProgress = useRef(false);
+  const errorRef = useRef<HTMLParagraphElement | null>(null);
 
   function authNavigate(path: string) {
     if (hasNavigated.current) return;
@@ -142,10 +144,14 @@ function LoginForm() {
       // redirect when the user is already navigating away. Only act on
       // an explicit new sign-in. On native, OAuth navigation is handled by
       // NativeAuthListener / explicit authNavigate after password sign-in.
+      // Also skip if sign-up is in flight — handleSignUp owns navigation
+      // and the SIGNED_IN event fires even when email confirmation is
+      // required, which would cause a blank-page redirect.
       if (
         session?.user &&
         event === "SIGNED_IN" &&
-        !isNativeAppRuntime()
+        !isNativeAppRuntime() &&
+        !signUpInProgress.current
       ) {
         authNavigate(resolveNextPath());
       }
@@ -267,6 +273,15 @@ function LoginForm() {
     setAuthSubmitting(false);
   }
 
+  function showSignUpError(msg: string) {
+    setAuthError(msg);
+    // Scroll the error into view on the next paint so iOS users see it
+    // even when the error renders above the button they just tapped.
+    requestAnimationFrame(() => {
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
+
   async function handleSignUp() {
     setAuthError(null);
     setAuthMessage(null);
@@ -274,10 +289,11 @@ function LoginForm() {
 
     const passwordError = validateSignUpPassword(password);
     if (passwordError) {
-      setAuthError(passwordError);
+      showSignUpError(passwordError);
       return;
     }
 
+    signUpInProgress.current = true;
     setAuthSubmitting(true);
 
     const { data, error: signUpError } = await supabase.auth.signUp({
@@ -286,12 +302,15 @@ function LoginForm() {
     });
 
     if (signUpError) {
-      setAuthError(signUpError.message);
+      showSignUpError(signUpError.message);
       setAuthSubmitting(false);
+      signUpInProgress.current = false;
       return;
     }
 
     if (data.session) {
+      // Email confirmation is disabled — session is immediately available.
+      signUpInProgress.current = false;
       authNavigate(resolveNextPath());
       setAuthSubmitting(false);
       return;
@@ -302,11 +321,14 @@ function LoginForm() {
         "An account with this email already exists. Sign in below.",
       );
       setAuthSubmitting(false);
+      signUpInProgress.current = false;
       return;
     }
 
+    // Email confirmation required — do NOT navigate. Show message and wait.
     setAuthMessage("Check your email to confirm your account, then sign in.");
     setAuthSubmitting(false);
+    signUpInProgress.current = false;
   }
 
   async function handleForgotPassword() {
@@ -457,19 +479,6 @@ function LoginForm() {
                   {PASSWORD_REQUIREMENTS_TEXT} Required for sign up.
                 </p>
               </div>
-              {authError && (
-                <p className="text-sm text-red-300" role="alert">
-                  {authError}
-                </p>
-              )}
-              {authMessage && (
-                <p className="text-sm text-primary" role="status">
-                  {authMessage}
-                </p>
-              )}
-              {forgotMessage && (
-                <p className="text-sm text-primary">{forgotMessage}</p>
-              )}
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="submit"
@@ -487,6 +496,19 @@ function LoginForm() {
                   Sign up
                 </button>
               </div>
+              {authError && (
+                <p ref={errorRef} className="text-sm text-red-300" role="alert">
+                  {authError}
+                </p>
+              )}
+              {authMessage && (
+                <p className="text-sm text-primary" role="status">
+                  {authMessage}
+                </p>
+              )}
+              {forgotMessage && (
+                <p className="text-sm text-primary">{forgotMessage}</p>
+              )}
               <button
                 type="button"
                 disabled={authBusy || forgotSending}
