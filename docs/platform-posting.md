@@ -122,7 +122,7 @@ YouTube is first because: single MP4 asset, mature resumable upload API, caption
 
 **Reuse from YouTube:** `platform_connections`, `platform_posts`, Settings connected accounts, Publish panel pattern.
 
-**Key work:** TikTok OAuth, `video.upload` / Direct Post flow, audit package (privacy policy, UX screencasts), caption + hashtag mapping.
+**Key work:** TikTok OAuth, Content Posting API **file upload** (`FILE_UPLOAD` — server pulls from Fal export URL then uploads bytes to TikTok), audit package (privacy policy, UX screencasts), caption + hashtag mapping.
 
 ---
 

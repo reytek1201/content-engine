@@ -9,7 +9,7 @@ export function getTikTokPublishErrorMessage(error: string): string {
   }
 
   if (normalized.includes("url domain") || normalized.includes("url_ownership")) {
-    return "TikTok must verify your video export URL domain. Add it under URL properties in TikTok Developer Portal.";
+    return "TikTok rejected the video upload. Try again — SlidePress now uploads the file directly.";
   }
 
   if (normalized.includes("daily post limit")) {
@@ -37,6 +37,14 @@ export function getTikTokPublishErrorMessage(error: string): string {
 
   if (normalized.includes("already being published")) {
     return "This export is already being published to TikTok.";
+  }
+
+  if (normalized.includes("failed to download campaign video")) {
+    return "Could not download your video export for TikTok upload. Try exporting the video again.";
+  }
+
+  if (normalized.includes("video upload failed")) {
+    return "TikTok rejected the video upload. Try again in a few minutes.";
   }
 
   if (normalized.includes("video_pull_failed")) {

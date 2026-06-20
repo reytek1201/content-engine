@@ -27,12 +27,6 @@ function assertTikTokApiOk<T>(
       throw new TikTokPublishScopeError();
     }
 
-    if (code === "url_ownership_unverified") {
-      throw new Error(
-        "TikTok must verify your video URL domain before pull-from-URL posting. Add and verify the export host in TikTok Developer Portal → URL properties.",
-      );
-    }
-
     if (code === "unaudited_client_can_only_post_to_private_accounts") {
       throw new Error(
         "TikTok sandbox apps can only post privately. Reconnect with posting permission and use a private privacy level.",
@@ -66,6 +60,41 @@ export interface TikTokPublishResult {
 
 const STATUS_POLL_INTERVAL_MS = 5_000;
 const STATUS_POLL_MAX_ATTEMPTS = 120;
+const CHUNK_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_SINGLE_CHUNK_BYTES = 64 * 1024 * 1024;
+
+async function downloadVideo(videoUrl: string): Promise<Buffer> {
+  const response = await fetch(videoUrl);
+
+  if (!response.ok) {
+    throw new Error("Failed to download campaign video for TikTok upload");
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+
+  if (arrayBuffer.byteLength === 0) {
+    throw new Error("Campaign video file is empty");
+  }
+
+  return Buffer.from(arrayBuffer);
+}
+
+function getFileUploadPlan(videoSize: number): {
+  chunkSize: number;
+  totalChunkCount: number;
+} {
+  if (videoSize <= MAX_SINGLE_CHUNK_BYTES) {
+    return {
+      chunkSize: videoSize,
+      totalChunkCount: 1,
+    };
+  }
+
+  return {
+    chunkSize: CHUNK_SIZE_BYTES,
+    totalChunkCount: Math.ceil(videoSize / CHUNK_SIZE_BYTES),
+  };
+}
 
 export async function queryTikTokCreatorInfo(
   accessToken: string,
@@ -125,13 +154,15 @@ function pickPrivacyLevel(
   return options[0]!;
 }
 
-async function initTikTokDirectPost(input: {
+async function initTikTokFileUploadPost(input: {
   accessToken: string;
-  videoUrl: string;
+  videoSize: number;
   title: string;
   creator: TikTokCreatorInfo;
   privacyLevel: string;
-}): Promise<string> {
+}): Promise<{ publishId: string; uploadUrl: string }> {
+  const { chunkSize, totalChunkCount } = getFileUploadPlan(input.videoSize);
+
   const response = await fetch(
     "https://open.tiktokapis.com/v2/post/publish/video/init/",
     {
@@ -151,8 +182,10 @@ async function initTikTokDirectPost(input: {
           brand_organic_toggle: true,
         },
         source_info: {
-          source: "PULL_FROM_URL",
-          video_url: input.videoUrl,
+          source: "FILE_UPLOAD",
+          video_size: input.videoSize,
+          chunk_size: chunkSize,
+          total_chunk_count: totalChunkCount,
         },
       }),
     },
@@ -160,15 +193,53 @@ async function initTikTokDirectPost(input: {
 
   const body = (await response.json().catch(() => null)) as TikTokApiResponse<{
     publish_id?: string;
+    upload_url?: string;
   }> | null;
 
   assertTikTokApiOk(response, body);
 
-  if (!body.data.publish_id) {
-    throw new Error("TikTok did not return a publish id");
+  if (!body.data.publish_id || !body.data.upload_url) {
+    throw new Error("TikTok did not return publish upload details");
   }
 
-  return body.data.publish_id;
+  return {
+    publishId: body.data.publish_id,
+    uploadUrl: body.data.upload_url,
+  };
+}
+
+async function uploadVideoToTikTok(
+  uploadUrl: string,
+  video: Buffer,
+): Promise<void> {
+  const videoSize = video.byteLength;
+  const { chunkSize, totalChunkCount } = getFileUploadPlan(videoSize);
+
+  for (let chunkIndex = 0; chunkIndex < totalChunkCount; chunkIndex += 1) {
+    const start = chunkIndex * chunkSize;
+    const end = Math.min(start + chunkSize, videoSize) - 1;
+    const chunk = video.subarray(start, end + 1);
+
+    const response = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "video/mp4",
+        "Content-Length": String(chunk.byteLength),
+        "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+      },
+      body: new Uint8Array(chunk),
+    });
+
+    const isLastChunk = chunkIndex === totalChunkCount - 1;
+    const expectedStatus = isLastChunk ? 201 : 206;
+
+    if (response.status !== expectedStatus) {
+      const text = await response.text().catch(() => "");
+      throw new Error(
+        text || `TikTok video upload failed on chunk ${chunkIndex + 1}`,
+      );
+    }
+  }
 }
 
 async function fetchTikTokPublishStatus(
@@ -241,19 +312,22 @@ export async function publishTikTokVideo(input: {
   title: string;
   privacyPreference: string;
 }): Promise<TikTokPublishResult> {
+  const videoBuffer = await downloadVideo(input.videoUrl);
   const creator = await queryTikTokCreatorInfo(input.accessToken);
   const privacyLevel = pickPrivacyLevel(
     creator.privacyLevelOptions,
     input.privacyPreference,
   );
 
-  const publishId = await initTikTokDirectPost({
+  const { publishId, uploadUrl } = await initTikTokFileUploadPost({
     accessToken: input.accessToken,
-    videoUrl: input.videoUrl,
+    videoSize: videoBuffer.byteLength,
     title: input.title,
     creator,
     privacyLevel,
   });
+
+  await uploadVideoToTikTok(uploadUrl, videoBuffer);
 
   const { postIds } = await waitForTikTokPublishComplete(
     input.accessToken,

@@ -316,8 +316,8 @@ export default function CampaignTikTokPublishPanel({
 
       {isPublishing || readiness.isUploading ? (
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          TikTok is downloading and processing your video. This can take a few
-          minutes — keep this page open.
+          Uploading your video to TikTok and waiting for processing. This can
+          take a few minutes — keep this page open.
         </p>
       ) : null}
 
