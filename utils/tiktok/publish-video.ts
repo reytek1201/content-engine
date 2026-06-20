@@ -175,27 +175,17 @@ function formatUnauditedPrivacyError(
   );
 }
 
-function pickPrivacyLevel(
-  options: string[],
-  preferred: string,
-): string {
-  if (options.includes("SELF_ONLY")) {
-    return "SELF_ONLY";
-  }
-
-  if (options.includes(preferred)) {
-    return preferred;
-  }
-
-  return options[0]!;
-}
-
 async function initTikTokFileUploadPost(input: {
   accessToken: string;
   videoSize: number;
   title: string;
   creator: TikTokCreatorInfo;
   privacyLevel: string;
+  disableComment: boolean;
+  disableDuet: boolean;
+  disableStitch: boolean;
+  brandContentToggle: boolean;
+  brandOrganicToggle: boolean;
 }): Promise<{ publishId: string; uploadUrl: string }> {
   const { chunkSize, totalChunkCount } = getFileUploadPlan(input.videoSize);
 
@@ -211,11 +201,11 @@ async function initTikTokFileUploadPost(input: {
         post_info: {
           title: input.title,
           privacy_level: input.privacyLevel,
-          disable_comment: input.creator.commentDisabled,
-          disable_duet: input.creator.duetDisabled,
-          disable_stitch: input.creator.stitchDisabled,
-          brand_content_toggle: false,
-          brand_organic_toggle: false,
+          disable_comment: input.disableComment,
+          disable_duet: input.disableDuet,
+          disable_stitch: input.disableStitch,
+          brand_content_toggle: input.brandContentToggle,
+          brand_organic_toggle: input.brandOrganicToggle,
         },
         source_info: {
           source: "FILE_UPLOAD",
@@ -385,18 +375,29 @@ async function waitForTikTokPublishComplete(
   );
 }
 
+export interface TikTokVideoPostSettings {
+  privacyLevel: string;
+  title: string;
+  disableComment: boolean;
+  disableDuet: boolean;
+  disableStitch: boolean;
+  brandContentToggle: boolean;
+  brandOrganicToggle: boolean;
+}
+
 export async function publishTikTokVideo(input: {
   accessToken: string;
   videoUrl: string;
-  title: string;
-  privacyPreference: string;
+  postSettings: TikTokVideoPostSettings;
 }): Promise<TikTokPublishResult> {
   const videoBuffer = await downloadVideo(input.videoUrl);
   const creator = await queryTikTokCreatorInfo(input.accessToken);
-  let privacyLevel = pickPrivacyLevel(
-    creator.privacyLevelOptions,
-    input.privacyPreference,
-  );
+
+  if (!creator.privacyLevelOptions.includes(input.postSettings.privacyLevel)) {
+    throw new Error(
+      `TikTok rejected privacy level "${input.postSettings.privacyLevel}". Allowed: ${creator.privacyLevelOptions.join(", ")}`,
+    );
+  }
 
   let publishId: string;
   let uploadUrl: string;
@@ -405,43 +406,23 @@ export async function publishTikTokVideo(input: {
     ({ publishId, uploadUrl } = await initTikTokFileUploadPost({
       accessToken: input.accessToken,
       videoSize: videoBuffer.byteLength,
-      title: input.title,
+      title: input.postSettings.title,
       creator,
-      privacyLevel,
+      privacyLevel: input.postSettings.privacyLevel,
+      disableComment: input.postSettings.disableComment,
+      disableDuet: input.postSettings.disableDuet,
+      disableStitch: input.postSettings.disableStitch,
+      brandContentToggle: input.postSettings.brandContentToggle,
+      brandOrganicToggle: input.postSettings.brandOrganicToggle,
     }));
   } catch (error) {
-    if (
-      error instanceof TikTokUnauditedPrivacyError &&
-      privacyLevel !== "SELF_ONLY"
-    ) {
-      privacyLevel = "SELF_ONLY";
-      try {
-        ({ publishId, uploadUrl } = await initTikTokFileUploadPost({
-          accessToken: input.accessToken,
-          videoSize: videoBuffer.byteLength,
-          title: input.title,
-          creator,
-          privacyLevel,
-        }));
-      } catch (retryError) {
-        if (retryError instanceof TikTokUnauditedPrivacyError) {
-          throw new Error(
-            formatUnauditedPrivacyError(
-              retryError.privacyLevel,
-              retryError.privacyOptions,
-            ),
-          );
-        }
-
-        throw retryError;
-      }
-    } else if (error instanceof TikTokUnauditedPrivacyError) {
+    if (error instanceof TikTokUnauditedPrivacyError) {
       throw new Error(
         formatUnauditedPrivacyError(error.privacyLevel, error.privacyOptions),
       );
-    } else {
-      throw error;
     }
+
+    throw error;
   }
 
   await uploadVideoToTikTok(uploadUrl, videoBuffer);

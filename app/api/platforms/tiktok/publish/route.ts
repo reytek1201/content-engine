@@ -11,21 +11,35 @@ import {
   clearTikTokPublishScope,
 } from "@/utils/tiktok/connection-store";
 import { TikTokPublishScopeError } from "@/utils/tiktok/publish-video";
-import { publishTikTokVideo } from "@/utils/tiktok/publish-video";
+import { publishTikTokVideo, queryTikTokCreatorInfo } from "@/utils/tiktok/publish-video";
 import {
-  buildTikTokPostTitle,
-  getTikTokPublishPrivacyPreference,
-} from "@/utils/tiktok/video-metadata";
-import type { PlatformCaption } from "@/types/captions";
+  toTikTokApiPostSettings,
+  validateTikTokPublishSettings,
+  type TikTokPublishFormSettings,
+} from "@/utils/tiktok/publish-settings";
+import { estimateExportDurationSeconds } from "@/utils/tiktok/video-metadata";
+import { parseVideoExportMetadata } from "@/utils/fal-video";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const maxDuration = 300;
 
+const PublishSettingsSchema = z.object({
+  privacyLevel: z.string().min(1),
+  title: z.string().min(1).max(2200),
+  allowComment: z.boolean(),
+  allowDuet: z.boolean(),
+  allowStitch: z.boolean(),
+  commercialDisclosure: z.boolean(),
+  yourBrand: z.boolean(),
+  brandedContent: z.boolean(),
+});
+
 const RequestSchema = z.object({
   campaignId: z.string().uuid(),
   exportId: z.string().uuid().optional(),
+  publishSettings: PublishSettingsSchema,
 });
 
 export async function POST(request: Request) {
@@ -59,7 +73,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { campaignId, exportId } = parsed.data;
+    const { campaignId, exportId, publishSettings } = parsed.data;
 
     const connection = await getTikTokConnectionRow(user.id);
 
@@ -89,7 +103,7 @@ export async function POST(request: Request) {
 
     const { data: caption, error: captionError } = await supabase
       .from("platform_captions")
-      .select("*")
+      .select("id")
       .eq("campaign_id", campaignId)
       .eq("platform", "tiktok")
       .maybeSingle();
@@ -109,6 +123,32 @@ export async function POST(request: Request) {
       campaignId,
       exportId,
     );
+
+    const { data: exportRow } = await supabase
+      .from("exports")
+      .select("metadata")
+      .eq("id", videoExport.id)
+      .maybeSingle();
+
+    const videoDurationSec = estimateExportDurationSeconds(
+      parseVideoExportMetadata(exportRow?.metadata),
+    );
+
+    const freshConnection = await ensureFreshTikTokAccessToken(connection);
+    const creator = await queryTikTokCreatorInfo(freshConnection.access_token);
+
+    const validationError = validateTikTokPublishSettings(
+      creator,
+      publishSettings as TikTokPublishFormSettings,
+      videoDurationSec,
+    );
+
+    if (validationError) {
+      return NextResponse.json(
+        { success: false, error: validationError },
+        { status: 422 },
+      );
+    }
 
     const existingPost = await getPlatformPostForCampaignExport(
       user.id,
@@ -194,15 +234,15 @@ export async function POST(request: Request) {
 
     await updatePlatformPost(post.id, { status: "processing" });
 
-    const freshConnection = await ensureFreshTikTokAccessToken(connection);
-    const title = buildTikTokPostTitle(caption as PlatformCaption);
-    const privacyPreference = getTikTokPublishPrivacyPreference();
+    const apiSettings = toTikTokApiPostSettings(
+      creator,
+      publishSettings as TikTokPublishFormSettings,
+    );
 
     const published = await publishTikTokVideo({
       accessToken: freshConnection.access_token,
       videoUrl: videoExport.outputUrl,
-      title,
-      privacyPreference,
+      postSettings: apiSettings,
     });
 
     const stored = await updatePlatformPost(post.id, {

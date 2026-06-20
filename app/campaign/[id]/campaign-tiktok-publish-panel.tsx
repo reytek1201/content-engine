@@ -4,9 +4,28 @@ import { getTikTokPublishErrorMessage } from "@/utils/tiktok/publish-errors";
 import { buildPlatformAuthorizeUrl } from "@/utils/platforms/oauth-return";
 import type { PlatformConnectionPublic } from "@/types/platform-connection";
 import type { PlatformPostPublic } from "@/types/platform-post";
+import {
+  canSubmitTikTokPublishForm,
+  getCommercialContentLabel,
+  getPublishDeclarationText,
+  isSelfOnlyPrivacy,
+  privacyLevelLabel,
+  TIKTOK_BRANDED_CONTENT_POLICY_URL,
+  TIKTOK_MUSIC_USAGE_URL,
+  type TikTokCreatorInfoPublic,
+  type TikTokPublishFormSettings,
+  validateTikTokPublishSettings,
+} from "@/utils/tiktok/publish-settings";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 interface PublishReadinessResponse {
   success: boolean;
@@ -20,6 +39,11 @@ interface PublishReadinessResponse {
   isUploading: boolean;
   canPublish: boolean;
   postForCurrentExport: PlatformPostPublic | null;
+  videoPreviewUrl: string | null;
+  videoDurationSec: number | null;
+  defaultTitle: string | null;
+  creatorInfo: TikTokCreatorInfoPublic | null;
+  creatorInfoError: string | null;
   error?: string;
 }
 
@@ -44,6 +68,17 @@ interface CampaignTikTokPublishPanelProps {
   hasCaptions?: boolean;
   onPublishComplete?: () => void;
 }
+
+const EMPTY_FORM: TikTokPublishFormSettings = {
+  privacyLevel: "",
+  title: "",
+  allowComment: false,
+  allowDuet: false,
+  allowStitch: false,
+  commercialDisclosure: false,
+  yourBrand: false,
+  brandedContent: false,
+};
 
 function TikTokIcon() {
   return (
@@ -84,6 +119,39 @@ function TikTokPanelShell({
   );
 }
 
+function CheckboxField({
+  id,
+  label,
+  checked,
+  disabled,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={`flex items-start gap-2 text-xs leading-5 ${
+        disabled ? "cursor-not-allowed text-muted-foreground/70" : "text-foreground"
+      }`}
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-0.5 h-4 w-4 rounded border-border bg-background accent-primary disabled:opacity-50"
+      />
+      <span>{label}</span>
+    </label>
+  );
+}
+
 export default function CampaignTikTokPublishPanel({
   campaignId,
   disabled = false,
@@ -97,6 +165,7 @@ export default function CampaignTikTokPublishPanel({
   const [readiness, setReadiness] = useState<PublishReadinessResponse | null>(
     null,
   );
+  const [form, setForm] = useState<TikTokPublishFormSettings>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -128,6 +197,10 @@ export default function CampaignTikTokPublishPanel({
       }
 
       setReadiness(data);
+      setForm((current) => ({
+        ...current,
+        title: current.title || data.defaultTitle || "",
+      }));
 
       if (
         data.postForCurrentExport?.status === "published" &&
@@ -178,8 +251,38 @@ export default function CampaignTikTokPublishPanel({
     router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
   }, [loadReadiness, router, searchParams]);
 
+  const creator = readiness?.creatorInfo ?? null;
+  const commercialLabel = getCommercialContentLabel(form);
+  const declarationText = getPublishDeclarationText(form);
+
+  const formValidationError = useMemo(() => {
+    if (!creator) {
+      return readiness?.creatorInfoError ?? null;
+    }
+
+    return validateTikTokPublishSettings(
+      creator,
+      form,
+      readiness?.videoDurationSec ?? null,
+    );
+  }, [creator, form, readiness?.creatorInfoError, readiness?.videoDurationSec]);
+
+  const brandedContentBlocksPrivate =
+    form.commercialDisclosure && form.brandedContent;
+
+  const canSubmit = canSubmitTikTokPublishForm(
+    form,
+    creator,
+    readiness?.videoDurationSec ?? null,
+    formValidationError,
+  );
+
+  function updateForm(patch: Partial<TikTokPublishFormSettings>) {
+    setForm((current) => ({ ...current, ...patch }));
+  }
+
   async function handlePublish() {
-    if (publishInFlightRef.current || isPublishing) {
+    if (publishInFlightRef.current || isPublishing || !canSubmit) {
       return;
     }
 
@@ -193,7 +296,10 @@ export default function CampaignTikTokPublishPanel({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ campaignId }),
+        body: JSON.stringify({
+          campaignId,
+          publishSettings: form,
+        }),
       });
 
       const data = (await response.json()) as PublishResponse;
@@ -227,7 +333,7 @@ export default function CampaignTikTokPublishPanel({
       setMessage(
         data.alreadyPublished
           ? "This export is already on TikTok."
-          : "Published to TikTok.",
+          : "Published to TikTok. It may take a few minutes to appear on your profile.",
       );
       await loadReadiness();
       onPublishComplete?.();
@@ -266,9 +372,9 @@ export default function CampaignTikTokPublishPanel({
   }
 
   const needsPublishScope =
-    Boolean(readiness?.connected && !readiness.hasPublishScope);
+    Boolean(readiness.connected && !readiness.hasPublishScope);
 
-  let helperText = "Post your 9:16 Quick Reel with your TikTok caption.";
+  let helperText = "Review your post settings, then publish to TikTok.";
 
   if (!readiness.connected) {
     helperText = "Connect TikTok in Settings, then post your video.";
@@ -282,16 +388,23 @@ export default function CampaignTikTokPublishPanel({
       "This export is already on TikTok. Export a new 9:16 video to post again.";
   } else if (readiness.connected && readiness.hasPublishScope) {
     helperText =
-      "Sandbox note: your TikTok account must be set to Private in the TikTok app before posting. Posts are only visible to you until app review passes.";
+      "Sandbox note: your TikTok account must be Private before posting until app review passes.";
   }
 
+  const showPublishForm =
+    readiness.connected &&
+    readiness.hasPublishScope &&
+    readiness.hasVideoExport &&
+    !readiness.alreadyPublished &&
+    !publishedUrl &&
+    !needsPublishScope;
+
   const canClickPublish =
-    readiness.canPublish &&
+    showPublishForm &&
+    canSubmit &&
     !disabled &&
     !isPublishing &&
-    !readiness.isUploading &&
-    !readiness.alreadyPublished &&
-    !needsPublishScope;
+    !readiness.isUploading;
 
   return (
     <TikTokPanelShell helperText={helperText}>
@@ -308,14 +421,228 @@ export default function CampaignTikTokPublishPanel({
         </li>
       </ul>
 
-      {readiness.connection ? (
+      {creator ? (
+        <p className="mb-4 text-xs text-foreground">
+          Posting to{" "}
+          <span className="font-medium">{creator.creatorNickname}</span>
+          {creator.creatorUsername ? (
+            <span className="text-muted-foreground">
+              {" "}
+              (@{creator.creatorUsername.replace(/^@/, "")})
+            </span>
+          ) : null}
+        </p>
+      ) : readiness.connection ? (
         <p className="mb-4 text-xs text-foreground">
           Account:{" "}
           <span className="font-medium">{readiness.connection.accountLabel}</span>
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+      {showPublishForm ? (
+        <div className="space-y-4 rounded-xl border border-border/70 bg-background/30 p-4">
+          {readiness.videoPreviewUrl ? (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Preview
+              </p>
+              <video
+                src={readiness.videoPreviewUrl}
+                controls
+                playsInline
+                className="max-h-64 w-full rounded-lg border border-border bg-black object-contain"
+              />
+              {readiness.videoDurationSec ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Duration: {Math.ceil(readiness.videoDurationSec)}s (max{" "}
+                  {creator?.maxVideoPostDurationSec ?? 60}s for this account)
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div>
+            <label
+              htmlFor="tiktok-post-title"
+              className="mb-1.5 block text-xs font-semibold text-foreground"
+            >
+              Title
+            </label>
+            <textarea
+              id="tiktok-post-title"
+              value={form.title}
+              onChange={(event) => updateForm({ title: event.target.value })}
+              rows={4}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              placeholder="Write your TikTok caption and hashtags"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="tiktok-privacy-level"
+              className="mb-1.5 block text-xs font-semibold text-foreground"
+            >
+              Who can view this post
+            </label>
+            <select
+              id="tiktok-privacy-level"
+              value={form.privacyLevel}
+              onChange={(event) =>
+                updateForm({ privacyLevel: event.target.value })
+              }
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+            >
+              <option value="">Select visibility</option>
+              {creator?.privacyLevelOptions.map((option) => {
+                const disabledOption =
+                  brandedContentBlocksPrivate && isSelfOnlyPrivacy(option);
+
+                return (
+                  <option
+                    key={option}
+                    value={option}
+                    disabled={disabledOption}
+                    title={
+                      disabledOption
+                        ? "Branded content visibility cannot be set to private."
+                        : undefined
+                    }
+                  >
+                    {privacyLevelLabel(option)}
+                    {disabledOption ? " (unavailable for branded content)" : ""}
+                  </option>
+                );
+              })}
+            </select>
+            {brandedContentBlocksPrivate ? (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Branded content visibility cannot be set to private.
+              </p>
+            ) : null}
+          </div>
+
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-semibold text-foreground">
+              Interaction settings
+            </legend>
+            <CheckboxField
+              id="tiktok-allow-comment"
+              label="Allow comment"
+              checked={form.allowComment}
+              disabled={creator?.commentDisabled}
+              onChange={(checked) => updateForm({ allowComment: checked })}
+            />
+            <CheckboxField
+              id="tiktok-allow-duet"
+              label="Allow duet"
+              checked={form.allowDuet}
+              disabled={creator?.duetDisabled}
+              onChange={(checked) => updateForm({ allowDuet: checked })}
+            />
+            <CheckboxField
+              id="tiktok-allow-stitch"
+              label="Allow stitch"
+              checked={form.allowStitch}
+              disabled={creator?.stitchDisabled}
+              onChange={(checked) => updateForm({ allowStitch: checked })}
+            />
+          </fieldset>
+
+          <div className="space-y-3 rounded-lg border border-border/60 p-3">
+            <CheckboxField
+              id="tiktok-commercial-disclosure"
+              label="Disclose promotional content"
+              checked={form.commercialDisclosure}
+              onChange={(checked) =>
+                updateForm({
+                  commercialDisclosure: checked,
+                  yourBrand: checked ? form.yourBrand : false,
+                  brandedContent: checked ? form.brandedContent : false,
+                  privacyLevel:
+                    checked && form.brandedContent && isSelfOnlyPrivacy(form.privacyLevel)
+                      ? ""
+                      : form.privacyLevel,
+                })
+              }
+            />
+
+            {form.commercialDisclosure ? (
+              <div className="space-y-2 border-t border-border/60 pt-3">
+                <CheckboxField
+                  id="tiktok-your-brand"
+                  label="Your brand — you are promoting yourself or your own business"
+                  checked={form.yourBrand}
+                  onChange={(checked) => updateForm({ yourBrand: checked })}
+                />
+                <CheckboxField
+                  id="tiktok-branded-content"
+                  label="Branded content — you are promoting another brand or third party"
+                  checked={form.brandedContent}
+                  onChange={(checked) =>
+                    updateForm({
+                      brandedContent: checked,
+                      privacyLevel:
+                        checked && isSelfOnlyPrivacy(form.privacyLevel)
+                          ? ""
+                          : form.privacyLevel,
+                    })
+                  }
+                />
+                {form.commercialDisclosure &&
+                !form.yourBrand &&
+                !form.brandedContent ? (
+                  <p className="text-xs text-amber-200/90">
+                    You need to indicate if your content promotes yourself, a
+                    third party, or both.
+                  </p>
+                ) : null}
+                {commercialLabel ? (
+                  <p className="text-xs text-muted-foreground">{commercialLabel}</p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <p className="text-xs leading-5 text-muted-foreground">
+            {declarationText}{" "}
+            <a
+              href={TIKTOK_MUSIC_USAGE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline-offset-2 hover:underline"
+            >
+              Music Usage Confirmation
+            </a>
+            {form.commercialDisclosure && form.brandedContent ? (
+              <>
+                {" "}
+                ·{" "}
+                <a
+                  href={TIKTOK_BRANDED_CONTENT_POLICY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline-offset-2 hover:underline"
+                >
+                  Branded Content Policy
+                </a>
+              </>
+            ) : null}
+          </p>
+
+          {formValidationError ? (
+            <p className="text-xs text-amber-200/90" role="status">
+              {formValidationError}
+            </p>
+          ) : null}
+        </div>
+      ) : readiness.creatorInfoError ? (
+        <p className="mb-4 text-xs text-red-300" role="alert">
+          {readiness.creatorInfoError}
+        </p>
+      ) : null}
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         {!readiness.connected ? (
           <Link
             href="/settings/connected-accounts"

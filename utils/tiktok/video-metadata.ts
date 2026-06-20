@@ -3,6 +3,7 @@ import {
   formatHashtagsOnlyForCopy,
   formatPostCaptionForCopy,
 } from "@/types/captions";
+import type { VideoExportMetadata } from "@/utils/fal-video";
 
 const TIKTOK_TITLE_MAX = 2200;
 
@@ -24,21 +25,17 @@ export function buildTikTokVideoUrl(postId: string): string {
   return `https://www.tiktok.com/video/${postId}`;
 }
 
-export function getTikTokPublishPrivacyPreference():
-  | "PUBLIC_TO_EVERYONE"
-  | "MUTUAL_FOLLOW_FRIENDS"
-  | "FOLLOWER_OF_CREATOR"
-  | "SELF_ONLY" {
-  const value = process.env.TIKTOK_PUBLISH_PRIVACY?.toUpperCase();
-
-  if (
-    value === "PUBLIC_TO_EVERYONE" ||
-    value === "MUTUAL_FOLLOW_FRIENDS" ||
-    value === "FOLLOWER_OF_CREATOR" ||
-    value === "SELF_ONLY"
-  ) {
-    return value;
+export function estimateExportDurationSeconds(
+  metadata: VideoExportMetadata | null,
+): number | null {
+  if (!metadata?.slideClips?.length) {
+    return null;
   }
 
-  return "SELF_ONLY";
+  const total = metadata.slideClips.reduce(
+    (sum, clip) => sum + clip.durationSeconds,
+    0,
+  );
+
+  return total > 0 ? total : null;
 }

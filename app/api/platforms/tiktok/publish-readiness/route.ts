@@ -1,11 +1,24 @@
-import { getTikTokConnectionPublic, getTikTokConnectionRow, clearTikTokPublishScope } from "@/utils/tiktok/connection-store";
+import {
+  ensureFreshTikTokAccessToken,
+  getTikTokConnectionPublic,
+  getTikTokConnectionRow,
+  clearTikTokPublishScope,
+} from "@/utils/tiktok/connection-store";
 import { hasTikTokPublishScope } from "@/utils/platforms/scopes";
 import { verifyTikTokPublishScopeLive } from "@/utils/tiktok/publish-scope";
+import { queryTikTokCreatorInfo } from "@/utils/tiktok/publish-video";
+import { toPublicCreatorInfo } from "@/utils/tiktok/publish-settings";
 import { resolveVerticalVideoExport } from "@/utils/platforms/resolve-video-export";
 import {
   getPlatformPostForCampaignExport,
   isPlatformPostInFlight,
 } from "@/utils/platform-post-store";
+import {
+  buildTikTokPostTitle,
+  estimateExportDurationSeconds,
+} from "@/utils/tiktok/video-metadata";
+import type { PlatformCaption } from "@/types/captions";
+import { parseVideoExportMetadata } from "@/utils/fal-video";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -64,9 +77,9 @@ export async function GET(request: Request) {
       }
     }
 
-    const { data: caption } = await supabase
+    const { data: captionRow } = await supabase
       .from("platform_captions")
-      .select("id")
+      .select("*")
       .eq("campaign_id", campaignId)
       .eq("platform", "tiktok")
       .maybeSingle();
@@ -77,11 +90,31 @@ export async function GET(request: Request) {
     let alreadyPublished = false;
     let isUploading = false;
     let profileUrl: string | null = null;
+    let videoPreviewUrl: string | null = null;
+    let videoDurationSec: number | null = null;
+    let defaultTitle: string | null = null;
+    let creatorInfo = null;
+    let creatorInfoError: string | null = null;
+
+    if (captionRow) {
+      defaultTitle = buildTikTokPostTitle(captionRow as PlatformCaption);
+    }
 
     try {
       const videoExport = await resolveVerticalVideoExport(supabase, campaignId);
       hasVideoExport = true;
       currentExportId = videoExport.id;
+      videoPreviewUrl = videoExport.outputUrl;
+
+      const { data: exportRow } = await supabase
+        .from("exports")
+        .select("metadata")
+        .eq("id", videoExport.id)
+        .maybeSingle();
+
+      videoDurationSec = estimateExportDurationSeconds(
+        parseVideoExportMetadata(exportRow?.metadata),
+      );
 
       postForCurrentExport = await getPlatformPostForCampaignExport(
         user.id,
@@ -102,22 +135,41 @@ export async function GET(request: Request) {
       hasVideoExport = false;
     }
 
+    if (connectionRow && hasPublishScope && hasVideoExport) {
+      try {
+        const freshConnection = await ensureFreshTikTokAccessToken(connectionRow);
+        const creator = await queryTikTokCreatorInfo(freshConnection.access_token);
+        creatorInfo = toPublicCreatorInfo(creator);
+      } catch (error) {
+        creatorInfoError =
+          error instanceof Error
+            ? error.message
+            : "Could not load TikTok posting options";
+      }
+    }
+
     return NextResponse.json({
       success: true,
       connected: Boolean(connection),
       connection,
       hasPublishScope,
-      hasTiktokCaption: Boolean(caption),
+      hasTiktokCaption: Boolean(captionRow),
       hasVideoExport,
       currentExportId,
       alreadyPublished,
       isUploading,
       profileUrl,
+      videoPreviewUrl,
+      videoDurationSec,
+      defaultTitle,
+      creatorInfo,
+      creatorInfoError,
       canPublish:
         Boolean(connection) &&
         hasPublishScope &&
-        Boolean(caption) &&
+        Boolean(captionRow) &&
         hasVideoExport &&
+        Boolean(creatorInfo) &&
         !alreadyPublished &&
         !isUploading,
       postForCurrentExport,
