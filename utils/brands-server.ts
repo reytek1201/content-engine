@@ -30,8 +30,25 @@ export async function ensureDefaultBrand(
     .select("*")
     .single();
 
-  if (createError || !created) {
-    throw new Error(createError?.message ?? "Failed to create default brand");
+  if (createError) {
+    // PostgreSQL unique-violation (23505): a concurrent request already inserted
+    // the default brand (race on first sign-up). Re-fetch it instead of crashing.
+    if (createError.code === "23505") {
+      const { data: existing } = await supabase
+        .from("brands")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("is_default", true)
+        .single();
+
+      if (existing) return existing as Brand;
+    }
+
+    throw new Error(createError.message);
+  }
+
+  if (!created) {
+    throw new Error("Failed to create default brand");
   }
 
   return created as Brand;

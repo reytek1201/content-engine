@@ -14,16 +14,22 @@ import {
   startNativeProviderAuth,
 } from "@/utils/native-auth-flow";
 import { startNativeAppleAuth } from "@/utils/native-apple-auth";
-import { completeNativeOAuthNavigation, navigateAfterAuth } from "@/utils/native-oauth-session";
+import {
+  completeNativeOAuthNavigation,
+  navigateAfterAuth,
+} from "@/utils/native-oauth-session";
 import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_REQUIREMENTS_TEXT,
   validateSignUpPassword,
 } from "@/utils/password-validation";
+import { Capacitor } from "@capacitor/core";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+
+type AuthTab = "signin" | "signup";
 
 function GoogleIcon() {
   return (
@@ -69,6 +75,26 @@ function AppleIcon() {
   );
 }
 
+async function persistNativeSession(
+  accessToken: string,
+  refreshToken: string,
+): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    await fetch("/api/auth/native-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      }),
+    });
+  } catch {
+    // Non-fatal — the waitForServerSession poll will handle it.
+  }
+}
+
 function LoginForm() {
   const supabase = createClient();
   const router = useRouter();
@@ -81,6 +107,7 @@ function LoginForm() {
       : "/campaigns";
   }
 
+  const [tab, setTab] = useState<AuthTab>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
@@ -104,6 +131,24 @@ function LoginForm() {
     navigateAfterAuth(path, (target) => {
       router.replace(target);
       router.refresh();
+    });
+  }
+
+  function clearMessages() {
+    setAuthError(null);
+    setAuthMessage(null);
+    setForgotMessage(null);
+  }
+
+  function switchTab(next: AuthTab) {
+    clearMessages();
+    setTab(next);
+  }
+
+  function showError(msg: string) {
+    setAuthError(msg);
+    requestAnimationFrame(() => {
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
   }
 
@@ -144,7 +189,7 @@ function LoginForm() {
       // redirect when the user is already navigating away. Only act on
       // an explicit new sign-in. On native, OAuth navigation is handled by
       // NativeAuthListener / explicit authNavigate after password sign-in.
-      // Also skip if sign-up is in flight — handleSignUp owns navigation
+      // Skip if sign-up is in flight — handleSignUp owns navigation
       // and the SIGNED_IN event fires even when email confirmation is
       // required, which would cause a blank-page redirect.
       if (
@@ -177,9 +222,7 @@ function LoginForm() {
   }, [searchParams]);
 
   async function handleProviderSignIn(provider: "google" | "apple") {
-    setAuthError(null);
-    setAuthMessage(null);
-    setForgotMessage(null);
+    clearMessages();
 
     if (provider === "google") {
       setGoogleSubmitting(true);
@@ -192,11 +235,7 @@ function LoginForm() {
     try {
       if (isNativeAppRuntime()) {
         const { error } = await startNativeProviderAuth(provider, next);
-
-        if (error) {
-          setAuthError(error);
-        }
-
+        if (error) setAuthError(error);
         return;
       }
 
@@ -208,9 +247,7 @@ function LoginForm() {
         },
       });
 
-      if (error) {
-        setAuthError(error.message);
-      }
+      if (error) setAuthError(error.message);
     } finally {
       if (provider === "google") {
         setGoogleSubmitting(false);
@@ -220,14 +257,8 @@ function LoginForm() {
     }
   }
 
-  async function handleGoogleSignIn() {
-    await handleProviderSignIn("google");
-  }
-
   async function handleAppleSignIn() {
-    setAuthError(null);
-    setAuthMessage(null);
-    setForgotMessage(null);
+    clearMessages();
     setAppleSubmitting(true);
 
     const next = resolveNextPath();
@@ -253,43 +284,40 @@ function LoginForm() {
 
   async function handleSignIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setAuthError(null);
-    setAuthMessage(null);
-    setForgotMessage(null);
+    clearMessages();
     setAuthSubmitting(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (signInError) {
-      setAuthError(signInError.message);
+      showError(signInError.message);
       setAuthSubmitting(false);
       return;
+    }
+
+    // On native, propagate the session to the server so the next SSR render
+    // sees the auth cookie (avoids the blank-page issue after email sign-in).
+    if (data.session) {
+      await persistNativeSession(
+        data.session.access_token,
+        data.session.refresh_token,
+      );
     }
 
     authNavigate(resolveNextPath());
     setAuthSubmitting(false);
   }
 
-  function showSignUpError(msg: string) {
-    setAuthError(msg);
-    // Scroll the error into view on the next paint so iOS users see it
-    // even when the error renders above the button they just tapped.
-    requestAnimationFrame(() => {
-      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    });
-  }
-
-  async function handleSignUp() {
-    setAuthError(null);
-    setAuthMessage(null);
-    setForgotMessage(null);
+  async function handleSignUp(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    clearMessages();
 
     const passwordError = validateSignUpPassword(password);
     if (passwordError) {
-      showSignUpError(passwordError);
+      showError(passwordError);
       return;
     }
 
@@ -302,7 +330,7 @@ function LoginForm() {
     });
 
     if (signUpError) {
-      showSignUpError(signUpError.message);
+      showError(signUpError.message);
       setAuthSubmitting(false);
       signUpInProgress.current = false;
       return;
@@ -310,6 +338,11 @@ function LoginForm() {
 
     if (data.session) {
       // Email confirmation is disabled — session is immediately available.
+      // Persist server session on native before navigating.
+      await persistNativeSession(
+        data.session.access_token,
+        data.session.refresh_token,
+      );
       signUpInProgress.current = false;
       authNavigate(resolveNextPath());
       setAuthSubmitting(false);
@@ -318,7 +351,7 @@ function LoginForm() {
 
     if (data.user?.identities?.length === 0) {
       setAuthMessage(
-        "An account with this email already exists. Sign in below.",
+        "An account with this email already exists. Sign in instead.",
       );
       setAuthSubmitting(false);
       signUpInProgress.current = false;
@@ -333,13 +366,11 @@ function LoginForm() {
 
   async function handleForgotPassword() {
     if (!email.trim()) {
-      setAuthError("Enter your email above, then tap Forgot password.");
+      showError("Enter your email above, then tap Forgot password.");
       return;
     }
 
-    setAuthError(null);
-    setAuthMessage(null);
-    setForgotMessage(null);
+    clearMessages();
     setForgotSending(true);
 
     const redirectTo = isNativeAppRuntime()
@@ -362,13 +393,18 @@ function LoginForm() {
 
   const authBusy = authSubmitting || googleSubmitting || appleSubmitting;
 
+  const tabBtnClass = (active: boolean) =>
+    active
+      ? "flex-1 rounded-lg bg-gradient-to-r from-primary to-ring py-2 text-sm font-semibold text-primary-foreground shadow transition active:scale-[0.97] active:opacity-80"
+      : "flex-1 rounded-lg py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground active:scale-[0.97]";
+
   return (
     <div className="min-h-full bg-background text-foreground">
       <header className="page-shell page-header-safe hidden items-center justify-between md:flex">
         <BrandLogo href={isNativeApp ? "/login" : "/"} />
       </header>
 
-      <main className="page-main flex min-h-[100dvh] flex-col max-md:pt-[calc(env(safe-area-inset-top,0px)+2rem)] md:min-h-[calc(100vh-4rem)]">
+      <main className="page-main flex min-h-dvh flex-col max-md:pt-[calc(env(safe-area-inset-top,0px)+2rem)] md:min-h-[calc(100vh-4rem)]">
         <div className="page-content flex flex-1 flex-col justify-center">
           <header className="mb-8 text-center md:mb-10">
             <div className="mb-3 flex items-center justify-center gap-3 md:hidden">
@@ -381,11 +417,11 @@ function LoginForm() {
                 priority
               />
               <h1 className="text-left text-2xl font-semibold tracking-tight text-foreground">
-                Sign in to SlidePress
+                {tab === "signin" ? "Sign in to SlidePress" : "Create your account"}
               </h1>
             </div>
             <h1 className="hidden text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:block">
-              Sign in to SlidePress
+              {tab === "signin" ? "Sign in to SlidePress" : "Create your account"}
             </h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
               Create carousel campaigns with AI slides, captions, narration, and video.
@@ -393,15 +429,42 @@ function LoginForm() {
           </header>
 
           <section className="rounded-2xl border border-border bg-card/60 p-6 sm:p-8">
+            {/* Tab switcher */}
+            <div className="mb-6 flex gap-1 rounded-xl bg-secondary/40 p-1">
+              <button
+                type="button"
+                onClick={() => switchTab("signin")}
+                disabled={authBusy}
+                aria-selected={tab === "signin"}
+                className={tabBtnClass(tab === "signin")}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                onClick={() => switchTab("signup")}
+                disabled={authBusy}
+                aria-selected={tab === "signup"}
+                className={tabBtnClass(tab === "signup")}
+              >
+                Create account
+              </button>
+            </div>
+
+            {/* Social buttons */}
             <div className="space-y-3">
               <button
                 type="button"
                 disabled={authBusy}
-                onClick={() => void handleGoogleSignIn()}
-                className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background px-5 py-3 text-sm font-semibold text-foreground transition hover:border-ring/60 hover:bg-secondary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => void handleProviderSignIn("google")}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background px-5 py-3 text-sm font-semibold text-foreground transition hover:border-ring/60 hover:bg-secondary/40 active:scale-[0.97] active:bg-secondary/60 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <GoogleIcon />
-                {googleSubmitting ? "Redirecting…" : "Continue with Google"}
+                {googleSubmitting
+                  ? "Redirecting…"
+                  : tab === "signin"
+                    ? "Continue with Google"
+                    : "Sign up with Google"}
               </button>
 
               {isIosNative ? (
@@ -409,10 +472,14 @@ function LoginForm() {
                   type="button"
                   disabled={authBusy}
                   onClick={() => void handleAppleSignIn()}
-                  className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-foreground px-5 py-3 text-sm font-semibold text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-foreground px-5 py-3 text-sm font-semibold text-background transition hover:opacity-90 active:scale-[0.97] active:opacity-75 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <AppleIcon />
-                  {appleSubmitting ? "Redirecting…" : "Continue with Apple"}
+                  {appleSubmitting
+                    ? "Redirecting…"
+                    : tab === "signin"
+                      ? "Continue with Apple"
+                      : "Sign up with Apple"}
                 </button>
               ) : null}
             </div>
@@ -426,98 +493,162 @@ function LoginForm() {
               </p>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSignIn}>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-secondary-foreground"
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                  disabled={authBusy}
-                  autoComplete="email"
-                  className="field-input mt-2"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-secondary-foreground"
-                >
-                  Password
-                </label>
-                <div className="relative mt-2">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required
-                    minLength={PASSWORD_MIN_LENGTH}
-                    disabled={authBusy}
-                    autoComplete="current-password"
-                    className="field-input pr-16"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((current) => !current)}
-                    disabled={authBusy}
-                    aria-pressed={showPassword}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute inset-y-0 right-0 px-3 text-sm font-medium text-muted-foreground transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            {/* Sign In form */}
+            {tab === "signin" && (
+              <form className="space-y-4" onSubmit={handleSignIn}>
+                <div>
+                  <label
+                    htmlFor="signin-email"
+                    className="block text-sm font-medium text-secondary-foreground"
                   >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
+                    Email
+                  </label>
+                  <input
+                    id="signin-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={authBusy}
+                    autoComplete="email"
+                    className="field-input mt-2"
+                  />
                 </div>
-                <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                  {PASSWORD_REQUIREMENTS_TEXT} Required for sign up.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
+                <div>
+                  <label
+                    htmlFor="signin-password"
+                    className="block text-sm font-medium text-secondary-foreground"
+                  >
+                    Password
+                  </label>
+                  <div className="relative mt-2">
+                    <input
+                      id="signin-password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={authBusy}
+                      autoComplete="current-password"
+                      className="field-input pr-16"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      disabled={authBusy}
+                      aria-pressed={showPassword}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="absolute inset-y-0 right-0 px-3 text-sm font-medium text-muted-foreground transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+                {authError && (
+                  <p ref={errorRef} className="text-sm text-red-300" role="alert">
+                    {authError}
+                  </p>
+                )}
+                {authMessage && (
+                  <p className="text-sm text-primary" role="status">
+                    {authMessage}
+                  </p>
+                )}
+                {forgotMessage && (
+                  <p className="text-sm text-primary">{forgotMessage}</p>
+                )}
                 <button
                   type="submit"
                   disabled={authBusy}
-                  className="btn-primary flex-1"
+                  className="btn-primary-full"
                 >
-                  Sign in
+                  {authSubmitting ? "Signing in…" : "Sign in"}
                 </button>
                 <button
                   type="button"
-                  disabled={authBusy}
-                  onClick={() => void handleSignUp()}
-                  className="btn-secondary flex-1"
+                  disabled={authBusy || forgotSending}
+                  onClick={() => void handleForgotPassword()}
+                  className="text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-60"
                 >
-                  Sign up
+                  {forgotSending ? "Sending reset email…" : "Forgot password?"}
                 </button>
-              </div>
-              {authError && (
-                <p ref={errorRef} className="text-sm text-red-300" role="alert">
-                  {authError}
-                </p>
-              )}
-              {authMessage && (
-                <p className="text-sm text-primary" role="status">
-                  {authMessage}
-                </p>
-              )}
-              {forgotMessage && (
-                <p className="text-sm text-primary">{forgotMessage}</p>
-              )}
-              <button
-                type="button"
-                disabled={authBusy || forgotSending}
-                onClick={() => void handleForgotPassword()}
-                className="text-sm font-medium text-primary underline-offset-2 hover:underline disabled:opacity-60"
-              >
-                {forgotSending ? "Sending reset email…" : "Forgot password?"}
-              </button>
-            </form>
+              </form>
+            )}
+
+            {/* Sign Up form */}
+            {tab === "signup" && (
+              <form className="space-y-4" onSubmit={handleSignUp}>
+                <div>
+                  <label
+                    htmlFor="signup-email"
+                    className="block text-sm font-medium text-secondary-foreground"
+                  >
+                    Email
+                  </label>
+                  <input
+                    id="signup-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={authBusy}
+                    autoComplete="email"
+                    className="field-input mt-2"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="signup-password"
+                    className="block text-sm font-medium text-secondary-foreground"
+                  >
+                    Password
+                  </label>
+                  <div className="relative mt-2">
+                    <input
+                      id="signup-password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={PASSWORD_MIN_LENGTH}
+                      disabled={authBusy}
+                      autoComplete="new-password"
+                      className="field-input pr-16"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      disabled={authBusy}
+                      aria-pressed={showPassword}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="absolute inset-y-0 right-0 px-3 text-sm font-medium text-muted-foreground transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                    {PASSWORD_REQUIREMENTS_TEXT}
+                  </p>
+                </div>
+                {authError && (
+                  <p ref={errorRef} className="text-sm text-red-300" role="alert">
+                    {authError}
+                  </p>
+                )}
+                {authMessage && (
+                  <p className="text-sm text-primary" role="status">
+                    {authMessage}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={authBusy}
+                  className="btn-primary-full"
+                >
+                  {authSubmitting ? "Creating account…" : "Create account"}
+                </button>
+              </form>
+            )}
           </section>
 
           {isNativeApp === false ? (
