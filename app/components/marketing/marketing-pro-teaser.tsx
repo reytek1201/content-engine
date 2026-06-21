@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckIcon } from "@/app/components/marketing/marketing-icons";
 import RevealOnScroll from "@/app/components/marketing/reveal-on-scroll";
+import { getProWaitlistMailtoUrl } from "@/utils/pro-waitlist";
 
 const FREE_INCLUDES = [
   "Carousel slides with AI images",
@@ -16,6 +17,8 @@ const PRO_TEASE = [
 ] as const;
 
 export default function MarketingProTeaser() {
+  const proWaitlistUrl = getProWaitlistMailtoUrl();
+
   return (
     <section className="border-t border-border bg-card/20">
       <div className="page-shell py-16 md:py-20">
@@ -71,7 +74,7 @@ export default function MarketingProTeaser() {
                 className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"
                 aria-hidden
               />
-              <div className="relative">
+              <div className="relative flex h-full flex-col">
                 <h3 className="text-lg font-semibold text-foreground">
                   Pro
                   <span className="ml-2 text-sm font-normal text-muted-foreground">
@@ -87,23 +90,25 @@ export default function MarketingProTeaser() {
                       key={item}
                       className="flex items-start gap-3 text-sm text-secondary-foreground"
                     >
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
                         <CheckIcon className="h-3 w-3" />
                       </span>
                       {item}
                     </li>
                   ))}
                 </ul>
-                <button
-                  type="button"
-                  disabled
-                  className="btn-secondary mt-8 w-full cursor-not-allowed opacity-60"
-                >
-                  Notify me when Pro launches
-                </button>
-                <p className="mt-3 text-center text-xs text-muted-foreground">
-                  We&apos;ll announce pricing before anything goes live
-                </p>
+                <div className="mt-auto pt-8">
+                  <a
+                    href={proWaitlistUrl}
+                    className="btn-secondary w-full"
+                  >
+                    Join the Pro waitlist
+                  </a>
+                  <p className="mt-3 text-center text-xs text-muted-foreground">
+                    Opens your email app — we&apos;ll announce pricing before
+                    anything goes live
+                  </p>
+                </div>
               </div>
             </div>
           </RevealOnScroll>

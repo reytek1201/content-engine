@@ -124,6 +124,23 @@ Quick reminders:
 
 ---
 
+## Marketing site — store download links
+
+When TestFlight or store listings are ready, set these in **Vercel → Environment Variables** (and `.env.local` for local dev):
+
+| Variable | Example |
+|----------|---------|
+| `NEXT_PUBLIC_APP_STORE_URL` | `https://testflight.apple.com/join/XXXXXXXX` (beta) or `https://apps.apple.com/app/idXXXXXXXX` (public) |
+| `NEXT_PUBLIC_PLAY_STORE_URL` | `https://play.google.com/store/apps/details?id=co.slidepress.app` |
+
+The landing page (`/`) reads these via `utils/app-store-links.ts`. Store badges switch from “Coming soon” to live links automatically. Until set, users can still **Start free** on the web.
+
+Hero marketing assets live in `public/marketing/` (video, poster, feature screenshots). Optional overrides: `NEXT_PUBLIC_MARKETING_HERO_VIDEO_URL`, `NEXT_PUBLIC_MARKETING_HERO_POSTER_URL`.
+
+Compress the hero MP4 after re-exporting: `node scripts/compress-marketing-hero-video.mjs`
+
+---
+
 ## Optional: push notifications in beta
 
 Users opt in under **Settings → Notifications**. Configure **APNs** (iOS) and/or **FCM** (Android) on Vercel — see `docs/capacitor.md` → Push notifications. For TestFlight, set `APNS_USE_SANDBOX=false` and use production `aps-environment` in entitlements.

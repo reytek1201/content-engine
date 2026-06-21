@@ -9,6 +9,10 @@ export function getSiteUrl(): string {
 
 export const siteName = "SlidePress";
 
+export const supportEmail = "hello@slidepress.co";
+
+export const proWaitlistSubject = "SlidePress Pro waitlist";
+
 export const brandLogoSrc = "/brand/logo.png";
 
 export const brandLogoPath = "public/brand/logo.png";

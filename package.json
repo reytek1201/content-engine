@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:tts-normalize": "node --experimental-strip-types --test utils/tts/normalize-script.test.ts",
     "brand:process-logo": "node scripts/process-brand-logo.mjs",
+    "marketing:compress-hero": "node scripts/compress-marketing-hero-video.mjs",
     "cap:assets:prepare": "node scripts/prepare-capacitor-assets.mjs",
     "cap:assets": "npm run cap:assets:prepare && capacitor-assets generate --ios --android --iconBackgroundColor '#09090b' --iconBackgroundColorDark '#09090b' --splashBackgroundColor '#09090b' --splashBackgroundColorDark '#09090b'",
     "cap:assets:ios": "npm run cap:assets:prepare && capacitor-assets generate --ios --iconBackgroundColor '#09090b' --iconBackgroundColorDark '#09090b' --splashBackgroundColor '#09090b' --splashBackgroundColorDark '#09090b'",

@@ -5,7 +5,7 @@ import MarketingSectionAtmosphere from "@/app/components/marketing/marketing-sec
 
 const STEPS = [
   "Enter your topic",
-  "Wait for slides & images",
+  "Slides & images generate",
   "Preview voice & copy captions",
   "Download carousel, audio, or video",
 ] as const;
