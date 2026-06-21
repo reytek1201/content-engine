@@ -209,6 +209,8 @@ The iOS app shows **Continue with Apple** only in the native shell (App Store re
 
 **Deploy note:** The shell loads the live web app. Deploy web changes to Vercel, then rebuild the native app after `npm run cap:sync` when adding new Capacitor plugins.
 
+**Haptics & keyboard (June 2026):** `@capacitor/haptics` drives tab, sheet, and slide selection feedback. `@capacitor/keyboard` plus `visualViewport` handling lifts bottom sheets when text fields are focused. Haptics are no-ops on web; test on a physical device in the Capacitor app.
+
 **Icons & splash:** Run `npm run cap:assets` before App Store / Play Store builds.
 
 ---
@@ -221,7 +223,7 @@ The iOS app shows **Continue with Apple** only in the native shell (App Store re
 | **5.2 Auth** | Google + Apple OAuth via deep link ✅; password reset deep links ✅ |
 | **5.3 App shell** | Icons + splash (`npm run cap:assets`) ✅, status bar (SlidePress dark + orange) ✅ |
 | **5.4 Native affordances** | Share sheet + Save to Photos (per slide, carousel, and **Save all to Photos** in next step bar) ✅ |
-| **5.5 Beta** | TestFlight, Play internal testing — see `docs/beta-release.md` |
+| **5.5 Beta** | TestFlight external beta approved (build 2+); Play internal testing — see `docs/beta-release.md` |
 | **5.6 Push** | FCM push when all campaign images finish generating ✅ |
 | **5.7 Camera** | Native camera for brand library, create form, and workspace regen ✅ |
 

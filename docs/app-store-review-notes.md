@@ -89,14 +89,20 @@ Short description for testers (TestFlight **What to Test**):
 Thanks for testing SlidePress!
 
 Please try:
-1. Sign in (email, Apple, or Google)
-2. Create a campaign or open the sample campaign
-3. Generate / review slide images
-4. Publish tab → generate captions → export a Quick Reel or save slides to Photos
-5. Optional: Settings → Security → Face ID lock
+1. Sign in (email, Apple, or Google) — use Sign in / Create account tabs
+2. Create a campaign or open an existing one
+3. Slides tab — swipe between slides; tap filmstrip thumbnails; open **Fix this slide** and swipe the sheet down to close
+4. Pull down on **Campaigns** to refresh the list
+5. Publish tab → generate captions → export a Quick Reel or save slides to Photos
+6. Optional: Settings → Security → Face ID lock; Settings → delete account (danger card at bottom)
+
+Native feel (physical device):
+- Haptics on tab changes, sheet open/close, and slide selection (enable System Haptics in iOS Settings)
+- Bottom sheets dismiss with a swipe down on the handle
 
 Known limits:
 - YouTube/TikTok direct posting may be restricted while platform audits are pending
+- Haptics do not work in mobile Safari — only in the TestFlight app
 - Report issues to hello@slidepress.co with version from Settings → About
 ```
 

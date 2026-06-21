@@ -6,11 +6,11 @@ Use this before **TestFlight** (iOS) and **Play internal testing** (Android).
 
 ## Pre-flight (web)
 
-- [ ] Latest `main` deployed to Vercel (`https://www.slidepress.co`)
+- [x] Latest `main` deployed to Vercel (`https://www.slidepress.co`) — includes native mobile UX (June 2026)
 - [x] Supabase migrations applied on production (`platform_connections`, `platform_posts`, `platform_posts_export_unique`)
 - [x] `/privacy` and `/terms` live (required for App Store / Play listing; includes YouTube section)
-- [ ] `/api/health` returns `{ "ok": true }` (native connectivity checks)
-- [ ] Smoke test: sign in, create campaign, generate images, save to Photos (native)
+- [x] `/api/health` returns `{ "ok": true }` (native connectivity checks)
+- [x] Smoke test: sign in, create campaign, generate images, save to Photos (native)
 - [ ] YouTube (optional): connect channel, publish 9:16 Short — see `docs/youtube-phase3-runbook.md`
 
 ---
@@ -19,7 +19,7 @@ Use this before **TestFlight** (iOS) and **Play internal testing** (Android).
 
 Before marketing direct posting:
 
-- [ ] Apply `20260619000003_platform_posts_export_unique.sql` (dedupes + unique index)
+- [x] Apply `20260619000003_platform_posts_export_unique.sql` (dedupes + unique index)
 - [x] Submit Google OAuth verification for `youtube.upload` — submitted June 2026; awaiting approval
 - [ ] Request YouTube Data API quota increase if needed (~6 uploads/day on default quota)
 
@@ -50,9 +50,13 @@ npm run cap:sync        # register Capacitor plugins in native projects
 
 Then **rebuild** in Xcode / Android Studio (web deploy alone is not enough for native plugin or UA changes).
 
+**Plugins requiring native rebuild after `cap:sync`:** Haptics, Keyboard, Camera, Media, Push, Biometric Auth, and others listed in `ios/App/App/capacitor.config.json` → `packageClassList`.
+
 ---
 
 ## iOS — TestFlight
+
+**Status (June 2026):** External TestFlight **Beta App Review passed** for build 2+. Continue incrementing build numbers for each upload.
 
 ### Prerequisites
 
@@ -129,10 +133,14 @@ Users opt in under **Settings → Notifications**. Configure **APNs** (iOS) and/
 ## Tester instructions (share with beta group)
 
 1. Install from TestFlight / Play internal link
-2. Sign in with Google, Apple, or email
+2. Sign in with Google, Apple, or email (Sign in / Create account tabs)
 3. Optional: Settings → Security → enable Face ID unlock
 4. Create a campaign, wait for images, try **Save all to Photos**
-5. Report bugs to hello@slidepress.co with app version from Settings → About
+5. **Native feel:** swipe slides in the workspace; swipe down to close bottom sheets; pull down on Campaigns to refresh; feel haptics on tab changes (physical device — not simulator)
+6. **Fix this slide:** edit headline if needed → open sheet → try **Fix headline text** or **Different layout** chips
+7. Report bugs to hello@slidepress.co with app version from Settings → About
+
+**Note:** Haptics require a **physical iPhone** with System Haptics enabled (Settings → Sounds & Haptics). The app loads UI from `www.slidepress.co` — force-quit and reopen after a new deploy if behavior looks stale.
 
 ---
 

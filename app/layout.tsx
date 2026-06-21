@@ -8,7 +8,6 @@ import NativePushListener from "@/app/components/native-push-listener";
 import NativeShell from "@/app/components/native-shell";
 import { NativeOverlayProvider } from "@/app/contexts/native-overlay-context";
 import {
-  brandLogoSrc,
   defaultDescription,
   defaultTitle,
   getSiteUrl,
@@ -34,10 +33,6 @@ export const metadata: Metadata = {
   },
   description: defaultDescription,
   applicationName: siteName,
-  icons: {
-    icon: brandLogoSrc,
-    apple: brandLogoSrc,
-  },
 };
 
 export const viewport = {

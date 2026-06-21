@@ -170,14 +170,17 @@ export default function SettingsHub({ user }: SettingsHubProps) {
               </SettingsListGroup>
             </div>
 
-            <button
-              type="button"
-              disabled={signingOut}
-              onClick={() => void handleSignOut()}
-              className="w-full py-3 text-center text-sm font-medium text-red-400 transition active:opacity-70 disabled:opacity-60"
-            >
-              {signingOut ? "Signing out…" : "Sign out"}
-            </button>
+            <div className="space-y-2">
+              <SettingsSectionLabel>Session</SettingsSectionLabel>
+              <button
+                type="button"
+                disabled={signingOut}
+                onClick={() => void handleSignOut()}
+                className="flex min-h-11 w-full items-center justify-center rounded-xl border border-border bg-secondary/35 px-4 py-3.5 text-sm font-semibold text-red-400 shadow-sm transition hover:border-red-900/30 hover:bg-red-950/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {signingOut ? "Signing out…" : "Sign out"}
+              </button>
+            </div>
           </div>
         </div>
       </main>

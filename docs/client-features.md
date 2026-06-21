@@ -31,9 +31,9 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 **Desktop:** full create form at **`/new`** (New campaign in nav) — redirects straight to workspace on submit.
 
-**Mobile:** tap the **+** button to open a native-style **bottom sheet** — slide-up form with scroll, backdrop dismiss, and redirect to workspace on success.
+**Mobile:** tap the **+** button to open a **bottom sheet** — swipe down on the handle to dismiss, backdrop tap, keyboard-aware layout, and redirect to workspace on success.
 
-**Public site:** **`/`** is the marketing landing page (web only); **`/login`** for sign in and sign up (email, Google, or create account). The native app opens at **`/login`** — marketing is skipped.
+**Public site:** **`/`** is the marketing landing page (web only); **`/login`** for sign in and sign up (email, Google, or create account). The native app opens at **`/login`** — marketing is skipped. Login uses **Sign in** / **Create account** tabs with a single primary action per tab.
 
 ### Public site & SEO
 
@@ -45,7 +45,7 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 - **Shared app shell** when signed in — one consistent way to move around
 - **Desktop:** top bar with SlidePress **logo**, Campaigns, New campaign, **Settings**
-- **Mobile:** top bar (logo) + **bottom tab bar** with Campaigns, center **+** FAB, and **Settings**
+- **Mobile (native app):** bottom tab bar with Campaigns, center **+** FAB, and **Settings**; **haptic feedback** on tab changes and key actions; **pull-to-refresh** on the campaigns list
 - **Settings** (`/settings`) — account, brands, security, usage; sign out lives here
 - **Campaigns list** is browse-only — tap a row to open; brand switcher on campaigns when you have multiple brands
 - Logged-in mobile users land on **My campaigns**; create always via **+** or New campaign button (opens sheet)
@@ -65,7 +65,7 @@ SlidePress is a marketing automation app for creators and small teams who need s
 - **Rewrite voiceover with AI** — pick a tone (warmer, punchier, shorter, match headline, etc.) and choose from three options in a sheet
 - **Copy voiceover** per slide to clipboard — ready for recording or AI narration
 - **Download a single slide image** without exporting the full zip
-- **Carousel preview** — full-screen swipe through ready slides (tap image or “Preview carousel”)
+- **Carousel preview** — swipe between ready slides; on mobile, **swipe down** to dismiss the viewer
 - **Generate images** when ready — one click for the whole campaign
 - Live **image progress** — “2 of 5 images ready” with realtime updates
 - Metadata at a glance: **target audience**, **aspect ratio**, **slide count**, **brand**
@@ -79,10 +79,10 @@ SlidePress is a marketing automation app for creators and small teams who need s
 - Reference images (product/style/logo) are respected when uploaded
 - **Production webhooks** on SlidePress.co — images queue and update live via Fal callbacks
 - **Regenerate a single slide** without redoing the whole campaign
-  - **Fix this slide** sheet — feedback chips, optional notes, optional snap-a-new product photo (native)
-  - Quick feedback chips: Brighter, Minimal, Bold colors, Product larger, Different layout, Try again
+  - **Fix this slide** sheet — shared bottom sheet with swipe-to-dismiss; feedback chips, optional notes, optional snap-a-new product photo (native)
+  - Quick feedback chips: **Fix headline text**, Brighter, Minimal, Bold colors, Product larger, Different layout, Try again
+  - Edit the headline first when on-slide text should change; unsaved headline edits are saved when you regenerate
   - Optional free-text notes for what to change
-  - Updated headlines apply on the next regeneration
   - Regeneration respects the **active format** when you have both 4:5 and 9:16
 
 ### Dual format (4:5 + 9:16 from one campaign)
@@ -176,7 +176,7 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 - **Usage** — campaigns, regenerations, voice previews, narration exports, and video exports this month with beta limits (resets monthly)
 - **Connected accounts** — connect or disconnect **YouTube** and **TikTok** for direct posting
 - **Security** (native) — optional Face ID / fingerprint app unlock
-- **Account deletion** — type `DELETE` to confirm; removes all campaigns, brands, usage data, and auth access
+- **Account deletion** — danger card at the bottom of Settings (web and mobile); type `DELETE` to confirm; removes all campaigns, brands, usage data, platform connections, and auth access
 
 ### Campaign management
 
@@ -187,12 +187,29 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 ### Account & security
 
 - Email sign-in via Supabase Auth
+- **Sign in / Create account tabs** on `/login` — one primary CTA per tab; clear validation errors below the action button
 - **Google sign-in** on **`/login`** — OAuth via Supabase; redirects through **`/auth/callback`**
 - **Apple sign-in** (native iOS) — Sign in with Apple sheet
+- **Native session** — email/password sign-in and sign-up persist the session in the Capacitor shell (Keychain) for reliable post-auth navigation
 - **Strong passwords** on sign up — 8+ characters with uppercase, lowercase, and a number
 - **Forgot password** on the sign-in screen (including deep links in the native app)
+- Friendly error boundary on `/campaigns` if the server fails after signup
 - Your campaigns are private to your account (row-level security)
 - Production auth configured for SlidePress.co domain
+
+### Native mobile feel (Capacitor)
+
+Available in the **iOS and Android apps** (not mobile Safari):
+
+| Feature | What it does |
+|---------|----------------|
+| **Haptics** | Light taps on sheets and tabs; selection feedback on slide/filmstrip changes; success/error on save and share |
+| **Bottom sheets** | Swipe down on the handle to dismiss; backdrop fades with drag; velocity-based dismiss; keyboard lifts sheets with text fields |
+| **Slide browsing** | Swipe the slide card horizontally to change slides; vertical scroll in editors won’t accidentally change slides |
+| **Filmstrip** | Scroll-snap thumbnails; haptic when selecting a different slide |
+| **Carousel preview** | Swipe between slides; swipe down to close on mobile |
+| **Pull to refresh** | Campaigns list refreshes from the server on native |
+| **Android back** | Hardware back closes the top sheet or modal before navigating away |
 
 ### Beta usage limits
 
@@ -211,7 +228,7 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 ### Design & brand
 
 - **SlidePress** dark UI — zinc background with orange primary actions
-- **Brand logo** in nav, landing, login, favicon, and OG image (`public/brand/logo.png`)
+- **Brand logo** in nav, landing, login, and OG image (`public/brand/logo.png`); browser tab icon via `app/icon.png`
 - Orange gradient CTAs for generate/create actions
 - Semantic greens/ambers/reds for success, progress, and errors
 - Unified **page layout** — shared shell widths for marketing and app pages
@@ -294,7 +311,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | **5.2 Auth** ✅ | Google + Apple OAuth (deep link), password reset deep links |
 | **5.3 App shell** ✅ | Icons + splash, status bar (SlidePress dark + orange) |
 | **5.4 Native affordances** ✅ | Share sheet + Save to Photos (per slide, carousel, save all) |
-| **5.5 Beta distribution** 🚧 | TestFlight + Play internal testing — see `docs/beta-release.md` |
+| **5.5 Beta distribution** 🚧 | TestFlight external beta approved (build 2+); Play internal testing — see `docs/beta-release.md` |
 | **5.6 Push notifications** ✅ | Opt-in alerts when all campaign images finish |
 
 **Mobile UX:**
@@ -311,6 +328,12 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | Offline connectivity screen (native) | ✅ |
 | Privacy + Terms + Settings → About | ✅ |
 | Brand switcher + per-brand campaigns | ✅ |
+| Haptics (`@capacitor/haptics`) | ✅ |
+| Shared bottom sheets (swipe-to-dismiss, keyboard avoidance) | ✅ |
+| Thumb-first slide swipe + filmstrip snap | ✅ |
+| Carousel swipe-down dismiss (mobile) | ✅ |
+| Pull-to-refresh on campaigns (native) | ✅ |
+| Android back closes overlays | ✅ |
 
 ### Phase 6 — Scale *(in progress)*
 
@@ -326,7 +349,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 
 - Inline voiceover script edit (PATCH per slide)
 - AI rewrite sheet with tone chips and three options
-- Regenerate slide via **Fix this slide** sheet (replaces inline chip clutter)
+- Regenerate slide via **Fix this slide** sheet — includes **Fix headline text** chip, scene-reset prompts for layout changes, auto-save headline before regen
 
 **6B — Dual format (4:5 + 9:16)** ✅ *shipped*
 
@@ -356,7 +379,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | Layer | Technology |
 |-------|------------|
 | App | Next.js 16, React 19, Tailwind |
-| Mobile | Capacitor — iOS + Android WebView shell |
+| Mobile | Capacitor — iOS + Android WebView shell; Haptics + Keyboard plugins |
 | Hosting | Vercel (SlidePress.co) |
 | Database & auth | Supabase (PostgreSQL + RLS) |
 | Slide copy & voiceover | Google Gemini 2.5 Flash |
@@ -385,4 +408,4 @@ SlidePress turns a topic into a full social campaign: headlines on every slide, 
 
 ---
 
-*Last updated: June 2026*
+*Last updated: June 21, 2026*
