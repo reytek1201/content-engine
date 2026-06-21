@@ -335,6 +335,15 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | Pull-to-refresh on campaigns (native) | ✅ |
 | Android back closes overlays | ✅ |
 
+### Phase 5.7 — Notifications & widgets *(planned)*
+
+Extend mobile engagement beyond image-ready push. Full plan: [`docs/notifications-widgets-roadmap.md`](notifications-widgets-roadmap.md).
+
+| Track | Epic | Next up |
+|-------|------|---------|
+| **Push notifications** | [Epic #35](https://github.com/reytek1201/SlidePress.co/issues/35) | [#41](https://github.com/reytek1201/SlidePress.co/issues/41) video export complete · [#37](https://github.com/reytek1201/SlidePress.co/issues/37) publish success/fail · [#38](https://github.com/reytek1201/SlidePress.co/issues/38) preferences |
+| **Home screen widgets** | [Epic #36](https://github.com/reytek1201/SlidePress.co/issues/36) | [#39](https://github.com/reytek1201/SlidePress.co/issues/39) snapshot contract · [#40](https://github.com/reytek1201/SlidePress.co/issues/40) iOS · [#42](https://github.com/reytek1201/SlidePress.co/issues/42) Android |
+
 ### Phase 6 — Scale *(in progress)*
 
 **6A — ElevenLabs narration & video** ✅ *shipped*

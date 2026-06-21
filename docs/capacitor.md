@@ -257,6 +257,8 @@ Native camera integration throughout the app using `@capacitor/camera`.
 
 Notify users in the **native app** when every slide image in a campaign is ready (app in background or closed).
 
+**Roadmap:** [Epic #35](https://github.com/reytek1201/SlidePress.co/issues/35) — video export, publish alerts, preferences · [`docs/notifications-widgets-roadmap.md`](notifications-widgets-roadmap.md)
+
 **Client:** Users opt in under **Settings → Notifications**. `NativePushListener` registers the device token only after opt-in and sign-in. Tapping a notification opens the campaign workspace.
 
 **Server:** When a campaign transitions to `completed`, `maybeSendCampaignImagesReadyPush` sends one push per registered device (deduped via `campaigns.images_ready_notified_at`):
