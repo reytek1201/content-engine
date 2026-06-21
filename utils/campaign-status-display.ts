@@ -23,6 +23,7 @@ export function formatCampaignDetailsProgress(input: {
   hasVideoExport: boolean;
   youtubeAlreadyPublished: boolean;
   tiktokAlreadyPublished?: boolean;
+  instagramAlreadyPublished?: boolean;
 }): string {
   const parts: string[] = [];
 
@@ -43,13 +44,20 @@ export function formatCampaignDetailsProgress(input: {
   }
 
   const tiktokAlreadyPublished = input.tiktokAlreadyPublished ?? false;
+  const instagramAlreadyPublished = input.instagramAlreadyPublished ?? false;
 
-  if (input.youtubeAlreadyPublished && tiktokAlreadyPublished) {
+  if (
+    input.youtubeAlreadyPublished &&
+    tiktokAlreadyPublished &&
+    instagramAlreadyPublished
+  ) {
     parts.push("Published");
   } else if (input.youtubeAlreadyPublished) {
     parts.push("On YouTube");
   } else if (tiktokAlreadyPublished) {
     parts.push("On TikTok");
+  } else if (instagramAlreadyPublished) {
+    parts.push("On Instagram");
   }
 
   return parts.length > 0 ? parts.join(" · ") : "Getting started";

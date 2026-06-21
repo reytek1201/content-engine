@@ -43,6 +43,7 @@ export type NextStepAction =
   | "focus_publish"
   | "view_youtube"
   | "view_tiktok"
+  | "view_instagram"
   | "download_zip"
   | "download_narration"
   | "copy_captions"
@@ -96,6 +97,8 @@ export interface CampaignJourneyInput {
   youtubeWatchUrl?: string | null;
   tiktokAlreadyPublished?: boolean;
   tiktokProfileUrl?: string | null;
+  instagramAlreadyPublished?: boolean;
+  instagramProfileUrl?: string | null;
   isExportingVideo?: boolean;
   copiedAllCaptions?: boolean;
   savedAllPhotos?: boolean;
@@ -109,18 +112,25 @@ export interface CampaignJourney {
   isFullyComplete: boolean;
   youtubeWatchUrl: string | null;
   tiktokProfileUrl: string | null;
+  instagramProfileUrl: string | null;
 }
 
 export function isAnyPlatformPublished(input: {
   youtubeAlreadyPublished?: boolean;
   tiktokAlreadyPublished?: boolean;
+  instagramAlreadyPublished?: boolean;
 }): boolean {
-  return Boolean(input.youtubeAlreadyPublished || input.tiktokAlreadyPublished);
+  return Boolean(
+    input.youtubeAlreadyPublished ||
+      input.tiktokAlreadyPublished ||
+      input.instagramAlreadyPublished,
+  );
 }
 
 export function formatPublishedPlatformsDescription(input: {
   youtubeAlreadyPublished?: boolean;
   tiktokAlreadyPublished?: boolean;
+  instagramAlreadyPublished?: boolean;
 }): string {
   const platforms: string[] = [];
 
@@ -132,6 +142,10 @@ export function formatPublishedPlatformsDescription(input: {
     platforms.push("TikTok");
   }
 
+  if (input.instagramAlreadyPublished) {
+    platforms.push("Instagram");
+  }
+
   if (platforms.length === 0) {
     return "Post copy is ready — copy captions or download assets below.";
   }
@@ -140,11 +154,19 @@ export function formatPublishedPlatformsDescription(input: {
     return `Posted to ${platforms[0]} — copy captions or download assets anytime.`;
   }
 
-  return `Posted to ${platforms.join(" and ")} — copy captions or download assets anytime.`;
+  if (platforms.length === 2) {
+    return `Posted to ${platforms.join(" and ")} — copy captions or download assets anytime.`;
+  }
+
+  return `Posted to ${platforms.slice(0, -1).join(", ")}, and ${platforms[platforms.length - 1]} — copy captions or download assets anytime.`;
 }
 
 export function isPlatformViewAction(action: NextStepAction): boolean {
-  return action === "view_youtube" || action === "view_tiktok";
+  return (
+    action === "view_youtube" ||
+    action === "view_tiktok" ||
+    action === "view_instagram"
+  );
 }
 
 export function platformViewUrlForAction(
@@ -152,6 +174,7 @@ export function platformViewUrlForAction(
   urls: {
     youtubeWatchUrl?: string | null;
     tiktokProfileUrl?: string | null;
+    instagramProfileUrl?: string | null;
   },
 ): string | null {
   if (action === "view_youtube") {
@@ -162,6 +185,10 @@ export function platformViewUrlForAction(
     return urls.tiktokProfileUrl ?? null;
   }
 
+  if (action === "view_instagram") {
+    return urls.instagramProfileUrl ?? null;
+  }
+
   return null;
 }
 
@@ -170,6 +197,8 @@ function buildPublishedViewButtons(input: {
   youtubeWatchUrl?: string | null;
   tiktokAlreadyPublished?: boolean;
   tiktokProfileUrl?: string | null;
+  instagramAlreadyPublished?: boolean;
+  instagramProfileUrl?: string | null;
 }): {
   primary: CampaignNextStepButton | null;
   viewSecondaries: CampaignNextStepButton[];
@@ -189,6 +218,15 @@ function buildPublishedViewButtons(input: {
     views.push({
       action: "view_tiktok",
       label: "View on TikTok",
+      disabled: false,
+      loading: false,
+    });
+  }
+
+  if (input.instagramAlreadyPublished && input.instagramProfileUrl) {
+    views.push({
+      action: "view_instagram",
+      label: "View on Instagram",
       disabled: false,
       loading: false,
     });
@@ -351,6 +389,8 @@ export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney
     youtubeWatchUrl = null,
     tiktokAlreadyPublished = false,
     tiktokProfileUrl = null,
+    instagramAlreadyPublished = false,
+    instagramProfileUrl = null,
     isNativeApp = false,
   } = input;
 
@@ -359,6 +399,7 @@ export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney
   const anyPlatformPublished = isAnyPlatformPublished({
     youtubeAlreadyPublished,
     tiktokAlreadyPublished,
+    instagramAlreadyPublished,
   });
 
   const isFullyComplete = isNativeApp
@@ -383,6 +424,8 @@ export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney
       youtubeWatchUrl,
       tiktokAlreadyPublished,
       tiktokProfileUrl,
+      instagramAlreadyPublished,
+      instagramProfileUrl,
     });
 
     if (isNativeApp) {
@@ -421,12 +464,14 @@ export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney
         : formatPublishedPlatformsDescription({
             youtubeAlreadyPublished,
             tiktokAlreadyPublished,
+            instagramAlreadyPublished,
           }),
       primary,
       secondaries: completeSecondaries,
       isFullyComplete: true,
       youtubeWatchUrl,
       tiktokProfileUrl,
+      instagramProfileUrl,
     };
   }
 
@@ -436,6 +481,7 @@ export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney
     isFullyComplete: false,
     youtubeWatchUrl,
     tiktokProfileUrl,
+    instagramProfileUrl,
   };
 }
 
@@ -495,6 +541,7 @@ function getCampaignNextStepFromInput(
     hasVideoExport = false,
     youtubeAlreadyPublished = false,
     tiktokAlreadyPublished = false,
+    instagramAlreadyPublished = false,
     isExportingVideo = false,
     verticalFormatPublishState = "not_applicable",
     verticalVideoExportReady = false,
@@ -503,6 +550,7 @@ function getCampaignNextStepFromInput(
   const anyPlatformPublished = isAnyPlatformPublished({
     youtubeAlreadyPublished,
     tiktokAlreadyPublished,
+    instagramAlreadyPublished,
   });
 
   const imageProgressLabel = formatImageProgressLabel(
@@ -679,7 +727,7 @@ function getCampaignNextStepFromInput(
         action: "focus_publish",
         label: "Post to platforms",
         description:
-          "Your video export is ready — post to YouTube, TikTok, or both below.",
+          "Your video export is ready — post to YouTube, TikTok, Instagram, or all three below.",
         disabled: false,
         loading: false,
         scrollTargetId: "section-publish",
@@ -781,7 +829,8 @@ export function scrollTargetForNextStepAction(action: NextStepAction): string {
   if (
     action === "focus_publish" ||
     action === "view_youtube" ||
-    action === "view_tiktok"
+    action === "view_tiktok" ||
+    action === "view_instagram"
   ) {
     return "section-publish";
   }

@@ -31,6 +31,7 @@ export function runJourneyAction(
     case "focus_publish":
     case "view_youtube":
     case "view_tiktok":
+    case "view_instagram":
       break;
   }
 }

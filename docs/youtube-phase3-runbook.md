@@ -163,4 +163,4 @@ Run on **web** and **native app** (Capacitor loads production URL).
 
 ## After YouTube
 
-Next platforms per [`docs/platform-posting.md`](platform-posting.md): TikTok (#32) → Instagram Reels (#33) → Carousel (#34).
+TikTok (#32) and Instagram Reels (#33) + Carousel (#34) are shipped in code. See [`docs/platform-posting.md`](platform-posting.md) and [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md) for remaining Meta/TikTok app review steps.

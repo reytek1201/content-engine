@@ -4,16 +4,16 @@
 
 **GitHub epic:** [Epic — Direct Platform Posting](https://github.com/reytek1201/SlidePress.co/issues/27)
 
-**Current state:** **YouTube Shorts direct posting** shipped (connect in Settings, publish from campaign). OAuth verification **under Google review** — public users need to be on OAuth test users until approved. TikTok and Instagram remain manual export. See `docs/client-features.md` and [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md).
+**Current state:** **YouTube Shorts**, **TikTok**, and **Instagram** (Reels + Carousel) direct posting shipped — connect in Settings, publish from campaign. **YouTube** OAuth verification **under Google review**; **Meta** app review pending for public Instagram publishing. See `docs/client-features.md`, [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md), and [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md).
 
 **Platform order (easiest → hardest):**
 
 | Rank | Platform | Content type | Issue |
 |------|----------|--------------|-------|
 | 1 | YouTube Shorts | 9:16 MP4 + title/description/hashtags | #28–#30 ✅ · #31 🚧 |
-| 2 | TikTok | 9:16 MP4 + caption/hashtags | #32 |
-| 3 | Instagram Reels | 9:16 MP4 + caption/hashtags | #33 |
-| 4 | Instagram Carousel | 4:5 multi-image + caption/hashtags | #34 |
+| 2 | TikTok | 9:16 MP4 + caption/hashtags | #32 ✅ · audit 🚧 |
+| 3 | Instagram Reels | 9:16 MP4 + caption/hashtags | #33 ✅ · Meta review 🚧 |
+| 4 | Instagram Carousel | 4:5 multi-image + caption/hashtags | #34 ✅ · Meta review 🚧 |
 
 ---
 
@@ -130,7 +130,7 @@ YouTube is first because: single MP4 asset, mature resumable upload API, caption
 
 **Content:** 4:5 slide images (2–10) + `instagram` caption.
 
-**Status (June 2026):** Carousel publish API + campaign panel shipped (dev/tester accounts). Meta app review pending for public users.
+**Status (June 2026):** Carousel publish API + campaign panel shipped (dev/tester accounts). Meta app review pending for public users. Runbook: [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md).
 
 **Depends on:** Instagram Reels path (#33) for shared Meta app, OAuth, and account-linking UX.
 
@@ -142,7 +142,7 @@ YouTube is first because: single MP4 asset, mature resumable upload API, caption
 
 **Content:** 9:16 MP4 + `instagram` caption.
 
-**Status (June 2026):** OAuth + Reels publish API shipped (dev/tester accounts). Meta app review pending for public users.
+**Status (June 2026):** OAuth + Reels publish API shipped (dev/tester accounts). Meta app review pending for public users. Runbook: [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md).
 
 **Blockers:** Meta app review for `instagram_content_publish`; user must have **Instagram Professional** account linked to a **Facebook Page**.
 

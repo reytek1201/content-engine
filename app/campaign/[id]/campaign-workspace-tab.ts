@@ -36,7 +36,8 @@ export function tabForNextStepAction(
     action === "export_video" ||
     action === "focus_publish" ||
     action === "view_youtube" ||
-    action === "view_tiktok"
+    action === "view_tiktok" ||
+    action === "view_instagram"
   ) {
     return "publish";
   }

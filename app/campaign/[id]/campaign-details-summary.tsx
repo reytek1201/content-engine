@@ -50,6 +50,7 @@ export default function CampaignDetailsSummary({
     hasVideoExport: journeyInput.hasVideoExport ?? false,
     youtubeAlreadyPublished: journeyInput.youtubeAlreadyPublished ?? false,
     tiktokAlreadyPublished: journeyInput.tiktokAlreadyPublished ?? false,
+    instagramAlreadyPublished: journeyInput.instagramAlreadyPublished ?? false,
   });
 
   const handlers = {
@@ -75,6 +76,7 @@ export default function CampaignDetailsSummary({
       const url = platformViewUrlForAction(primary.action, {
         youtubeWatchUrl: journey.youtubeWatchUrl,
         tiktokProfileUrl: journey.tiktokProfileUrl,
+        instagramProfileUrl: journey.instagramProfileUrl,
       });
 
       if (url) {
@@ -149,6 +151,17 @@ export default function CampaignDetailsSummary({
             className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground sm:w-auto"
           >
             View on TikTok
+          </a>
+        ) : null}
+
+        {journey.instagramProfileUrl && journey.isFullyComplete ? (
+          <a
+            href={journey.instagramProfileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground sm:w-auto"
+          >
+            View on Instagram
           </a>
         ) : null}
 

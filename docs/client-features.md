@@ -369,8 +369,7 @@ Extend mobile engagement beyond image-ready push. Full plan: [`docs/notification
 **6C — Business scale** *(in progress)*
 
 - **Usage tiers & billing** — paid plans with higher caps (Stripe) — [Epic #14](https://github.com/reytek1201/SlidePress.co/issues/14)
-- **Direct platform posting** — **YouTube Shorts** ✅ Phases 0–2 shipped; Phase 3 🚧 OAuth under review · **TikTok** ✅ Phases 0–1 shipped; app audit 🚧 — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/platform-posting.md`](platform-posting.md) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md)
-- **Instagram** — Reels + Carousel ([#33](https://github.com/reytek1201/SlidePress.co/issues/33)–[#34](https://github.com/reytek1201/SlidePress.co/issues/34))
+- **Direct platform posting** — **YouTube Shorts** ✅ Phases 0–2 shipped; Phase 3 🚧 OAuth under review · **TikTok** ✅ shipped; app audit 🚧 · **Instagram** Reels + Carousel ✅ shipped; Meta app review 🚧 — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/platform-posting.md`](platform-posting.md) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md) · [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md)
 - **On-screen video captions** — burned-in captions (deferred from beta)
 
 ### Not planned for v1
@@ -397,6 +396,7 @@ Extend mobile engagement beyond image-ready push. Full plan: [`docs/notification
 | Narration & video | ElevenLabs TTS + FFmpeg compose + Fal merge pipeline |
 | YouTube posting | YouTube Data API v3 (OAuth + resumable upload) |
 | TikTok posting | TikTok Content Posting API (Login Kit OAuth + FILE_UPLOAD) |
+| Instagram posting | Meta Graph API (Facebook Login + Reels + Carousel containers) |
 | Realtime | Supabase Realtime on slides, slide images & campaigns |
 
 Approximate **variable cost per 5-slide campaign** today (images + AI text): **~$0.45–0.65** depending on regenerations. **Video export** adds roughly **~$0.10–0.30** per Reel (TTS + render) at beta scale. End-user pricing will include tier limits above these costs.
@@ -405,7 +405,7 @@ Approximate **variable cost per 5-slide campaign** today (images + AI text): **~
 
 ## One-line pitch
 
-**Today:** Describe your offer once — get carousel slides, AI images with headlines, editable voiceover scripts, platform captions, AI narration, and Reel-ready MP4 export — optionally in both 4:5 and 9:16 from one campaign. Post directly to **YouTube Shorts** and **TikTok** from the same workspace.
+**Today:** Describe your offer once — get carousel slides, AI images with headlines, editable voiceover scripts, platform captions, AI narration, and Reel-ready MP4 export — optionally in both 4:5 and 9:16 from one campaign. Post directly to **YouTube Shorts**, **TikTok**, and **Instagram** (Reels + carousel) from the same workspace.
 
 **Same workflow:** One campaign → carousel zip, narration ZIP, or video — no second production pass.
 
@@ -413,7 +413,7 @@ Approximate **variable cost per 5-slide campaign** today (images + AI text): **~
 
 ## Elevator pitch (for sales / landing copy)
 
-SlidePress turns a topic into a full social campaign: headlines on every slide, AI-generated visuals, spoken scripts you can edit or rewrite with AI, and captions for TikTok, Instagram, and YouTube. Export **carousel zips** (one or both formats), **AI narration**, or **Reel-ready MP4** per format — then **post to YouTube Shorts and TikTok** without leaving the app.
+SlidePress turns a topic into a full social campaign: headlines on every slide, AI-generated visuals, spoken scripts you can edit or rewrite with AI, and captions for TikTok, Instagram, and YouTube. Export **carousel zips** (one or both formats), **AI narration**, or **Reel-ready MP4** per format — then **post to YouTube Shorts, TikTok, and Instagram** without leaving the app.
 
 ---
 

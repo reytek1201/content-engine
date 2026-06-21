@@ -197,9 +197,10 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           If you connect an Instagram Professional account (linked to a Facebook
           Page), SlidePress requests basic profile access to show your username.
           When you publish, we request posting permission to upload your
-          campaign video as a Reel with your Instagram caption. We store OAuth
-          tokens securely on our servers (not in the mobile app) and record
-          publish status per campaign.
+          campaign as an Instagram Reel (9:16 video) or carousel post (4:5 slide
+          images), using your Instagram caption. We store OAuth tokens securely
+          on our servers (not in the mobile app) and record publish status per
+          campaign.
         </p>
         <p className="mt-3">
           You can disconnect Instagram anytime in Settings → Connected accounts.

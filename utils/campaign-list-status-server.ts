@@ -58,6 +58,7 @@ export async function loadCampaignListStatuses(
 
   const youtubePublishedByCampaign = new Set<string>();
   const tiktokPublishedByCampaign = new Set<string>();
+  const instagramPublishedByCampaign = new Set<string>();
 
   for (const row of postsResult.data ?? []) {
     const campaignId = row.campaign_id as string;
@@ -68,6 +69,10 @@ export async function loadCampaignListStatuses(
 
     if (row.platform === "tiktok") {
       tiktokPublishedByCampaign.add(campaignId);
+    }
+
+    if (row.platform === "instagram") {
+      instagramPublishedByCampaign.add(campaignId);
     }
   }
 
@@ -87,6 +92,7 @@ export async function loadCampaignListStatuses(
       hasVideoExport: videoExportByCampaign.has(campaign.id),
       youtubePublished: youtubePublishedByCampaign.has(campaign.id),
       tiktokPublished: tiktokPublishedByCampaign.has(campaign.id),
+      instagramPublished: instagramPublishedByCampaign.has(campaign.id),
     });
   }
 

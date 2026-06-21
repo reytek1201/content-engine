@@ -146,6 +146,9 @@ export default function CampaignWorkspace({
     tiktokAlreadyPublished: false,
     tiktokProfileUrl: null as string | null,
     tiktokConnected: false,
+    instagramAlreadyPublished: false,
+    instagramProfileUrl: null as string | null,
+    instagramConnected: false,
   });
   const [captionsMessage, setCaptionsMessage] = useState<string | null>(null);
   const [justFinishedSlide, setJustFinishedSlide] = useState<{
@@ -408,6 +411,9 @@ export default function CampaignWorkspace({
         tiktokAlreadyPublished: false,
         tiktokProfileUrl: null,
         tiktokConnected: false,
+        instagramAlreadyPublished: false,
+        instagramProfileUrl: null,
+        instagramConnected: false,
       });
       return;
     }
@@ -417,9 +423,12 @@ export default function CampaignWorkspace({
     async function loadPublishFlow() {
       try {
         const campaignId = encodeURIComponent(campaign.id);
-        const [youtubeResponse, tiktokResponse] = await Promise.all([
+        const [youtubeResponse, tiktokResponse, instagramReelResponse, instagramCarouselResponse] =
+          await Promise.all([
           fetch(`/api/platforms/youtube/publish-readiness?campaignId=${campaignId}`),
           fetch(`/api/platforms/tiktok/publish-readiness?campaignId=${campaignId}`),
+          fetch(`/api/platforms/instagram/publish-readiness?campaignId=${campaignId}`),
+          fetch(`/api/platforms/instagram/carousel-publish-readiness?campaignId=${campaignId}`),
         ]);
 
         const youtubeData = (await youtubeResponse.json()) as {
@@ -438,14 +447,46 @@ export default function CampaignWorkspace({
           connected?: boolean;
         };
 
+        const instagramReelData = (await instagramReelResponse.json()) as {
+          success?: boolean;
+          alreadyPublished?: boolean;
+          profileUrl?: string | null;
+          connected?: boolean;
+        };
+
+        const instagramCarouselData =
+          (await instagramCarouselResponse.json()) as {
+            success?: boolean;
+            alreadyPublished?: boolean;
+            profileUrl?: string | null;
+            connected?: boolean;
+          };
+
         if (cancelled) {
           return;
         }
 
         const youtubeOk = youtubeResponse.ok && youtubeData.success;
         const tiktokOk = tiktokResponse.ok && tiktokData.success;
+        const instagramReelOk =
+          instagramReelResponse.ok && instagramReelData.success;
+        const instagramCarouselOk =
+          instagramCarouselResponse.ok && instagramCarouselData.success;
 
-        if (youtubeOk || tiktokOk) {
+        if (youtubeOk || tiktokOk || instagramReelOk || instagramCarouselOk) {
+          const instagramAlreadyPublished = Boolean(
+            (instagramReelOk && instagramReelData.alreadyPublished) ||
+              (instagramCarouselOk && instagramCarouselData.alreadyPublished),
+          );
+          const instagramProfileUrl =
+            (instagramReelOk &&
+            instagramReelData.alreadyPublished &&
+            instagramReelData.profileUrl) ||
+            (instagramCarouselOk &&
+              instagramCarouselData.alreadyPublished &&
+              instagramCarouselData.profileUrl) ||
+            null;
+
           setPublishFlow({
             hasVideoExport: Boolean(
               (youtubeOk && youtubeData.hasVideoExport) ||
@@ -461,6 +502,12 @@ export default function CampaignWorkspace({
               : false,
             tiktokProfileUrl: tiktokOk ? (tiktokData.profileUrl ?? null) : null,
             tiktokConnected: tiktokOk ? Boolean(tiktokData.connected) : false,
+            instagramAlreadyPublished,
+            instagramProfileUrl,
+            instagramConnected: Boolean(
+              (instagramReelOk && instagramReelData.connected) ||
+                (instagramCarouselOk && instagramCarouselData.connected),
+            ),
           });
         }
       } catch {
@@ -1622,6 +1669,8 @@ export default function CampaignWorkspace({
     youtubeWatchUrl: publishFlow.youtubeWatchUrl,
     tiktokAlreadyPublished: publishFlow.tiktokAlreadyPublished,
     tiktokProfileUrl: publishFlow.tiktokProfileUrl,
+    instagramAlreadyPublished: publishFlow.instagramAlreadyPublished,
+    instagramProfileUrl: publishFlow.instagramProfileUrl,
     isExportingVideo,
     verticalFormatPublishState,
     verticalVideoExportReady,
