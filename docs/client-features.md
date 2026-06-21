@@ -53,7 +53,7 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 ### Campaign workspace
 
-- **Campaign journey strip** — one guided flow: Copy → Images → Captions → Video → **Publish**, with honest checkmarks, next-step CTA, and step navigation (hidden on Details tab). The Publish step turns green when posted to **YouTube, TikTok, or both**
+- **Campaign journey strip** — one guided flow: Copy → Images → Captions → Video → **Publish**, with honest checkmarks, next-step CTA, and step navigation (hidden on Details tab). The Publish step turns green when posted to **YouTube, TikTok, or Instagram**
 - **Captions prompt** — after all images finish, a modal offers one-tap **Generate captions** (dismissible per session)
 - **First-time workspace tour** — three coach marks (journey strip, Publish tab, publish sections); dismiss once via localStorage
 - **Inline campaign rename** — edit title from the workspace header
@@ -130,7 +130,7 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 ### Publish copy & direct posting
 
 - **Platform captions** for TikTok, Instagram, and YouTube Shorts
-- Publish section in the **Publish** tab — captions; **9:16 video export**; **Post to YouTube Shorts** and **Post to TikTok**; file **downloads** (zip, narration) at the bottom
+- Publish section in the **Publish** tab — captions; **9:16 video export**; **Post to YouTube Shorts**, **TikTok**, and **Instagram** (Reels + carousel); file **downloads** (zip, narration) at the bottom
 - **Copy all** (via journey strip) or **copy per field** (title, caption, hashtags) to clipboard
 - **Regenerate captions only** — updates publish copy without touching slide images
 
@@ -156,6 +156,18 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 
 *TikTok sandbox (June 2026) — app is unaudited; your TikTok account must be set to **Private** in the TikTok app before posting. Posts are `SELF_ONLY` until TikTok app review passes. See Epic [#27](https://github.com/reytek1201/SlidePress.co/issues/27).*
 
+### Post to Instagram (Reels + Carousel)
+
+- **Settings → Connected accounts** — connect Instagram Professional account via Facebook Login (linked Facebook Page required)
+- **Campaign → Publish → Step 5** — **Post to Instagram Reels** when you have Instagram captions and a completed **9:16** video export
+- **Campaign → Publish → Step 6** — **Post carousel to Instagram** when you have Instagram captions and **4:5** slide images
+- **Grant publishing permission** on first publish (`instagram_content_publish` — separate from connect)
+- Splash overlay during upload/processing; **View on Instagram** link after publish
+- Reels: one publish per video export; Carousel: one publish per campaign
+- Disconnect Instagram anytime in Settings; account deletion revokes tokens and removes publish history
+
+*Meta App Review in progress (June 2026) — works for Meta app **testers/roles** until `instagram_content_publish` is approved. App owned by **KeyMacro LLC**. See [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md).*
+
 ### Export
 
 - **Download zip** when all slide images are ready (via journey strip or Downloads section)
@@ -174,13 +186,13 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 - **Settings → Brands** — manage all brands; edit kit and products per brand
 - **Campaigns header** — switch active brand, edit kit, add a brand (returns to campaigns when done)
 - **Usage** — campaigns, regenerations, voice previews, narration exports, and video exports this month with beta limits (resets monthly)
-- **Connected accounts** — connect or disconnect **YouTube** and **TikTok** for direct posting
+- **Connected accounts** — connect or disconnect **YouTube**, **TikTok**, and **Instagram** for direct posting
 - **Security** (native) — optional Face ID / fingerprint app unlock
 - **Account deletion** — danger card at the bottom of Settings (web and mobile); type `DELETE` to confirm; removes all campaigns, brands, usage data, platform connections, and auth access
 
 ### Campaign management
 
-- **My campaigns** list with preview thumbnails, format, date, and **publish-status badges** (e.g. Needs captions, Ready to post, On YouTube, On TikTok, Published) — scoped to the active brand
+- **My campaigns** list with preview thumbnails, format, date, and **publish-status badges** (e.g. Needs captions, Ready to post, On YouTube, On TikTok, On Instagram, Published) — scoped to the active brand
 - **Duplicate campaign** — from the workspace (not the list)
 - **Delete campaign** — hidden in workspace Danger zone only
 
@@ -246,8 +258,7 @@ Available in the **iOS and Android apps** (not mobile Safari):
 6. Preview carousel → fix any slide (edit headline → **Fix this slide** regenerate)
 7. Optional: add the other format (4:5 or 9:16) when primary images are ready
 8. Generate captions
-9. Publish: copy captions, download zip, export narration ZIP, export video MP4, or **post to YouTube Shorts and/or TikTok** (9:16 + captions + connected account)
-10. Post to Instagram manually, or use direct publish from SlidePress for YouTube and TikTok
+9. Publish: copy captions, download zip, export narration ZIP, export video MP4, or **post to YouTube Shorts, TikTok, and/or Instagram** (Reels and/or carousel)
 ```
 
 **Goal:** Fewest steps between idea and publish-ready assets — carousel, narration, or video from one campaign.
@@ -260,7 +271,7 @@ Available in the **iOS and Android apps** (not mobile Safari):
 |------|--------|
 | **Paid tiers & billing** | Stripe subscriptions, higher video/narration limits — [Epic #14](https://github.com/reytek1201/SlidePress.co/issues/14) |
 | **On-screen video captions** | Deferred — export MP4 + platform captions; burned-in captions not in current build |
-| **Direct platform posting** | **YouTube Shorts** + **TikTok** shipped; Google OAuth verification under review; TikTok app audit pending; Instagram next — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md) |
+| **Direct platform posting** | **YouTube**, **TikTok**, **Instagram** (Reels + carousel) shipped in code; Google OAuth + TikTok audit + Meta App Review pending for public users — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · runbooks in `docs/` |
 | **Voice library browser** | Curated personas today (warm / energetic / professional) |
 
 ### Why video export matters (marketing angle)
@@ -271,13 +282,11 @@ Available in the **iOS and Android apps** (not mobile Safari):
 - **9:16 by design** — campaigns created for vertical video export from day one
 - **Agency-ready** — multiple brands, consistent voice and motion per client
 
-### What we’re not promising in v1 of video
+### What we’re not promising until platform audits complete
 
-- Full voice library browser (we’ll curate a small set of great voices)
-- Direct upload to **Instagram** (export MP4 + captions; post manually today)
 - YouTube posting for users outside Google OAuth **test users** list until Google verification completes
 - TikTok **public** posting until TikTok app audit passes (sandbox / private account today)
-- 4:5 video before 9:16 Reels quality is solid
+- Instagram posting for users outside Meta app **testers/roles** until Meta App Review approves `instagram_content_publish`
 
 *Internal tracking: ElevenLabs narration & video export epic [#1](https://github.com/reytek1201/SlidePress.co/issues/1) ✅ closed.*
 
@@ -302,6 +311,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | **6B** | **Dual format** — one campaign, optional second aspect (confirm upsell), per-format preview/export |
 | **6C** | **YouTube Shorts posting** — connect, upload API, Publish UI ✅; Google OAuth verification 🚧 |
 | **6D** | **TikTok posting** — connect, FILE_UPLOAD API, Publish UI ✅; app audit 🚧 |
+| **6E** | **Instagram posting** — OAuth, Reels + carousel API, Publish UI ✅; Meta App Review 🚧 |
 
 ### Phase 5 — Mobile app (Capacitor) ✅ (largely complete)
 

@@ -22,7 +22,7 @@ Notifications are **optional** (not an App Store requirement) but high value for
 | Item | Detail |
 |------|--------|
 | Opt-in toggle | Settings → Notifications — “Campaign ready alerts” |
-| Trigger | All slide images finish; video export completes; **YouTube/TikTok publish succeeds or fails** |
+| Trigger | All slide images finish; video export completes; **YouTube/TikTok/Instagram publish succeeds or fails** |
 | Deep link | Tap opens `/campaign/{id}` (images) or `?tab=publish` (video) |
 | Infra | APNs + FCM, `push_device_tokens`, `maybeSendCampaignImagesReadyPush`, `maybeSendVideoExportReadyPush`, `maybeSendPlatformPublishPush` |
 | Docs | [`docs/capacitor.md`](capacitor.md) → Push notifications |
@@ -33,7 +33,7 @@ Notifications are **optional** (not an App Store requirement) but high value for
 |-------|--------|-------|----------|
 | 0 | Image-ready push | — | ✅ Shipped |
 | 1 | Video export complete | [#41](https://github.com/reytek1201/SlidePress.co/issues/41) | ✅ Shipped |
-| 2 | YouTube / TikTok publish success & failure | [#37](https://github.com/reytek1201/SlidePress.co/issues/37) | ✅ Shipped |
+| 2 | YouTube / TikTok / Instagram publish success & failure | [#37](https://github.com/reytek1201/SlidePress.co/issues/37) | ✅ Shipped |
 | 3 | Granular notification preferences | [#38](https://github.com/reytek1201/SlidePress.co/issues/38) | ✅ Shipped |
 
 ### Principles

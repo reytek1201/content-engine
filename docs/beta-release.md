@@ -7,11 +7,28 @@ Use this before **TestFlight** (iOS) and **Play internal testing** (Android).
 ## Pre-flight (web)
 
 - [x] Latest `main` deployed to Vercel (`https://www.slidepress.co`) — includes native mobile UX (June 2026)
-- [x] Supabase migrations applied on production (`platform_connections`, `platform_posts`, `platform_posts_export_unique`)
-- [x] `/privacy` and `/terms` live (required for App Store / Play listing; includes YouTube section)
+- [x] Supabase migrations applied on production (`platform_connections`, `platform_posts`, Instagram + carousel constraints)
+- [x] `/privacy` and `/terms` live (includes YouTube, TikTok, Instagram sections)
 - [x] `/api/health` returns `{ "ok": true }` (native connectivity checks)
 - [x] Smoke test: sign in, create campaign, generate images, save to Photos (native)
 - [ ] YouTube (optional): connect channel, publish 9:16 Short — see `docs/youtube-phase3-runbook.md`
+- [ ] TikTok (optional): connect, publish 9:16 video — sandbox / private account until audit
+- [ ] Instagram (optional): connect, post Reel + carousel — Meta app testers until App Review — see `docs/instagram-phase3-runbook.md`
+
+---
+
+## Platform posting (direct publish)
+
+All four integrations shipped in code (June 2026). Public users blocked by platform audits only.
+
+| Platform | Code | Blocker | Runbook |
+|----------|------|---------|---------|
+| YouTube Shorts | ✅ | Google OAuth verification submitted | `docs/youtube-phase3-runbook.md` |
+| TikTok | ✅ | App audit (`SELF_ONLY` today) | `docs/platform-posting.md` |
+| Instagram Reels | ✅ | Meta App Review in progress | `docs/instagram-phase3-runbook.md` |
+| Instagram Carousel | ✅ | Same Meta review | `docs/instagram-phase3-runbook.md` |
+
+**Epic:** [#27](https://github.com/reytek1201/SlidePress.co/issues/27)
 
 ---
 

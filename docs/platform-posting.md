@@ -4,7 +4,16 @@
 
 **GitHub epic:** [Epic — Direct Platform Posting](https://github.com/reytek1201/SlidePress.co/issues/27)
 
-**Current state:** **YouTube Shorts**, **TikTok**, and **Instagram** (Reels + Carousel) direct posting shipped — connect in Settings, publish from campaign. **YouTube** OAuth verification **under Google review**; **Meta** app review pending for public Instagram publishing. See `docs/client-features.md`, [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md), and [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md).
+**Current state (June 21, 2026):** All four platform integrations **shipped in code** — connect in Settings, publish from campaign. **Public launch** blocked only by platform audits:
+
+| Platform | Code | Public users |
+|----------|------|----------------|
+| YouTube Shorts | ✅ | 🚧 Google OAuth verification submitted |
+| TikTok | ✅ | 🚧 TikTok app audit (sandbox / `SELF_ONLY` today) |
+| Instagram Reels | ✅ | 🚧 Meta App Review (`instagram_content_publish`) — in progress; KeyMacro LLC business docs |
+| Instagram Carousel | ✅ | 🚧 Same Meta review as Reels |
+
+**Runbooks:** [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md) · [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md) · [`docs/client-features.md`](client-features.md)
 
 **Platform order (easiest → hardest):**
 
@@ -114,39 +123,41 @@ YouTube is first because: single MP4 asset, mature resumable upload API, caption
 
 ---
 
-## TikTok ([#32](https://github.com/reytek1201/SlidePress.co/issues/32))
+## TikTok ([#32](https://github.com/reytek1201/SlidePress.co/issues/32)) ✅ · audit 🚧
 
 **Content:** 9:16 Quick Reel MP4 + `tiktok` caption.
 
-**Blockers:** TikTok [Content Posting API](https://developers.tiktok.com/doc/content-posting-api-get-started) app audit before public posting.
+**Status (June 2026):** OAuth, FILE_UPLOAD publish API, and campaign publish panel shipped. TikTok **app audit** pending for public posting; unaudited apps post `SELF_ONLY` (account must be **Private** in TikTok app).
 
-**Reuse from YouTube:** `platform_connections`, `platform_posts`, Settings connected accounts, Publish panel pattern.
+**Reuse from YouTube:** `platform_connections`, `platform_posts`, Settings connected accounts, Publish panel pattern, splash overlay.
 
-**Key work:** TikTok OAuth, Content Posting API **file upload** (`FILE_UPLOAD` — server pulls from Fal export URL then uploads bytes to TikTok), audit package (privacy policy, UX screencasts), caption + hashtag mapping.
+**Key work (done):** TikTok OAuth, Content Posting API file upload, caption + hashtag mapping, publish-readiness + duplicate guard.
+
+**Remaining:** TikTok app audit package for public visibility.
 
 ---
 
-## Instagram Carousel ([#34](https://github.com/reytek1201/SlidePress.co/issues/34))
+## Instagram Carousel ([#34](https://github.com/reytek1201/SlidePress.co/issues/34)) ✅ · Meta review 🚧
 
 **Content:** 4:5 slide images (2–10) + `instagram` caption.
 
-**Status (June 2026):** Carousel publish API + campaign panel shipped (dev/tester accounts). Meta app review pending for public users. Runbook: [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md).
+**Status (June 2026):** Carousel publish API + campaign panel (Step 6) shipped and **tested** (dev/tester accounts). Meta App Review in progress for public users. Runbook: [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md).
 
 **Depends on:** Instagram Reels path (#33) for shared Meta app, OAuth, and account-linking UX.
 
-**Key work:** Child image containers → parent carousel container → poll → publish; 4:5 slide image URLs from Fal CDN.
+**Key work (done):** Child image containers → parent carousel container → poll → publish; 4:5 slide image URLs from Fal CDN; one carousel per campaign (`export_id` null).
 
 ---
 
-## Instagram Reels ([#33](https://github.com/reytek1201/SlidePress.co/issues/33))
+## Instagram Reels ([#33](https://github.com/reytek1201/SlidePress.co/issues/33)) ✅ · Meta review 🚧
 
 **Content:** 9:16 MP4 + `instagram` caption.
 
-**Status (June 2026):** OAuth + Reels publish API shipped (dev/tester accounts). Meta app review pending for public users. Runbook: [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md).
+**Status (June 2026):** OAuth + Reels publish API + splash overlay shipped and **tested** (dev/tester accounts). Meta App Review in progress (`instagram_content_publish`); business entity **KeyMacro LLC** (not a separate SlidePress LLC). Runbook: [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md).
 
 **Blockers:** Meta app review for `instagram_content_publish`; user must have **Instagram Professional** account linked to a **Facebook Page**.
 
-**Key work:** Meta OAuth (`instagram_content_publish`, `pages_show_list`), container create → poll → publish for Reels, public video URL hosting during publish.
+**Key work (done):** Meta OAuth, publish-authorize for `instagram_content_publish`, container create → poll → publish for Reels, public video URL from Fal export.
 
 ---
 
@@ -205,6 +216,6 @@ Plan for ~6 uploads/day on default quota or request an increase before marketing
 | YouTube 0–1 | 1–2 weeks |
 | YouTube 2 | 1 week |
 | YouTube 3 | 1–3 weeks (OAuth verification often dominates) |
-| TikTok | 2–4 weeks + audit wait |
-| Instagram Reels | 2–3 weeks + Meta review |
-| Instagram Carousel | 2–3 weeks (after Reels) |
+| TikTok | 2–4 weeks + audit wait | ✅ code shipped |
+| Instagram Reels | 2–3 weeks + Meta review | ✅ code shipped · review in progress |
+| Instagram Carousel | 2–3 weeks (after Reels) | ✅ code shipped · review in progress |

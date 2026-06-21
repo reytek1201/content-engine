@@ -2,7 +2,9 @@
 
 **Epic:** [#27 Direct Platform Posting](https://github.com/reytek1201/SlidePress.co/issues/27) · **Issues:** [#33 Reels](https://github.com/reytek1201/SlidePress.co/issues/33) · [#34 Carousel](https://github.com/reytek1201/SlidePress.co/issues/34)
 
-**Status (June 2026):** OAuth, Reels publish, and Carousel publish shipped in code. **Meta App Review pending** for `instagram_content_publish` — works for app testers/roles until approved.
+**Status (June 21, 2026):** OAuth, Reels publish, and Carousel publish **shipped and tested** (Reels + carousel confirmed on @slidepress1). **Meta App Review in progress** — submission started via App Review → “Manage messaging & content on Instagram” use case; demo video + final submit pending. Works for app testers/roles until approved.
+
+**Business entity:** Meta app owned by **KeyMacro LLC** (Business Portfolio). Product brand is SlidePress; no separate “SlidePress LLC” required.
 
 ---
 
@@ -27,6 +29,8 @@
 | Item | Value |
 |------|--------|
 | App name | SlidePress Publishing |
+| Business portfolio | KeyMacro LLC |
+| Facebook Page | SlidePress (linked to @slidepress1) |
 | Redirect URI | `https://www.slidepress.co/api/platforms/instagram/callback` |
 | Privacy policy | `https://www.slidepress.co/privacy` |
 | Login method | Facebook Login for Business |
@@ -44,11 +48,15 @@
 ### Submission package
 
 - [x] **Privacy policy** — documents Instagram data access, Reels + carousel posting, deletion
+- [x] **End-to-end test** — Reels + carousel published successfully from SlidePress (June 21, 2026)
 - [ ] **Demo video** — sign in → Connect Instagram → grant publish permission → post Reel → post carousel
 - [ ] **Use-case description** — creators publish campaign Reels and carousels from SlidePress using their own IG Professional account
 - [ ] **Test credentials** — Meta reviewer test user with Page + IG Professional linked
+- [ ] **KeyMacro LLC business verification** — gather business paperwork if Meta requests it
 
-**Where to submit:** [Meta for Developers](https://developers.facebook.com/) → your app → **App Review** → request `instagram_content_publish`
+**Where to submit:** [Meta for Developers](https://developers.facebook.com/) → **SlidePress Publishing** app → **Use cases** → **Manage messaging & content on Instagram** → **App Review** → **Next** through the wizard (video upload is on a later step, not the top-level Publish page).
+
+**Permission test counters:** Meta dashboard may take up to 24 hours to show API test calls as complete after successful publishes.
 
 **Timeline:** Often 1–4 weeks. Keep Development mode + testers until approved.
 
@@ -81,23 +89,23 @@ Common failure: `/me/accounts` empty — user must grant Business integrations f
 
 ### Connect
 
-- [ ] Settings → Connect Instagram → Meta login → returns to Settings with @username
+- [x] Settings → Connect Instagram → Meta login → returns to Settings with @username
 - [ ] Disconnect removes connection
 - [ ] Account deletion revokes tokens and removes row
 
 ### Reels (Step 5)
 
-- [ ] 9:16 video export + Instagram captions required
-- [ ] “Grant publishing permission” flow works
-- [ ] Post to Instagram Reels → splash overlay → published permalink
-- [ ] Duplicate publish blocked for same export
+- [x] 9:16 video export + Instagram captions required
+- [x] “Grant publishing permission” flow works
+- [x] Post to Instagram Reels → splash overlay → published permalink
+- [x] Duplicate publish blocked for same export
 - [ ] New export can be posted again
 
 ### Carousel (Step 6)
 
-- [ ] 4:5 slide images + Instagram captions required
-- [ ] Post carousel → splash overlay → published permalink
-- [ ] One carousel per campaign (re-post requires new campaign)
+- [x] 4:5 slide images + Instagram captions required
+- [x] Post carousel → splash overlay → published permalink
+- [x] One carousel per campaign (re-post requires new campaign)
 
 ### Errors
 
@@ -122,9 +130,10 @@ PLATFORM_TOKEN_ENCRYPTION_KEY=
 
 ## Launch checklist
 
+- [ ] Meta App Review **submitted** (wizard in progress — demo video remaining)
 - [ ] Meta App Review **approved** for `instagram_content_publish`
-- [ ] Carousel migration applied in production
-- [ ] QA checklist signed off on web + iOS
+- [x] Carousel migration applied in production
+- [ ] QA checklist signed off on web + iOS (core Reels + carousel paths ✅)
 - [x] `docs/client-features.md` reflects Instagram posting
 - [x] Campaign list shows **On Instagram** when published
 
