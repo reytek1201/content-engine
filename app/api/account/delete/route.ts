@@ -2,6 +2,7 @@ import {
   deleteUserReferenceStorage,
   deleteUserTtsCacheStorage,
 } from "@/utils/delete-user-storage";
+import { revokeAndDeleteInstagramConnection } from "@/utils/instagram/connection-store";
 import { revokeAndDeleteTikTokConnection } from "@/utils/tiktok/connection-store";
 import { revokeAndDeleteYouTubeConnection } from "@/utils/youtube/connection-store";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
     try {
       await revokeAndDeleteYouTubeConnection(user.id);
       await revokeAndDeleteTikTokConnection(user.id);
+      await revokeAndDeleteInstagramConnection(user.id);
       await deleteUserReferenceStorage(admin, user.id);
       await deleteUserTtsCacheStorage(admin, user.id);
     } catch (storageError) {

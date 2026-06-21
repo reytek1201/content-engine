@@ -162,6 +162,11 @@ TIKTOK_REDIRECT_URI=https://www.slidepress.co/api/platforms/tiktok/callback
 # Optional — default SELF_ONLY (required for unaudited/sandbox apps)
 TIKTOK_PUBLISH_PRIVACY=SELF_ONLY
 
+# Meta OAuth (Instagram + Facebook Page — Facebook Login for Business)
+META_APP_ID=
+META_APP_SECRET=
+META_REDIRECT_URI=https://www.slidepress.co/api/platforms/instagram/callback
+
 # Optional: encrypt platform tokens at rest
 PLATFORM_TOKEN_ENCRYPTION_KEY=
 ```

@@ -74,7 +74,7 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           </li>
           <li>
             <strong className="text-foreground">Connected social accounts (optional)</strong>{" "}
-            — if you connect YouTube or TikTok in Settings, we store OAuth
+            — if you connect YouTube, TikTok, or Instagram in Settings, we store OAuth
             tokens and your account display name so SlidePress can post on your
             behalf when you choose to publish. For YouTube we also record
             publish status (video id, URL, errors) per campaign.
@@ -186,6 +186,26 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           Disconnecting revokes our access tokens. Deleting your SlidePress
           account also revokes TikTok access and removes the connection from our
           database.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-base font-semibold text-foreground">
+          Instagram connection
+        </h2>
+        <p className="mt-3">
+          If you connect an Instagram Professional account (linked to a Facebook
+          Page), SlidePress requests basic profile access to show your username.
+          When you publish, we request posting permission to upload your
+          campaign video as a Reel with your Instagram caption. We store OAuth
+          tokens securely on our servers (not in the mobile app) and record
+          publish status per campaign.
+        </p>
+        <p className="mt-3">
+          You can disconnect Instagram anytime in Settings → Connected accounts.
+          Disconnecting revokes our access tokens. Deleting your SlidePress
+          account also revokes Instagram access and removes the connection from
+          our database.
         </p>
       </section>
 

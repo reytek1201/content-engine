@@ -1,3 +1,4 @@
+import { INSTAGRAM_PUBLISH_SCOPE } from "@/utils/instagram/oauth";
 import { TIKTOK_PUBLISH_SCOPE } from "@/utils/tiktok/oauth";
 import { YOUTUBE_UPLOAD_SCOPE } from "@/utils/youtube/oauth";
 
@@ -31,6 +32,12 @@ export function hasYouTubeUploadScope(scopes: string | null | undefined): boolea
   return parseScopeString(scopes).includes(YOUTUBE_UPLOAD_SCOPE);
 }
 
+export function hasInstagramPublishScope(
+  scopes: string | null | undefined,
+): boolean {
+  return parseScopeString(scopes).includes(INSTAGRAM_PUBLISH_SCOPE);
+}
+
 /** After token refresh, trust the provider response over stored scopes. */
 export function resolveScopesAfterRefresh(
   stored: string | null | undefined,
@@ -58,6 +65,16 @@ export function withoutYouTubeUploadScope(
 ): string | null {
   const filtered = parseScopeString(scopes).filter(
     (scope) => scope !== YOUTUBE_UPLOAD_SCOPE,
+  );
+
+  return filtered.length > 0 ? filtered.join(",") : null;
+}
+
+export function withoutInstagramPublishScope(
+  scopes: string | null | undefined,
+): string | null {
+  const filtered = parseScopeString(scopes).filter(
+    (scope) => scope !== INSTAGRAM_PUBLISH_SCOPE,
   );
 
   return filtered.length > 0 ? filtered.join(",") : null;

@@ -11,7 +11,7 @@ export function resolveSafeReturnPath(returnTo: string | null | undefined): stri
 }
 
 export function buildOAuthSuccessRedirect(input: {
-  platform: "tiktok" | "youtube";
+  platform: "instagram" | "tiktok" | "youtube";
   intent: PlatformOAuthIntent;
   returnTo?: string;
 }): string {
@@ -33,7 +33,7 @@ export function buildOAuthSuccessRedirect(input: {
 }
 
 export function buildOAuthErrorRedirect(input: {
-  platform: "tiktok" | "youtube";
+  platform: "instagram" | "tiktok" | "youtube";
   reason: string;
   returnTo?: string;
 }): string {

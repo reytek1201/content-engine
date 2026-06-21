@@ -11,7 +11,33 @@ interface PlatformStatusResponse {
   error?: string;
 }
 
-type PlatformKey = "youtube" | "tiktok";
+type PlatformKey = "youtube" | "tiktok" | "instagram";
+
+const PLATFORM_KEYS: PlatformKey[] = ["youtube", "tiktok", "instagram"];
+
+const PLATFORM_LABELS: Record<
+  PlatformKey,
+  { name: string; connect: string; disconnect: string; connected: string }
+> = {
+  youtube: {
+    name: "YouTube",
+    connect: "Connect YouTube",
+    disconnect: "Disconnect YouTube",
+    connected: "YouTube channel connected.",
+  },
+  tiktok: {
+    name: "TikTok",
+    connect: "Connect TikTok",
+    disconnect: "Disconnect TikTok",
+    connected: "TikTok account connected.",
+  },
+  instagram: {
+    name: "Instagram",
+    connect: "Connect Instagram",
+    disconnect: "Disconnect Instagram",
+    connected: "Instagram account connected.",
+  },
+};
 
 const PLATFORM_ERROR_MESSAGES: Record<
   PlatformKey,
@@ -46,6 +72,22 @@ const PLATFORM_ERROR_MESSAGES: Record<
     connect: "Could not start TikTok connection. Check server configuration.",
     unknown: "Could not connect TikTok. Try again.",
   },
+  instagram: {
+    state:
+      "Connection timed out or was interrupted. Try Connect Instagram again.",
+    session_mismatch:
+      "Signed in as a different SlidePress account. Sign out and try again.",
+    missing_code: "Meta did not return an authorization code. Try again.",
+    database:
+      "Server database is not ready for Instagram connections. Run the platform_connections migration in Supabase.",
+    account:
+      "No Instagram Professional account linked to a Facebook Page was found. Link one in Meta Business Suite, then try again.",
+    token:
+      "Meta token exchange failed. Check META_APP_ID and META_APP_SECRET in Vercel.",
+    connect:
+      "Could not start Instagram connection. Check server configuration.",
+    unknown: "Could not connect Instagram. Try again.",
+  },
 };
 
 function YouTubeIcon() {
@@ -77,8 +119,21 @@ function TikTokIcon() {
   );
 }
 
+function InstagramIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="h-5 w-5 text-pink-500"
+      aria-hidden
+    >
+      <path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4A5.8 5.8 0 0 1 16.2 22H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6A3.6 3.6 0 0 0 16.4 4H7.6m9.65 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10m0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+    </svg>
+  );
+}
+
 function PlatformConnectionCard({
-  platform,
   title,
   description,
   accountLabel,
@@ -86,10 +141,11 @@ function PlatformConnectionCard({
   connection,
   loading,
   busy,
+  connectLabel,
+  disconnectLabel,
   onConnect,
   onDisconnect,
 }: {
-  platform: PlatformKey;
   title: string;
   description: string;
   accountLabel: string;
@@ -97,13 +153,11 @@ function PlatformConnectionCard({
   connection: PlatformConnectionPublic | null;
   loading: boolean;
   busy: boolean;
+  connectLabel: string;
+  disconnectLabel: string;
   onConnect: () => void;
   onDisconnect: () => void;
 }) {
-  const connectLabel = platform === "youtube" ? "Connect YouTube" : "Connect TikTok";
-  const disconnectLabel =
-    platform === "youtube" ? "Disconnect YouTube" : "Disconnect TikTok";
-
   return (
     <div className="overflow-hidden rounded-xl border border-border/60 bg-secondary/20">
       <div className="flex items-start gap-4 px-4 py-4">
@@ -167,55 +221,59 @@ function PlatformConnectionCard({
   );
 }
 
+type PlatformConnectionState = Record<PlatformKey, PlatformConnectionPublic | null>;
+type PlatformLoadingState = Record<PlatformKey, boolean>;
+
+const INITIAL_CONNECTIONS: PlatformConnectionState = {
+  youtube: null,
+  tiktok: null,
+  instagram: null,
+};
+
+const INITIAL_LOADING: PlatformLoadingState = {
+  youtube: true,
+  tiktok: true,
+  instagram: true,
+};
+
 export default function ConnectedAccountsSettings() {
   const searchParams = useSearchParams();
-  const [youtubeConnection, setYoutubeConnection] =
-    useState<PlatformConnectionPublic | null>(null);
-  const [tiktokConnection, setTiktokConnection] =
-    useState<PlatformConnectionPublic | null>(null);
-  const [loadingYoutube, setLoadingYoutube] = useState(true);
-  const [loadingTiktok, setLoadingTiktok] = useState(true);
+  const [connections, setConnections] =
+    useState<PlatformConnectionState>(INITIAL_CONNECTIONS);
+  const [loading, setLoading] = useState<PlatformLoadingState>(INITIAL_LOADING);
   const [busyPlatform, setBusyPlatform] = useState<PlatformKey | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadPlatformStatus = useCallback(
-    async (platform: PlatformKey) => {
-      const setLoading =
-        platform === "youtube" ? setLoadingYoutube : setLoadingTiktok;
-      const setConnection =
-        platform === "youtube" ? setYoutubeConnection : setTiktokConnection;
+  const loadPlatformStatus = useCallback(async (platform: PlatformKey) => {
+    setLoading((current) => ({ ...current, [platform]: true }));
 
-      setLoading(true);
+    try {
+      const response = await fetch(`/api/platforms/${platform}`);
+      const data = (await response.json()) as PlatformStatusResponse;
 
-      try {
-        const response = await fetch(`/api/platforms/${platform}`);
-        const data = (await response.json()) as PlatformStatusResponse;
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.error ?? `Failed to load ${platform} status`);
-        }
-
-        setConnection(data.connection);
-      } catch (loadError) {
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Failed to load connected accounts",
-        );
-      } finally {
-        setLoading(false);
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? `Failed to load ${platform} status`);
       }
-    },
-    [],
-  );
+
+      setConnections((current) => ({
+        ...current,
+        [platform]: data.connection,
+      }));
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Failed to load connected accounts",
+      );
+    } finally {
+      setLoading((current) => ({ ...current, [platform]: false }));
+    }
+  }, []);
 
   const loadStatus = useCallback(async () => {
     setError(null);
-    await Promise.all([
-      loadPlatformStatus("youtube"),
-      loadPlatformStatus("tiktok"),
-    ]);
+    await Promise.all(PLATFORM_KEYS.map((platform) => loadPlatformStatus(platform)));
   }, [loadPlatformStatus]);
 
   useEffect(() => {
@@ -223,15 +281,11 @@ export default function ConnectedAccountsSettings() {
   }, [loadStatus]);
 
   useEffect(() => {
-    for (const platform of ["youtube", "tiktok"] as const) {
+    for (const platform of PLATFORM_KEYS) {
       const status = searchParams.get(platform);
 
       if (status === "connected") {
-        setMessage(
-          platform === "youtube"
-            ? "YouTube channel connected."
-            : "TikTok account connected.",
-        );
+        setMessage(PLATFORM_LABELS[platform].connected);
         void loadPlatformStatus(platform);
         return;
       }
@@ -240,8 +294,8 @@ export default function ConnectedAccountsSettings() {
         const reason = searchParams.get("reason");
         setError(
           reason
-            ? `${platform === "youtube" ? "YouTube" : "TikTok"} connection was denied: ${reason}`
-            : `${platform === "youtube" ? "YouTube" : "TikTok"} connection was cancelled.`,
+            ? `${PLATFORM_LABELS[platform].name} connection was denied: ${reason}`
+            : `${PLATFORM_LABELS[platform].name} connection was cancelled.`,
         );
         return;
       }
@@ -277,17 +331,12 @@ export default function ConnectedAccountsSettings() {
       if (!response.ok || !data.success) {
         throw new Error(
           data.error ??
-            `Failed to disconnect ${platform === "youtube" ? "YouTube" : "TikTok"}`,
+            `Failed to disconnect ${PLATFORM_LABELS[platform].name}`,
         );
       }
 
-      if (platform === "youtube") {
-        setYoutubeConnection(null);
-        setMessage("YouTube disconnected.");
-      } else {
-        setTiktokConnection(null);
-        setMessage("TikTok disconnected.");
-      }
+      setConnections((current) => ({ ...current, [platform]: null }));
+      setMessage(`${PLATFORM_LABELS[platform].name} disconnected.`);
     } catch (disconnectError) {
       setError(
         disconnectError instanceof Error
@@ -302,14 +351,15 @@ export default function ConnectedAccountsSettings() {
   return (
     <div className="space-y-4">
       <PlatformConnectionCard
-        platform="youtube"
         title="YouTube"
         description="Connect your YouTube channel to post Shorts from SlidePress. Upload permission is requested the first time you publish."
         accountLabel="Channel"
         icon={<YouTubeIcon />}
-        connection={youtubeConnection}
-        loading={loadingYoutube}
+        connection={connections.youtube}
+        loading={loading.youtube}
         busy={busyPlatform === "youtube"}
+        connectLabel={PLATFORM_LABELS.youtube.connect}
+        disconnectLabel={PLATFORM_LABELS.youtube.disconnect}
         onConnect={() => {
           window.location.href = "/api/platforms/youtube/connect";
         }}
@@ -317,18 +367,35 @@ export default function ConnectedAccountsSettings() {
       />
 
       <PlatformConnectionCard
-        platform="tiktok"
         title="TikTok"
         description="Connect your TikTok account to post videos from SlidePress. Posting permission is requested the first time you publish."
         accountLabel="Account"
         icon={<TikTokIcon />}
-        connection={tiktokConnection}
-        loading={loadingTiktok}
+        connection={connections.tiktok}
+        loading={loading.tiktok}
         busy={busyPlatform === "tiktok"}
+        connectLabel={PLATFORM_LABELS.tiktok.connect}
+        disconnectLabel={PLATFORM_LABELS.tiktok.disconnect}
         onConnect={() => {
           window.location.href = "/api/platforms/tiktok/connect";
         }}
         onDisconnect={() => void handleDisconnect("tiktok")}
+      />
+
+      <PlatformConnectionCard
+        title="Instagram"
+        description="Connect your Instagram Professional account (linked to a Facebook Page) to post Reels from SlidePress. Publishing permission is requested the first time you publish."
+        accountLabel="Account"
+        icon={<InstagramIcon />}
+        connection={connections.instagram}
+        loading={loading.instagram}
+        busy={busyPlatform === "instagram"}
+        connectLabel={PLATFORM_LABELS.instagram.connect}
+        disconnectLabel={PLATFORM_LABELS.instagram.disconnect}
+        onConnect={() => {
+          window.location.href = "/api/platforms/instagram/connect";
+        }}
+        onDisconnect={() => void handleDisconnect("instagram")}
       />
 
       {message ? (
