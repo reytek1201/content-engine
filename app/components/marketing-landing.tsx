@@ -1,6 +1,7 @@
 import BrandLogo from "@/app/components/brand-logo";
 import MarketingApps from "@/app/components/marketing/marketing-apps";
 import MarketingFeatures from "@/app/components/marketing/marketing-features";
+import MarketingHeader from "@/app/components/marketing/marketing-header";
 import MarketingHero from "@/app/components/marketing/marketing-hero";
 import MarketingOutputs from "@/app/components/marketing/marketing-outputs";
 import MarketingProTeaser from "@/app/components/marketing/marketing-pro-teaser";
@@ -81,26 +82,7 @@ export default function MarketingLanding() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd) }}
       />
 
-      <header className="page-shell flex items-center justify-between py-5 md:py-6">
-        <BrandLogo href="/" />
-        <nav className="flex items-center gap-1 sm:gap-2">
-          <a
-            href="#download"
-            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground sm:inline"
-          >
-            Download app
-          </a>
-          <Link
-            href="/login"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground"
-          >
-            Sign in
-          </Link>
-          <Link href="/login" className="btn-primary hidden py-2 sm:inline-flex">
-            Start free
-          </Link>
-        </nav>
-      </header>
+      <MarketingHeader />
 
       <main>
         <MarketingHero />

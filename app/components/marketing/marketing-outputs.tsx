@@ -3,6 +3,9 @@ import {
   MicIcon,
   VideoIcon,
 } from "@/app/components/marketing/marketing-icons";
+import MarketingSectionAtmosphere from "@/app/components/marketing/marketing-section-atmosphere";
+import MarketingSectionIntro from "@/app/components/marketing/marketing-section-intro";
+import RevealOnScroll from "@/app/components/marketing/reveal-on-scroll";
 
 const OUTPUTS = [
   {
@@ -30,43 +33,38 @@ const OUTPUTS = [
 
 export default function MarketingOutputs() {
   return (
-    <section className="border-y border-border bg-card/20">
+    <section className="relative overflow-hidden border-y border-border bg-card/20">
+      <MarketingSectionAtmosphere />
       <div className="page-shell py-16 md:py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="brand-kicker">One campaign, three ways to post</p>
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Carousel, narration, or video — you choose
-          </h2>
-          <p className="mt-4 text-base leading-7 text-muted-foreground">
-            Same topic, same workflow. Pick what fits the platform — or export
-            all three without starting over.
-          </p>
-        </div>
+        <MarketingSectionIntro
+          kicker="One campaign, three ways to post"
+          title="Carousel, narration, or video — you choose"
+          description="Same topic, same workflow. Pick what fits the platform — or export all three without starting over."
+        />
 
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           {OUTPUTS.map((output, index) => (
-            <div
-              key={output.title}
-              className="marketing-output-card group relative"
-            >
-              <span className="marketing-output-step" aria-hidden>
-                {index + 1}
-              </span>
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
-                <output.icon className="h-5 w-5" />
-              </span>
-              <div className="mt-4 flex flex-wrap items-baseline gap-2">
-                <h3 className="text-lg font-semibold text-foreground">
-                  {output.title}
-                </h3>
-                <span className="rounded-full border border-border bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {output.format}
+            <RevealOnScroll key={output.title} delay={index * 80}>
+              <div className="marketing-output-card group relative h-full">
+                <span className="marketing-output-step" aria-hidden>
+                  {index + 1}
                 </span>
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
+                  <output.icon className="h-5 w-5" />
+                </span>
+                <div className="mt-4 flex flex-wrap items-baseline gap-2">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {output.title}
+                  </h3>
+                  <span className="rounded-full border border-border bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {output.format}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {output.description}
+                </p>
               </div>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {output.description}
-              </p>
-            </div>
+            </RevealOnScroll>
           ))}
         </div>
       </div>

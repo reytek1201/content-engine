@@ -1,4 +1,6 @@
 import { SparklesIcon } from "@/app/components/marketing/marketing-icons";
+import MarketingSectionIntro from "@/app/components/marketing/marketing-section-intro";
+import RevealOnScroll from "@/app/components/marketing/reveal-on-scroll";
 
 const FEATURES = [
   {
@@ -112,16 +114,11 @@ function FeatureVisual({ type }: { type: (typeof FEATURES)[number]["visual"] }) 
 export default function MarketingFeatures() {
   return (
     <section className="page-shell py-16 md:py-24">
-      <div className="mx-auto max-w-2xl text-center">
-        <p className="brand-kicker">Built for creators, not designers</p>
-        <h2 className="mt-4 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          Everything happens in one simple flow
-        </h2>
-        <p className="mt-4 text-base leading-7 text-muted-foreground">
-          No timelines, layers, or five different apps. If you can type a
-          sentence, you can publish.
-        </p>
-      </div>
+      <MarketingSectionIntro
+        kicker="Built for creators, not designers"
+        title="Everything happens in one simple flow"
+        description="No timelines, layers, or five different apps. If you can type a sentence, you can publish."
+      />
 
       <div className="mt-14 space-y-20">
         {FEATURES.map((feature, index) => (
@@ -129,31 +126,40 @@ export default function MarketingFeatures() {
             key={feature.title}
             className={`grid items-center gap-10 lg:grid-cols-2 lg:gap-16 ${index % 2 === 1 ? "lg:[&>div:first-child]:order-2" : ""}`}
           >
-            <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                {feature.kicker}
-              </p>
-              <h3 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
-                {feature.title}
-              </h3>
-              <p className="mt-3 text-base leading-7 text-muted-foreground">
-                {feature.description}
-              </p>
-              <ul className="mt-5 space-y-2">
-                {feature.bullets.map((bullet) => (
-                  <li
-                    key={bullet}
-                    className="flex items-start gap-2 text-sm text-secondary-foreground"
-                  >
-                    <SparklesIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    {bullet}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className={index % 2 === 1 ? "lg:order-1" : ""}>
+            <RevealOnScroll
+              delay={0}
+              className={index % 2 === 1 ? "lg:order-2" : ""}
+            >
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                  {feature.kicker}
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
+                  {feature.title}
+                </h3>
+                <p className="mt-3 text-base leading-7 text-muted-foreground">
+                  {feature.description}
+                </p>
+                <ul className="mt-5 space-y-2">
+                  {feature.bullets.map((bullet) => (
+                    <li
+                      key={bullet}
+                      className="flex items-start gap-2 text-sm text-secondary-foreground"
+                    >
+                      <SparklesIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </RevealOnScroll>
+            <RevealOnScroll
+              delay={100}
+              emphasize
+              className={index % 2 === 1 ? "lg:order-1" : ""}
+            >
               <FeatureVisual type={feature.visual} />
-            </div>
+            </RevealOnScroll>
           </div>
         ))}
       </div>

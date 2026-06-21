@@ -135,7 +135,7 @@
   }
 
   .marketing-output-card {
-    @apply rounded-2xl border border-border bg-card/40 p-6 transition hover:border-primary/25 hover:bg-card/60;
+    @apply rounded-2xl border border-border bg-card/40 p-6 transition-[transform,border-color,background-color,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:border-primary/25 hover:bg-card/60 hover:shadow-lg hover:shadow-black/20;
   }
 
   .marketing-output-step {
@@ -152,6 +152,22 @@
 
   .marketing-apps-phone-ring {
     @apply rounded-[2.5rem] bg-gradient-to-br from-primary/20 via-transparent to-ring/10 p-4;
+    animation: marketing-ring-pulse 5s ease-in-out infinite;
+  }
+
+  .marketing-section-atmosphere {
+    @apply pointer-events-none absolute inset-0;
+    background: radial-gradient(
+      ellipse 80% 55% at 50% 0%,
+      color-mix(in oklab, var(--primary) 10%, transparent),
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .marketing-section-atmosphere.is-visible {
+    opacity: 1;
   }
 
   .marketing-hero-visual {
@@ -176,18 +192,42 @@
   }
 
   .marketing-slide-fan-left {
-    @apply -left-[4%] top-[12%] z-0 -rotate-12 opacity-80;
+    @apply relative z-0 -rotate-12 opacity-80;
     animation: marketing-float-left 6s ease-in-out infinite;
   }
 
   .marketing-slide-fan-right {
-    @apply -right-[4%] top-[8%] z-0 rotate-12 opacity-70;
+    @apply relative z-0 rotate-12 opacity-70;
     animation: marketing-float-right 6s ease-in-out 1.5s infinite;
   }
 
+  .marketing-hero-parallax-fan-left {
+    @apply absolute -left-[4%] top-[12%] z-0 w-[38%];
+    will-change: transform;
+  }
+
+  .marketing-hero-parallax-fan-right {
+    @apply absolute -right-[4%] top-[8%] z-0 w-[38%];
+    will-change: transform;
+  }
+
+  .marketing-hero-parallax-fan-left .marketing-slide-card,
+  .marketing-hero-parallax-fan-right .marketing-slide-card {
+    @apply relative w-full;
+  }
+
+  .marketing-hero-parallax-phone {
+    @apply absolute left-1/2 top-1/2 z-10 w-[52%];
+    will-change: transform;
+  }
+
   .marketing-phone-frame {
-    @apply absolute left-1/2 top-1/2 z-10 w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] border-2 border-zinc-700 bg-zinc-900 p-1.5 shadow-2xl shadow-black/50;
+    @apply rounded-[1.75rem] border-2 border-zinc-700 bg-zinc-900 p-1.5 shadow-2xl shadow-black/50;
     aspect-ratio: 9 / 19;
+  }
+
+  .marketing-phone-frame-hero {
+    @apply relative w-full;
   }
 
   .marketing-phone-frame-large {
@@ -214,6 +254,48 @@
   .marketing-phone-placeholder-slide {
     @apply rounded-lg border border-border/80 bg-card/60 p-2.5;
   }
+
+  .marketing-reveal {
+    opacity: 0;
+    transform: translateY(1.25rem);
+    transition:
+      opacity 600ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+
+  .marketing-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .marketing-reveal-scale {
+    opacity: 0;
+    transform: translateY(1.25rem) scale(0.96);
+    transition:
+      opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+
+  .marketing-reveal-scale.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .marketing-reveal-emphasize {
+    opacity: 0;
+    transform: translateY(1.25rem) scale(0.98);
+    transition:
+      opacity 600ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+
+  .marketing-reveal-emphasize.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1.02);
+  }
 }
 
 @keyframes marketing-float-left {
@@ -236,9 +318,46 @@
   }
 }
 
+@keyframes marketing-ring-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.015);
+    opacity: 0.92;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marketing-slide-fan-left,
   .marketing-slide-fan-right {
     animation: none;
+  }
+
+  .marketing-apps-phone-ring {
+    animation: none;
+  }
+
+  .marketing-section-atmosphere {
+    opacity: 1;
+    transition: none;
+  }
+
+  .marketing-reveal,
+  .marketing-reveal-scale,
+  .marketing-reveal-emphasize {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    will-change: auto;
+  }
+
+  .marketing-hero-parallax-fan-left,
+  .marketing-hero-parallax-fan-right,
+  .marketing-hero-parallax-phone {
+    transform: none !important;
+    will-change: auto;
   }
 }
