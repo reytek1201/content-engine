@@ -13,6 +13,7 @@ import {
   SettingsSectionLabel,
   UsageIcon,
 } from "@/app/settings/settings-list";
+import SettingsAppVersionFootnote from "@/app/components/settings-app-version-footnote";
 import { useUsageSummary } from "@/app/settings/usage-settings";
 import {
   checkBiometry,
@@ -181,6 +182,8 @@ export default function SettingsHub({ user }: SettingsHubProps) {
                 {signingOut ? "Signing out…" : "Sign out"}
               </button>
             </div>
+
+            <SettingsAppVersionFootnote className="pt-2 pb-4" />
           </div>
         </div>
       </main>

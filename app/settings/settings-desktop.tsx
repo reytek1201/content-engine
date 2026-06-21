@@ -8,6 +8,7 @@ import PasswordResetForm from "@/app/components/password-reset-form";
 import PushSettings from "@/app/components/push-settings";
 import PushTestSection from "@/app/components/push-test-section";
 import SettingsAboutContent from "@/app/components/settings-about";
+import SettingsAppVersionFootnote from "@/app/components/settings-app-version-footnote";
 import AccountSettings from "@/app/settings/account-settings";
 import SettingsSection from "@/app/settings/settings-section";
 import UsageSettings from "@/app/settings/usage-settings";
@@ -87,6 +88,8 @@ export default function SettingsDesktop({
             <SettingsAboutContent variant="card" />
 
             <DeleteAccountSection />
+
+            <SettingsAppVersionFootnote className="pt-4" />
           </div>
         </div>
       </main>

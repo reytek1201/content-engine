@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppVersion } from "@/app/hooks/use-app-version";
+import { formatAppVersionLabel } from "@/utils/app-version";
 import {
   LegalIcon,
   SettingsListExternalRow,
@@ -18,11 +19,7 @@ export default function SettingsAboutContent({
 }: SettingsAboutContentProps) {
   const version = useAppVersion();
 
-  const versionLabel = version
-    ? version.build !== version.version
-      ? `Version ${version.version} (${version.build})`
-      : `Version ${version.version}`
-    : null;
+  const versionLabel = formatAppVersionLabel(version);
 
   const body = (
     <>

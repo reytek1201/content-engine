@@ -14,6 +14,20 @@ export function getWebAppVersion(): string {
   return WEB_VERSION;
 }
 
+export function formatAppVersionLabel(
+  version: AppVersionInfo | null,
+): string | null {
+  if (!version) {
+    return null;
+  }
+
+  if (version.build !== version.version) {
+    return `Version ${version.version} (${version.build})`;
+  }
+
+  return `Version ${version.version}`;
+}
+
 export async function getAppVersionInfo(): Promise<AppVersionInfo> {
   if (!Capacitor.isNativePlatform()) {
     return {
