@@ -146,6 +146,19 @@
     @apply rounded-2xl border border-border bg-gradient-to-br from-card/80 to-background shadow-lg shadow-black/20;
   }
 
+  .marketing-feature-shot {
+    @apply mx-auto w-full max-w-[280px] overflow-hidden rounded-2xl border border-border bg-zinc-950 shadow-lg shadow-black/20 sm:max-w-[300px];
+  }
+
+  .marketing-feature-shot-image {
+    @apply block w-full object-cover object-top;
+    aspect-ratio: 9 / 19;
+  }
+
+  .marketing-slide-card-image {
+    @apply overflow-hidden p-0;
+  }
+
   .marketing-apps-panel {
     @apply rounded-3xl border border-border bg-gradient-to-br from-card/50 to-background p-6 sm:p-10;
   }

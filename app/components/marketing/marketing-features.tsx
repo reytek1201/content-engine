@@ -1,6 +1,7 @@
 import { SparklesIcon } from "@/app/components/marketing/marketing-icons";
 import MarketingSectionIntro from "@/app/components/marketing/marketing-section-intro";
 import RevealOnScroll from "@/app/components/marketing/reveal-on-scroll";
+import { getMarketingFeatureImageUrl } from "@/utils/marketing-assets";
 
 const FEATURES = [
   {
@@ -14,6 +15,7 @@ const FEATURES = [
       "Separate workspaces per brand or client",
     ],
     visual: "topic",
+    imageAlt: "SlidePress new campaign screen with topic and format options",
   },
   {
     kicker: "Step 2",
@@ -26,6 +28,7 @@ const FEATURES = [
       "Preview the full carousel before you publish",
     ],
     visual: "slides",
+    imageAlt: "SlidePress slides workspace showing generated carousel images",
   },
   {
     kicker: "Step 3",
@@ -38,75 +41,15 @@ const FEATURES = [
       "Save to Photos or share from the mobile app",
     ],
     visual: "export",
+    imageAlt: "SlidePress publish screen with captions and export options",
   },
 ] as const;
 
-function FeatureVisual({ type }: { type: (typeof FEATURES)[number]["visual"] }) {
-  if (type === "topic") {
-    return (
-      <div className="marketing-feature-mock p-5">
-        <p className="text-xs font-medium text-muted-foreground">Your topic</p>
-        <p className="mt-2 text-sm font-semibold text-foreground">
-          Why most small businesses waste money on ads
-        </p>
-        <div className="mt-4 flex gap-2">
-          <span className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-            4:5 Carousel
-          </span>
-          <span className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground">
-            5 slides
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (type === "slides") {
-    return (
-      <div className="marketing-feature-mock p-4">
-        <div className="grid grid-cols-3 gap-2">
-          {[1, 2, 3].map((n) => (
-            <div
-              key={n}
-              className={`aspect-[4/5] rounded-lg border ${n === 2 ? "border-primary/50 bg-primary/10" : "border-border bg-card/80"}`}
-            >
-              <div className="flex h-full flex-col justify-end p-2">
-                <span className="text-[8px] font-semibold text-foreground">
-                  Slide {n}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="mt-3 text-center text-[10px] text-muted-foreground">
-          2 of 5 images ready
-        </p>
-      </div>
-    );
-  }
-
+function FeatureScreenshot({ src, alt }: { src: string; alt: string }) {
   return (
-    <div className="marketing-feature-mock p-4">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2">
-          <span className="text-xs font-medium text-foreground">
-            Quick Reel
-          </span>
-          <span className="text-[10px] text-primary">Export video</span>
-        </div>
-        <div className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2">
-          <span className="text-xs font-medium text-foreground">
-            Narration ZIP
-          </span>
-          <span className="text-[10px] text-muted-foreground">Download</span>
-        </div>
-        <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
-          <p className="text-[10px] text-muted-foreground">Instagram caption</p>
-          <p className="mt-1 text-xs text-secondary-foreground line-clamp-2">
-            Here&apos;s the truth about organic reach in 2026…
-          </p>
-        </div>
-      </div>
+    <div className="marketing-feature-shot">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="marketing-feature-shot-image" />
     </div>
   );
 }
@@ -158,7 +101,10 @@ export default function MarketingFeatures() {
               emphasize
               className={index % 2 === 1 ? "lg:order-1" : ""}
             >
-              <FeatureVisual type={feature.visual} />
+              <FeatureScreenshot
+                src={getMarketingFeatureImageUrl(feature.visual)}
+                alt={feature.imageAlt}
+              />
             </RevealOnScroll>
           </div>
         ))}

@@ -1,11 +1,12 @@
 import Link from "next/link";
 import MarketingStoreBadges from "@/app/components/marketing/marketing-store-badges";
-import { PhoneIcon } from "@/app/components/marketing/marketing-icons";
 import RevealOnScroll from "@/app/components/marketing/reveal-on-scroll";
 import { hasAnyStoreLink } from "@/utils/app-store-links";
+import { getMarketingAppsPhoneUrl } from "@/utils/marketing-assets";
 
 export default function MarketingApps() {
   const storesLive = hasAnyStoreLink();
+  const appsPhoneUrl = getMarketingAppsPhoneUrl();
 
   return (
     <section id="download" className="page-shell scroll-mt-20 py-16 md:py-24">
@@ -47,18 +48,13 @@ export default function MarketingApps() {
               <div className="marketing-apps-phone-ring">
                 <div className="marketing-phone-frame marketing-phone-frame-large">
                   <div className="marketing-phone-notch" />
-                  <div className="marketing-phone-screen flex flex-col items-center justify-center gap-3 p-6 text-center">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
-                      <PhoneIcon className="h-7 w-7" />
-                    </span>
-                    <p className="text-sm font-semibold text-foreground">
-                      SlidePress for mobile
-                    </p>
-                    <p className="text-xs leading-5 text-muted-foreground">
-                      {storesLive
-                        ? "Download now and start your first campaign."
-                        : "Launching on iOS and Android soon."}
-                    </p>
+                  <div className="marketing-phone-screen overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={appsPhoneUrl}
+                      alt="SlidePress mobile app"
+                      className="h-full w-full object-cover object-top"
+                    />
                   </div>
                 </div>
               </div>
