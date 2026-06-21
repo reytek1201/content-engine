@@ -14,6 +14,7 @@ export type CampaignOperationKind =
   | "video_export"
   | "youtube_publish"
   | "tiktok_publish"
+  | "instagram_publish"
   | "narration"
   | "zip"
   | "format_variant";
@@ -169,6 +170,21 @@ export function resolveCampaignOperationOverlay(input: {
         ],
         activeStageIndex: timeBasedStageIndex(elapsedSeconds, [0, 20, 90]),
       };
+    case "instagram_publish":
+      return {
+        kind,
+        kicker: "Publishing to Instagram",
+        description:
+          "Sending your Reel to Instagram and waiting for processing to finish.",
+        durationHint: "This can take a few minutes.",
+        errorTitle: "Instagram publish failed",
+        stages: [
+          { id: "upload", label: "Uploading video" },
+          { id: "processing", label: "Processing on Instagram" },
+          { id: "published", label: "Published" },
+        ],
+        activeStageIndex: timeBasedStageIndex(elapsedSeconds, [0, 20, 90]),
+      };
     case "narration":
       return {
         kind,
@@ -218,6 +234,7 @@ export function pickActiveCampaignOperation(input: {
   isExportingVideo: boolean;
   isPublishingYouTube: boolean;
   isPublishingTikTok: boolean;
+  isPublishingInstagram: boolean;
   isGeneratingCaptions: boolean;
   isGeneratingFormat: boolean;
   isExportingAudio: boolean;
@@ -233,6 +250,10 @@ export function pickActiveCampaignOperation(input: {
 
   if (input.isPublishingTikTok) {
     return "tiktok_publish";
+  }
+
+  if (input.isPublishingInstagram) {
+    return "instagram_publish";
   }
 
   if (input.isGeneratingCaptions) {

@@ -119,6 +119,7 @@ export default function CampaignWorkspace({
   const [isGeneratingCaptions, setIsGeneratingCaptions] = useState(false);
   const [isPublishingYouTube, setIsPublishingYouTube] = useState(false);
   const [isPublishingTikTok, setIsPublishingTikTok] = useState(false);
+  const [isPublishingInstagram, setIsPublishingInstagram] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingAudio, setIsExportingAudio] = useState(false);
   const [isExportingVideo, setIsExportingVideo] = useState(false);
@@ -1216,6 +1217,7 @@ export default function CampaignWorkspace({
         isExportingVideo,
         isPublishingYouTube,
         isPublishingTikTok,
+        isPublishingInstagram,
         isGeneratingCaptions,
         isGeneratingFormat,
         isExportingAudio,
@@ -1226,6 +1228,7 @@ export default function CampaignWorkspace({
       isExportingVideo,
       isPublishingYouTube,
       isPublishingTikTok,
+      isPublishingInstagram,
       isGeneratingCaptions,
       isGeneratingFormat,
       isExportingAudio,
@@ -1278,6 +1281,7 @@ export default function CampaignWorkspace({
     onPublishComplete: () => setPublishRefreshKey((current) => current + 1),
     onYouTubePublishingChange: setIsPublishingYouTube,
     onTikTokPublishingChange: setIsPublishingTikTok,
+    onInstagramPublishingChange: setIsPublishingInstagram,
     campaignStatus: campaign.status,
     onGenerateCaptions: handleGenerateCaptions,
     onCopyCaptionField: handleCopyCaptionField,
