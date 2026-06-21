@@ -11,7 +11,7 @@ export const alt = `${siteName} — Carousel slides & AI-narrated video`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const heroPosterPath = "public/marketing/hero-poster.webp";
+const heroPosterPath = "public/marketing/hero-poster-og.png";
 
 async function loadInterFont(weight: 400 | 600 | 700) {
   return readFile(
@@ -30,7 +30,7 @@ export default async function Image() {
     ]);
 
   const logoSrc = `data:image/png;base64,${logoData.toString("base64")}`;
-  const heroPosterSrc = `data:image/webp;base64,${heroPosterData.toString("base64")}`;
+  const heroPosterSrc = `data:image/png;base64,${heroPosterData.toString("base64")}`;
 
   return new ImageResponse(
     (
