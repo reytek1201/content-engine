@@ -230,8 +230,13 @@ export default function NativePushListener() {
 
     const registrationErrorListener = PushNotifications.addListener(
       "registrationError",
-      (registrationError) => {
-        console.error("Push registration failed:", registrationError);
+      (registrationError: { error?: string }) => {
+        const errorMessage =
+          typeof registrationError?.error === "string"
+            ? registrationError.error
+            : "Unknown registration error";
+
+        console.error("Push registration failed:", errorMessage);
         clearRegistrationTimeout();
 
         const existingToken =
@@ -243,7 +248,7 @@ export default function NativePushListener() {
         }
 
         setPushNotificationsEnabled(false);
-        dispatchPushRegistrationFailed("registration_error");
+        dispatchPushRegistrationFailed("registration_error", errorMessage);
       },
     );
 

@@ -181,7 +181,8 @@ export default function PushSettings() {
     }
 
     function handleRegistrationFailed(event: Event) {
-      const detail = (event as CustomEvent<{ reason?: string }>).detail;
+      const detail = (event as CustomEvent<{ reason?: string; message?: string }>)
+        .detail;
 
       if (getStoredPushDeviceToken()) {
         setBusy(false);
@@ -206,8 +207,11 @@ export default function PushSettings() {
       }
 
       if (detail?.reason === "registration_error") {
+        const nativeHint = detail.message
+          ? ` (${detail.message})`
+          : "";
         setError(
-          "Could not register for push notifications. Try turning notifications off and on again, or allow notifications for SlidePress in system settings.",
+          `Could not register for push notifications${nativeHint}. If you installed from TestFlight, install the latest build from Xcode with production push entitlements, then try again.`,
         );
         return;
       }

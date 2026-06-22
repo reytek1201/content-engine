@@ -286,7 +286,7 @@ Notify users in the **native app** when every slide image in a campaign is ready
 **iOS (APNs)**
 
 1. In [Apple Developer](https://developer.apple.com/account/resources/authkeys/list) → create an **APNs Auth Key** (.p8).
-2. In Xcode → App target → **Signing & Capabilities** → enable **Push Notifications** (and use `aps-environment` = `production` for App Store / TestFlight release builds).
+2. In Xcode → App target → **Signing & Capabilities** → enable **Push Notifications**. **Release / TestFlight** builds use `ios/App/App/AppRelease.entitlements` (`aps-environment` = `production`); **Debug** uses `App.entitlements` (`development`). Re-archive after changing entitlements.
 3. Set on Vercel:
    - `APNS_KEY_ID` — Key ID from the .p8 key
    - `APNS_TEAM_ID` — Apple Team ID

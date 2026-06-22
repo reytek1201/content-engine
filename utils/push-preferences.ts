@@ -53,13 +53,18 @@ export function dispatchPushPreferenceChanged(): void {
   window.dispatchEvent(new CustomEvent(PUSH_PREFERENCE_CHANGED_EVENT));
 }
 
-export function dispatchPushRegistrationFailed(reason: string): void {
+export function dispatchPushRegistrationFailed(
+  reason: string,
+  message?: string,
+): void {
   if (typeof window === "undefined") {
     return;
   }
 
   window.dispatchEvent(
-    new CustomEvent(PUSH_REGISTRATION_FAILED_EVENT, { detail: { reason } }),
+    new CustomEvent(PUSH_REGISTRATION_FAILED_EVENT, {
+      detail: { reason, message },
+    }),
   );
 }
 
