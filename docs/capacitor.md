@@ -213,6 +213,8 @@ The iOS app shows **Continue with Apple** only in the native shell (App Store re
 
 **Deploy note:** The shell loads the live web app. Deploy web changes to Vercel, then rebuild the native app after `npm run cap:sync` when adding new Capacitor plugins.
 
+**RevenueCat (in-app purchases):** After `npm install` or any change to `@revenuecat/purchases-capacitor`, run `npm run cap:sync` before building Android. The sync step writes `android/app/src/main/assets/capacitor.plugins.json` (gitignored). Skipping sync produces *"Purchases plugin is not implemented on Android"* even though Gradle lists the dependency.
+
 **Haptics & keyboard (June 2026):** `@capacitor/haptics` drives tab, sheet, and slide selection feedback. `@capacitor/keyboard` plus `visualViewport` handling lifts bottom sheets when text fields are focused. Haptics are no-ops on web; test on a physical device in the Capacitor app.
 
 **Icons & splash:** Run `npm run cap:assets` before App Store / Play Store builds.

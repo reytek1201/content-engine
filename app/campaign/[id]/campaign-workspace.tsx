@@ -67,8 +67,10 @@ import {
   TTS_VIDEO_EXPORT_SUCCESS_DISCLOSURE,
 } from "@/utils/tts/disclosure-copy";
 import {
-  VIDEO_EXPORT_POLL_TIMEOUT_MS,
-  mapPipelineStageToUiStage,
+  pollVideoExport,
+  tryRecoverCompletedExport,
+} from "@/utils/poll-video-export";
+import {
   type VideoExportUiStage,
 } from "@/utils/video-export-stages";
 import {
@@ -196,6 +198,7 @@ export default function CampaignWorkspace({
   const slideFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const justFinishedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const slideIdsRef = useRef(new Set(initialSlides.map((slide) => slide.id)));
+  const activeVideoExportIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const tab = parseCampaignWorkspaceTab(searchParams.get("tab"));
@@ -370,6 +373,49 @@ export default function CampaignWorkspace({
     videoExportReady,
     publishRefreshKey,
   ]);
+
+  useEffect(() => {
+    if (!isNativeApp) {
+      return;
+    }
+
+    async function recoverStaleVideoExportError() {
+      const exportId = activeVideoExportIdRef.current;
+
+      if (!exportId || !videoExportError) {
+        return;
+      }
+
+      const outputUrl = await tryRecoverCompletedExport(
+        exportId,
+        setVideoExportStage,
+      );
+
+      if (!outputUrl) {
+        return;
+      }
+
+      setVideoExportError(null);
+      setPublishRefreshKey((current) => current + 1);
+      setVideoExportMessage(
+        "Your video finished rendering while you were away. Use Download last export on Publish.",
+      );
+    }
+
+    function handleResume() {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      void recoverStaleVideoExportError();
+    }
+
+    document.addEventListener("visibilitychange", handleResume);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleResume);
+    };
+  }, [isNativeApp, videoExportError]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1061,49 +1107,6 @@ export default function CampaignWorkspace({
     }
   }
 
-  async function pollVideoExport(
-    exportId: string,
-    onStageChange: (stage: VideoExportUiStage) => void,
-  ): Promise<string> {
-    const startedAt = Date.now();
-
-    while (Date.now() - startedAt < VIDEO_EXPORT_POLL_TIMEOUT_MS) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const response = await fetch(`/api/exports/${exportId}`);
-      const data = await readJsonResponse<{
-        success?: boolean;
-        export?: {
-          status?: string;
-          stage?: string | null;
-          outputUrl?: string | null;
-          errorMessage?: string | null;
-        };
-        error?: string;
-      }>(response);
-
-      if (!response.ok || !data.success || !data.export) {
-        throw new Error(data.error ?? "Failed to check video export status");
-      }
-
-      if (data.export.stage) {
-        onStageChange(mapPipelineStageToUiStage(data.export.stage));
-      }
-
-      if (data.export.status === "completed" && data.export.outputUrl) {
-        return data.export.outputUrl;
-      }
-
-      if (data.export.status === "failed") {
-        throw new Error(data.export.errorMessage ?? "Video export failed");
-      }
-    }
-
-    throw new Error(
-      "Video export is taking longer than expected. Try again in a few minutes.",
-    );
-  }
-
   function getCampaignVideoFilename(preset: VideoExportPreset = videoPreset): string {
     return getVideoExportFilename(campaign.title, campaign.id, preset);
   }
@@ -1175,6 +1178,9 @@ export default function CampaignWorkspace({
     setVideoExportStage("preparing");
     setIsExportingVideo(true);
 
+    let exportId: string | undefined;
+    let completed = false;
+
     try {
       const response = await fetch("/api/export-video", {
         method: "POST",
@@ -1218,6 +1224,9 @@ export default function CampaignWorkspace({
         throw new Error(data.error ?? "Video export failed");
       }
 
+      exportId = data.exportId;
+      activeVideoExportIdRef.current = exportId;
+
       if (data.fastPath === "image_only") {
         setVideoExportMessage(
           "Scripts unchanged — reusing narration and re-rendering updated slide images.",
@@ -1257,14 +1266,35 @@ export default function CampaignWorkspace({
 
       const blob = await videoResponse.blob();
       await deliverCampaignVideoBlob(blob, filename, "Video downloaded.");
+      completed = true;
+      activeVideoExportIdRef.current = null;
     } catch (exportError) {
-      const message =
-        exportError instanceof Error
-          ? exportError.message
-          : "Something went wrong";
+      if (exportId) {
+        const recoveredUrl = await tryRecoverCompletedExport(
+          exportId,
+          setVideoExportStage,
+        );
 
-      setError(message);
-      setVideoExportError(message);
+        if (recoveredUrl) {
+          setPublishRefreshKey((current) => current + 1);
+          setVideoExportMessage(
+            "Your video finished rendering. Use Download last export on Publish.",
+          );
+          setVideoExportError(null);
+          activeVideoExportIdRef.current = null;
+          completed = true;
+        }
+      }
+
+      if (!completed) {
+        const message =
+          exportError instanceof Error
+            ? exportError.message
+            : "Something went wrong";
+
+        setError(message);
+        setVideoExportError(message);
+      }
     } finally {
       setIsExportingVideo(false);
     }
@@ -2034,6 +2064,7 @@ export default function CampaignWorkspace({
         onDismiss={() => {
           setVideoExportError(null);
           setVideoExportStage("preparing");
+          activeVideoExportIdRef.current = null;
         }}
       />
     </div>

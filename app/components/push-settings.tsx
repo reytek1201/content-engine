@@ -8,6 +8,7 @@ import {
   getStoredPushDeviceToken,
   isPushNotificationsEnabled,
   PUSH_REGISTRATION_FAILED_EVENT,
+  PUSH_REGISTRATION_SUCCESS_EVENT,
   setPushNotificationsEnabled,
   setStoredPushDeviceToken,
 } from "@/utils/push-preferences";
@@ -122,6 +123,7 @@ export default function PushSettings() {
     DEFAULT_PUSH_NOTIFICATION_PREFERENCES,
   );
   const [busy, setBusy] = useState(false);
+  const [activating, setActivating] = useState(false);
   const [preferenceBusyKey, setPreferenceBusyKey] = useState<
     keyof PushNotificationPreferences | null
   >(null);
@@ -142,10 +144,25 @@ export default function PushSettings() {
       return;
     }
 
-    setEnabled(isPushNotificationsEnabled());
+    const storedToken = getStoredPushDeviceToken();
+    const pushEnabled = isPushNotificationsEnabled();
 
-    if (isPushNotificationsEnabled()) {
+    setEnabled(pushEnabled);
+
+    if (pushEnabled && storedToken) {
+      setError(null);
+      setActivating(false);
       void loadPreferences();
+      return;
+    }
+
+    if (pushEnabled && !storedToken) {
+      setActivating(true);
+      setBusy(true);
+      setError(null);
+      dispatchPushPreferenceChanged();
+      void loadPreferences();
+      return;
     }
   }, [isNativeApp, loadPreferences]);
 
@@ -154,10 +171,31 @@ export default function PushSettings() {
       return;
     }
 
+    function handleRegistrationSuccess() {
+      setBusy(false);
+      setActivating(false);
+      setEnabled(true);
+      setError(null);
+      setSuccessMessage("Push notifications are enabled on this device.");
+      void loadPreferences();
+    }
+
     function handleRegistrationFailed(event: Event) {
       const detail = (event as CustomEvent<{ reason?: string }>).detail;
+
+      if (getStoredPushDeviceToken()) {
+        setBusy(false);
+        setActivating(false);
+        setEnabled(true);
+        setError(null);
+        setSuccessMessage("Push notifications are enabled on this device.");
+        return;
+      }
+
       setBusy(false);
+      setActivating(false);
       setEnabled(false);
+      setSuccessMessage(null);
       setPushNotificationsEnabled(false);
 
       if (detail?.reason === "denied") {
@@ -167,9 +205,34 @@ export default function PushSettings() {
         return;
       }
 
+      if (detail?.reason === "registration_error") {
+        setError(
+          "Could not register for push notifications. Try turning notifications off and on again, or allow notifications for SlidePress in system settings.",
+        );
+        return;
+      }
+
+      if (detail?.reason === "registration_timeout") {
+        setError(
+          "Push registration timed out. Check notification permissions for SlidePress in system settings, then try again.",
+        );
+        return;
+      }
+
+      if (detail?.reason === "not_granted") {
+        setError(
+          "Notification permission is required. Turn push notifications on again and tap Allow when prompted.",
+        );
+        return;
+      }
+
       setError("Could not register for push notifications. Try again later.");
     }
 
+    window.addEventListener(
+      PUSH_REGISTRATION_SUCCESS_EVENT,
+      handleRegistrationSuccess,
+    );
     window.addEventListener(
       PUSH_REGISTRATION_FAILED_EVENT,
       handleRegistrationFailed,
@@ -177,11 +240,15 @@ export default function PushSettings() {
 
     return () => {
       window.removeEventListener(
+        PUSH_REGISTRATION_SUCCESS_EVENT,
+        handleRegistrationSuccess,
+      );
+      window.removeEventListener(
         PUSH_REGISTRATION_FAILED_EVENT,
         handleRegistrationFailed,
       );
     };
-  }, [isNativeApp]);
+  }, [isNativeApp, loadPreferences]);
 
   if (isNativeApp !== true) {
     return (
@@ -192,7 +259,7 @@ export default function PushSettings() {
   }
 
   async function handleMasterToggle() {
-    if (busy) {
+    if (busy || activating) {
       return;
     }
 
@@ -210,6 +277,7 @@ export default function PushSettings() {
       setStoredPushDeviceToken(null);
       setPushNotificationsEnabled(false);
       setEnabled(false);
+      setActivating(false);
       dispatchPushPreferenceChanged();
       setSuccessMessage("Push notifications turned off.");
       setBusy(false);
@@ -221,6 +289,7 @@ export default function PushSettings() {
       setPreferences(nextPreferences);
     } catch (loadError) {
       setBusy(false);
+      setActivating(false);
       setError(
         loadError instanceof Error
           ? loadError.message
@@ -229,14 +298,16 @@ export default function PushSettings() {
       return;
     }
 
+    setActivating(true);
     setPushNotificationsEnabled(true);
-    setEnabled(true);
     dispatchPushPreferenceChanged();
     setSuccessMessage(
       "Requesting permission… If prompted, allow notifications to finish setup.",
     );
-    setBusy(false);
+    // Stay busy until NativePushListener dispatches success or failure.
   }
+
+  const masterToggleOn = enabled || activating;
 
   async function handlePreferenceChange(
     key: keyof PushNotificationPreferences,
@@ -280,8 +351,10 @@ export default function PushSettings() {
             Push notifications
           </p>
           <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
-            {enabled
-              ? "Choose which campaign events send alerts to this device."
+            {masterToggleOn
+              ? activating
+                ? "Waiting for permission and device registration…"
+                : "Choose which campaign events send alerts to this device."
               : "Turn on to get alerts when long-running campaign work finishes."}
           </p>
         </div>
@@ -289,23 +362,23 @@ export default function PushSettings() {
         <button
           type="button"
           role="switch"
-          aria-checked={enabled}
-          aria-label={`${enabled ? "Disable" : "Enable"} push notifications`}
-          disabled={busy}
+          aria-checked={masterToggleOn}
+          aria-label={`${masterToggleOn ? "Disable" : "Enable"} push notifications`}
+          disabled={busy || activating}
           onClick={() => void handleMasterToggle()}
           className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
-            enabled ? "bg-primary" : "bg-border"
+            masterToggleOn ? "bg-primary" : "bg-border"
           }`}
         >
           <span
             className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ${
-              enabled ? "translate-x-5" : "translate-x-0.5"
+              masterToggleOn ? "translate-x-5" : "translate-x-0.5"
             }`}
           />
         </button>
       </div>
 
-      {enabled ? (
+      {enabled && !activating ? (
         <div className="mt-4 divide-y divide-border rounded-xl border border-border bg-background/30 px-4">
           <PreferenceToggle
             label="Images ready"
@@ -346,7 +419,7 @@ export default function PushSettings() {
         </div>
       )}
 
-      {successMessage && (
+      {successMessage && !error && (
         <p className="mt-3 text-sm text-emerald-400">{successMessage}</p>
       )}
     </div>

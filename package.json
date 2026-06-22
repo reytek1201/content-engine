@@ -14,7 +14,7 @@
     "cap:assets": "npm run cap:assets:prepare && capacitor-assets generate --ios --android --iconBackgroundColor '#09090b' --iconBackgroundColorDark '#09090b' --splashBackgroundColor '#09090b' --splashBackgroundColorDark '#09090b'",
     "cap:assets:ios": "npm run cap:assets:prepare && capacitor-assets generate --ios --iconBackgroundColor '#09090b' --iconBackgroundColorDark '#09090b' --splashBackgroundColor '#09090b' --splashBackgroundColorDark '#09090b'",
     "cap:assets:android": "npm run cap:assets:prepare && capacitor-assets generate --android --iconBackgroundColor '#09090b' --iconBackgroundColorDark '#09090b' --splashBackgroundColor '#09090b' --splashBackgroundColorDark '#09090b'",
-    "cap:sync": "cap sync && node scripts/patch-ios-capacitor-config.mjs",
+    "cap:sync": "cap sync && node scripts/patch-ios-capacitor-config.mjs && node scripts/verify-capacitor-plugins.mjs",
     "cap:ios": "cap open ios",
     "cap:android": "cap open android"
   },
@@ -60,6 +60,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "sharp": "^0.35.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

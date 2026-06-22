@@ -1,6 +1,6 @@
 # SlidePress — Launch status & next phase
 
-**Last updated:** June 22, 2026
+**Last updated:** June 20, 2026
 
 Single source of truth for where store setup, billing, and platform audits stand — and what to work on next.
 
@@ -18,7 +18,7 @@ Single source of truth for where store setup, billing, and platform audits stand
 | **Web (Vercel)** | ✅ Live at `https://www.slidepress.co` |
 | **iOS TestFlight** | ✅ External beta review passed (build 2+); build **4** uploaded |
 | **iOS App Store** | 🟡 **1.0 draft ready** — build + subs attached; **not submitted** (waiting on platform reviews) |
-| **Android closed testing** | 🟡 AAB `versionCode` **2** uploaded; policy/listing mostly done; submit for review when ready |
+| **Android closed testing** | 🟡 AAB uploaded (`versionCode` **4**); **Play sandbox IAP verified** ([#26](https://github.com/reytek1201/SlidePress.co/issues/26) closed) |
 | **Billing v2 (code)** | ✅ Caps, gating, Stripe + RevenueCat integration in repo |
 | **Billing v2 (prod)** | 🟡 Migrations + Stripe Price IDs may still need applying in Supabase/Vercel |
 | **Platform audits** | 🚧 YouTube OAuth, Meta Instagram, TikTok public posting — **blockers for marketing “direct post”** |
@@ -61,20 +61,20 @@ Single source of truth for where store setup, billing, and platform audits stand
 
 ### Android — Play Console
 
-- [x] Package `co.slidepress.app`, `versionCode` **2**, `versionName` **1.0**
+- [x] Package `co.slidepress.app`, `versionCode` **4**, `versionName` **1.0**
 - [x] Store listing (Productivity), privacy, data safety, content ratings, 18+ audience
 - [x] Subscriptions: `slidepress_creator_monthly`, `slidepress_agency_monthly` ($29.99 / $99.99)
 - [x] RevenueCat Play products linked
 - [x] Signed AAB uploaded to closed/internal testing
 - [ ] Closed testing **submitted for review** (if not already)
-- [ ] License tester sandbox IAP end-to-end ([#26](https://github.com/reytek1201/SlidePress.co/issues/26))
+- [x] License tester sandbox IAP end-to-end ([#26](https://github.com/reytek1201/SlidePress.co/issues/26) — closed Jun 2026)
 - [ ] Child safety declaration — only if Play blocks on Social category (use **Productivity**)
 
 ### Billing implementation (code — Epic #14)
 
 - [x] #15–#24, #22, #23 (iOS ASC setup) — closed
 - [ ] #25 QA checklist + launch docs — open
-- [ ] #26 Google Play subscription QA — open
+- [x] #26 Google Play subscription QA — closed (sandbox purchase → tier upgrade verified)
 
 ---
 
@@ -117,11 +117,12 @@ Run on web + one native device after Phase A migrations:
 - [ ] Downgrade → 7-day connection grace then revoke
 - [ ] Brand limits 1 / 3 / 15
 
-### Phase D — Mobile store QA ([#26](https://github.com/reytek1201/SlidePress.co/issues/26), [#44](https://github.com/reytek1201/SlidePress.co/issues/44))
+### Phase D — Mobile store QA ([#44](https://github.com/reytek1201/SlidePress.co/issues/44))
 
 - [ ] **iOS TestFlight:** smoke test on build 4 (login, campaign, Save to Photos, Settings → Usage paywall UI)
 - [ ] **Android:** closed testing install + smoke test
-- [ ] **IAP sandbox** (after iOS App Store submit + Apple approves subs, or limited sandbox before): Creator + Agency purchase → `usage_balances` updates via webhook
+- [x] **Android IAP sandbox** ([#26](https://github.com/reytek1201/SlidePress.co/issues/26)): license tester purchase → `usage_balances` tier upgrade via RevenueCat webhook
+- [ ] **iOS IAP sandbox** (after App Store submit + Apple approves subs, or limited sandbox before): Creator + Agency purchase → `usage_balances` updates via webhook
 - [ ] Increment iOS build to **5** when shipping `ITSAppUsesNonExemptEncryption` fix
 
 ### Phase E — Launch (when Phases A–D + platform audits acceptable)
@@ -138,7 +139,7 @@ Run on web + one native device after Phase A migrations:
 | Platform | Marketing | Build / versionCode |
 |----------|-----------|---------------------|
 | iOS | 1.0 | **4** (`CURRENT_PROJECT_VERSION`) |
-| Android | 1.0 | **2** (`versionCode`) |
+| Android | 1.0 | **4** (`versionCode`) |
 
 Increment build numbers on every store upload.
 
@@ -148,6 +149,7 @@ Increment build numbers on every store upload.
 
 | Date | Decision |
 |------|----------|
+| Jun 20, 2026 | **Android Play sandbox IAP verified** — #26 closed; purchase upgrades tier via RevenueCat webhook |
 | Jun 22, 2026 | **Do not** submit iOS 1.0 for App Store review until platform audits + QA complete; 1.0 draft with subs attached is correct holding state |
 | Jun 22, 2026 | iOS **manual release** — approval will not auto-publish to App Store |
 | Jun 2026 | v2 pricing locked: web $24/$79, IAP $29.99/$99.99 |

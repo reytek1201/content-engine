@@ -1,10 +1,14 @@
 "use client";
 
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
+import { fetchWithRetry } from "@/utils/fetch-with-retry";
+import { App } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const HEALTH_CHECK_TIMEOUT_MS = 8_000;
 const HEALTH_RECHECK_MS = 30_000;
+const RESUME_DEBOUNCE_MS = 1_500;
+const OFFLINE_FAILURES_BEFORE_SHOW = 2;
 
 async function checkServerReachable(): Promise<boolean> {
   if (typeof window === "undefined") {
@@ -15,24 +19,17 @@ async function checkServerReachable(): Promise<boolean> {
     return false;
   }
 
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(
-    () => controller.abort(),
-    HEALTH_CHECK_TIMEOUT_MS,
-  );
-
   try {
-    const response = await fetch("/api/health", {
+    const response = await fetchWithRetry("/api/health", {
       method: "GET",
       cache: "no-store",
-      signal: controller.signal,
+      attempts: 3,
+      retryDelayMs: 600,
     });
 
     return response.ok;
   } catch {
     return false;
-  } finally {
-    window.clearTimeout(timeoutId);
   }
 }
 
@@ -41,11 +38,28 @@ export default function NativeConnectivity() {
   const [offline, setOffline] = useState(false);
   const [checking, setChecking] = useState(false);
   const recheckTimerRef = useRef<number | null>(null);
+  const consecutiveFailuresRef = useRef(0);
+  const resumeTimerRef = useRef<number | null>(null);
 
-  const runCheck = useCallback(async () => {
+  const runCheck = useCallback(async (options?: { resetFailures?: boolean }) => {
+    if (options?.resetFailures) {
+      consecutiveFailuresRef.current = 0;
+    }
+
     setChecking(true);
     const reachable = await checkServerReachable();
-    setOffline(!reachable);
+
+    if (reachable) {
+      consecutiveFailuresRef.current = 0;
+      setOffline(false);
+    } else {
+      consecutiveFailuresRef.current += 1;
+
+      if (consecutiveFailuresRef.current >= OFFLINE_FAILURES_BEFORE_SHOW) {
+        setOffline(true);
+      }
+    }
+
     setChecking(false);
     return reachable;
   }, []);
@@ -62,6 +76,13 @@ export default function NativeConnectivity() {
       }
     }
 
+    function clearResumeTimer() {
+      if (resumeTimerRef.current !== null) {
+        window.clearTimeout(resumeTimerRef.current);
+        resumeTimerRef.current = null;
+      }
+    }
+
     function scheduleRecheck() {
       clearRecheckTimer();
       recheckTimerRef.current = window.setInterval(() => {
@@ -70,27 +91,59 @@ export default function NativeConnectivity() {
     }
 
     function handleOnline() {
-      void runCheck().then((reachable) => {
-        if (reachable) {
-          scheduleRecheck();
-        }
-      });
+      clearResumeTimer();
+      resumeTimerRef.current = window.setTimeout(() => {
+        void runCheck({ resetFailures: true }).then((reachable) => {
+          if (reachable) {
+            scheduleRecheck();
+          }
+        });
+      }, RESUME_DEBOUNCE_MS);
     }
 
     function handleOffline() {
-      setOffline(true);
+      consecutiveFailuresRef.current += 1;
+
+      if (consecutiveFailuresRef.current >= OFFLINE_FAILURES_BEFORE_SHOW) {
+        setOffline(true);
+      }
+
       clearRecheckTimer();
     }
 
-    void runCheck().then(() => scheduleRecheck());
+    function handleVisibilityChange() {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      handleOnline();
+    }
+
+    void runCheck({ resetFailures: true }).then(() => scheduleRecheck());
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    let appStateListener: { remove: () => void } | undefined;
+
+    if (Capacitor.isNativePlatform()) {
+      void App.addListener("appStateChange", ({ isActive }) => {
+        if (isActive) {
+          handleOnline();
+        }
+      }).then((listener) => {
+        appStateListener = listener;
+      });
+    }
 
     return () => {
       clearRecheckTimer();
+      clearResumeTimer();
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      appStateListener?.remove();
     };
   }, [isNativeApp, runCheck]);
 
@@ -128,7 +181,7 @@ export default function NativeConnectivity() {
           type="button"
           disabled={checking}
           onClick={() => {
-            void runCheck().then((reachable) => {
+            void runCheck({ resetFailures: true }).then((reachable) => {
               if (reachable) {
                 window.location.reload();
               }

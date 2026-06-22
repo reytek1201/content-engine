@@ -3,6 +3,7 @@ const PUSH_DEVICE_TOKEN_KEY = "slidepress-push-device-token";
 
 export const PUSH_PREFERENCE_CHANGED_EVENT = "slidepress-push-preference-changed";
 export const PUSH_REGISTRATION_FAILED_EVENT = "slidepress-push-registration-failed";
+export const PUSH_REGISTRATION_SUCCESS_EVENT = "slidepress-push-registration-success";
 
 export function isPushNotificationsEnabled(): boolean {
   if (typeof window === "undefined") {
@@ -60,4 +61,12 @@ export function dispatchPushRegistrationFailed(reason: string): void {
   window.dispatchEvent(
     new CustomEvent(PUSH_REGISTRATION_FAILED_EVENT, { detail: { reason } }),
   );
+}
+
+export function dispatchPushRegistrationSuccess(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent(PUSH_REGISTRATION_SUCCESS_EVENT));
 }
