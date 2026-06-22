@@ -2,9 +2,11 @@
 
 import { Capacitor } from "@capacitor/core";
 import type {
+  CustomerInfo,
   PurchasesPackage,
   PurchasesOffering,
 } from "@revenuecat/purchases-capacitor";
+import type { Tier } from "@/utils/plan-limits";
 
 // ─── Platform helpers ─────────────────────────────────────────────────────────
 
@@ -65,18 +67,45 @@ export async function getRCOffering(): Promise<PurchasesOffering | null> {
   return offerings.current ?? null;
 }
 
+// ─── Entitlements ─────────────────────────────────────────────────────────────
+
+export function tierFromRCCustomerInfo(
+  customerInfo: CustomerInfo | null | undefined,
+): Tier | null {
+  if (!customerInfo?.entitlements?.active) {
+    return null;
+  }
+
+  const active = customerInfo.entitlements.active;
+
+  if (active.agency?.isActive) {
+    return "agency";
+  }
+
+  if (active.creator?.isActive) {
+    return "creator";
+  }
+
+  return null;
+}
+
 // ─── Purchase ─────────────────────────────────────────────────────────────────
 
 export async function purchaseRCPackage(pkg: PurchasesPackage): Promise<{
   success: boolean;
   cancelled: boolean;
+  tier?: Tier | null;
   error?: string;
 }> {
   const { Purchases } = await import("@revenuecat/purchases-capacitor");
 
   try {
-    await Purchases.purchasePackage({ aPackage: pkg });
-    return { success: true, cancelled: false };
+    const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
+    return {
+      success: true,
+      cancelled: false,
+      tier: tierFromRCCustomerInfo(customerInfo),
+    };
   } catch (err: unknown) {
     const rcErr = err as { userCancelled?: boolean; message?: string };
     if (rcErr?.userCancelled) {
@@ -94,13 +123,17 @@ export async function purchaseRCPackage(pkg: PurchasesPackage): Promise<{
 
 export async function restoreRCPurchases(): Promise<{
   success: boolean;
+  tier?: Tier | null;
   error?: string;
 }> {
   const { Purchases } = await import("@revenuecat/purchases-capacitor");
 
   try {
-    await Purchases.restorePurchases();
-    return { success: true };
+    const { customerInfo } = await Purchases.restorePurchases();
+    return {
+      success: true,
+      tier: tierFromRCCustomerInfo(customerInfo),
+    };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Restore failed";
     return { success: false, error: message };

@@ -2,12 +2,17 @@
 
 import SettingsSection from "@/app/settings/settings-section";
 import type { UsageSummary } from "@/types/usage";
+import {
+  fetchUsageSummary,
+  waitForUsageTierChange,
+} from "@/utils/client-usage";
 import { isNativeAppRuntime } from "@/utils/is-native-app";
 import {
   formatPlanPriceLabel,
   getPlanFeatureBullets,
   getPlanHighlight,
   type PaidTier,
+  type Tier,
 } from "@/utils/plan-limits";
 import { Capacitor } from "@capacitor/core";
 import Link from "next/link";
@@ -198,9 +203,16 @@ const RC_PACKAGE_ID: Record<"creator" | "agency", string> = {
 interface NativeUpgradeButtonProps {
   tier: "creator" | "agency";
   currentTier: string;
+  disabled?: boolean;
+  onPurchaseComplete: (expectedTier: "creator" | "agency") => Promise<void>;
 }
 
-function NativeUpgradeButton({ tier, currentTier }: NativeUpgradeButtonProps) {
+function NativeUpgradeButton({
+  tier,
+  currentTier,
+  disabled = false,
+  onPurchaseComplete,
+}: NativeUpgradeButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -243,10 +255,10 @@ function NativeUpgradeButton({ tier, currentTier }: NativeUpgradeButtonProps) {
         throw new Error(result.error ?? "Purchase failed");
       }
 
-      // Success — tier update arrives via RevenueCat webhook; reload to reflect.
-      window.location.reload();
+      await onPurchaseComplete(tier);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
       setLoading(false);
     }
   }
@@ -264,7 +276,7 @@ function NativeUpgradeButton({ tier, currentTier }: NativeUpgradeButtonProps) {
       <button
         type="button"
         onClick={() => void handlePurchase()}
-        disabled={loading}
+        disabled={loading || disabled}
         className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-60 ${
           isDowngrade
             ? "border border-border text-secondary-foreground hover:border-ring/60 hover:text-foreground"
@@ -316,10 +328,14 @@ function NativeSubscriptionActions({
   showManage,
   restoreMessage,
   onRestoreMessage,
+  onRestoreComplete,
+  disabled = false,
 }: {
   showManage: boolean;
   restoreMessage: string | null;
   onRestoreMessage: (message: string | null) => void;
+  onRestoreComplete: () => Promise<void>;
+  disabled?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -332,8 +348,8 @@ function NativeSubscriptionActions({
       const result = await restoreRCPurchases();
 
       if (result.success) {
-        onRestoreMessage("Purchases restored. Reloading…");
-        setTimeout(() => window.location.reload(), 1500);
+        await onRestoreComplete();
+        onRestoreMessage("Subscription restored.");
       } else {
         onRestoreMessage(result.error ?? "Nothing to restore");
       }
@@ -351,7 +367,7 @@ function NativeSubscriptionActions({
         <button
           type="button"
           onClick={() => void handleRestore()}
-          disabled={loading}
+          disabled={loading || disabled}
           className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Restoring…" : "Restore purchases"}
@@ -373,7 +389,34 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
   const [usageLoading, setUsageLoading] = useState(true);
   const [usageError, setUsageError] = useState<string | null>(null);
   const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
+  const [activatingPlan, setActivatingPlan] = useState(false);
   const isNative = isNativeAppRuntime();
+
+  async function syncUsageAfterBillingChange(
+    previousTier: Tier,
+    expectedTier?: Tier,
+  ): Promise<void> {
+    setActivatingPlan(true);
+    setUsageError(null);
+
+    try {
+      const updated = await waitForUsageTierChange(previousTier, {
+        expectedTier,
+      });
+
+      if (updated) {
+        setUsage(updated);
+      }
+
+      if (!updated || updated.tier === previousTier) {
+        setUsageError(
+          "Purchase succeeded. Your plan may take up to a minute to update. Reopen Settings if credits look stale.",
+        );
+      }
+    } finally {
+      setActivatingPlan(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -383,19 +426,14 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
       setUsageError(null);
 
       try {
-        const response = await fetch("/api/usage");
-        const data = (await response.json()) as {
-          success: boolean;
-          usage?: UsageSummary;
-          error?: string;
-        };
+        const nextUsage = await fetchUsageSummary();
 
-        if (!response.ok || !data.success || !data.usage) {
-          throw new Error(data.error ?? "Failed to load usage");
+        if (!nextUsage) {
+          throw new Error("Failed to load usage");
         }
 
         if (!cancelled) {
-          setUsage(data.usage);
+          setUsage(nextUsage);
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -427,6 +465,16 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
 
   const body = (
     <>
+      {activatingPlan ? (
+        <div
+          className="mb-4 flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-foreground"
+          role="status"
+        >
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          Activating your subscription…
+        </div>
+      ) : null}
+
       {usageLoading ? (
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -461,6 +509,10 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
                 showManage={!usage.isLifetimeTier}
                 restoreMessage={restoreMessage}
                 onRestoreMessage={setRestoreMessage}
+                disabled={activatingPlan}
+                onRestoreComplete={async () => {
+                  await syncUsageAfterBillingChange(usage.tier);
+                }}
               />
             ) : !usage.isLifetimeTier ? (
               <ManageSubscriptionButton />
@@ -573,7 +625,17 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
                       </ul>
                       <div className="mt-4">
                         {isNative ? (
-                          <NativeUpgradeButton tier={planTier} currentTier={usage.tier} />
+                          <NativeUpgradeButton
+                            tier={planTier}
+                            currentTier={usage.tier}
+                            disabled={activatingPlan}
+                            onPurchaseComplete={async (expectedTier) => {
+                              await syncUsageAfterBillingChange(
+                                usage.tier,
+                                expectedTier,
+                              );
+                            }}
+                          />
                         ) : (
                           <UpgradeButton tier={planTier} currentTier={usage.tier} />
                         )}
