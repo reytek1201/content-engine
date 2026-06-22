@@ -279,14 +279,14 @@ Notify users in the **native app** when every slide image in a campaign is ready
 **Android (FCM)**
 
 1. Create a [Firebase](https://console.firebase.google.com/) project.
-2. Add an **Android** app with package `co.slidepress.app` → download `google-services.json` → place in `android/app/` (gitignored; see `google-services.json.example`).
+2. Add an **Android** app with package `co.slidepress.app` → download `google-services.json` → place in `android/app/` (gitignored; see `google-services.json.example`). **Required before building the AAB** — without it, Gradle skips the Google Services plugin and push registration fails in the app.
 3. Create a **service account** with Firebase Cloud Messaging API access.
 4. Set `FCM_SERVICE_ACCOUNT_JSON` on Vercel (base64-encoded service account JSON) **or** `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY`.
 
 **iOS (APNs)**
 
 1. In [Apple Developer](https://developer.apple.com/account/resources/authkeys/list) → create an **APNs Auth Key** (.p8).
-2. In Xcode → App target → **Signing & Capabilities** → enable **Push Notifications**. **Release / TestFlight** builds use `ios/App/App/AppRelease.entitlements` (`aps-environment` = `production`); **Debug** uses `App.entitlements` (`development`). Re-archive after changing entitlements.
+2. In Xcode → App target → **Signing & Capabilities** → enable **Push Notifications** (use `aps-environment` = `production` for App Store / TestFlight release builds).
 3. Set on Vercel:
    - `APNS_KEY_ID` — Key ID from the .p8 key
    - `APNS_TEAM_ID` — Apple Team ID

@@ -17,6 +17,13 @@
 		"StatusBar": {
 			"style": "DARK",
 			"backgroundColor": "#09090b"
+		},
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
 		}
 	},
 	"packageClassList": [
@@ -32,6 +39,7 @@
 		"SharePlugin",
 		"StatusBarPlugin",
 		"PurchasesPlugin",
-		"SecureStoragePlugin"
+		"SecureStoragePlugin",
+		"NativeAppleSignInPlugin"
 	]
 }

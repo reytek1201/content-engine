@@ -13,6 +13,7 @@ import {
   setStoredPushDeviceToken,
 } from "@/utils/push-preferences";
 import { useCallback, useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 
 async function unregisterPushToken(token: string) {
   await fetch("/api/push/register", {
@@ -207,11 +208,17 @@ export default function PushSettings() {
       }
 
       if (detail?.reason === "registration_error") {
-        const nativeHint = detail.message
-          ? ` (${detail.message})`
-          : "";
+        const nativeHint = detail.message ? ` (${detail.message})` : "";
+
+        if (Capacitor.getPlatform() === "android") {
+          setError(
+            `Could not register for push notifications${nativeHint}. Add google-services.json to android/app/ (from Firebase), run npm run cap:sync, rebuild the signed AAB, and install from Play internal testing.`,
+          );
+          return;
+        }
+
         setError(
-          `Could not register for push notifications${nativeHint}. If you installed from TestFlight, install the latest build from Xcode with production push entitlements, then try again.`,
+          `Could not register for push notifications${nativeHint}. Try turning notifications off and on again, or allow notifications for SlidePress in system settings.`,
         );
         return;
       }

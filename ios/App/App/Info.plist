@@ -49,10 +49,6 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>SlidePress uses your camera so you can photograph your product, logo, or style reference for campaigns.</string>
 	<key>NSFaceIDUsageDescription</key>
