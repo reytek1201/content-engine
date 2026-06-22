@@ -70,6 +70,7 @@ import {
   pollVideoExport,
   tryRecoverCompletedExport,
 } from "@/utils/poll-video-export";
+import { setBiometricLockDeferred } from "@/utils/biometric-lock-defer";
 import {
   type VideoExportUiStage,
 } from "@/utils/video-export-stages";
@@ -199,6 +200,17 @@ export default function CampaignWorkspace({
   const justFinishedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const slideIdsRef = useRef(new Set(initialSlides.map((slide) => slide.id)));
   const activeVideoExportIdRef = useRef<string | null>(null);
+
+  const syncVideoExportBiometricDefer = useCallback(() => {
+    setBiometricLockDeferred(
+      "video_export",
+      isExportingVideo || Boolean(activeVideoExportIdRef.current),
+    );
+  }, [isExportingVideo]);
+
+  useEffect(() => {
+    syncVideoExportBiometricDefer();
+  }, [syncVideoExportBiometricDefer]);
 
   useEffect(() => {
     const tab = parseCampaignWorkspaceTab(searchParams.get("tab"));
@@ -1226,6 +1238,7 @@ export default function CampaignWorkspace({
 
       exportId = data.exportId;
       activeVideoExportIdRef.current = exportId;
+      syncVideoExportBiometricDefer();
 
       if (data.fastPath === "image_only") {
         setVideoExportMessage(
@@ -1268,6 +1281,7 @@ export default function CampaignWorkspace({
       await deliverCampaignVideoBlob(blob, filename, "Video downloaded.");
       completed = true;
       activeVideoExportIdRef.current = null;
+      syncVideoExportBiometricDefer();
     } catch (exportError) {
       if (exportId) {
         const recoveredUrl = await tryRecoverCompletedExport(
@@ -1282,6 +1296,7 @@ export default function CampaignWorkspace({
           );
           setVideoExportError(null);
           activeVideoExportIdRef.current = null;
+          syncVideoExportBiometricDefer();
           completed = true;
         }
       }
@@ -2065,6 +2080,7 @@ export default function CampaignWorkspace({
           setVideoExportError(null);
           setVideoExportStage("preparing");
           activeVideoExportIdRef.current = null;
+          syncVideoExportBiometricDefer();
         }}
       />
     </div>

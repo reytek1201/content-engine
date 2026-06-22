@@ -16,6 +16,7 @@ import {
   restoreSessionFromKeychain,
   resumeSupabaseAutoRefresh,
 } from "@/utils/biometric-session";
+import { isBiometricLockDeferred } from "@/utils/biometric-lock-defer";
 import { storeRefreshToken } from "@/utils/secure-token-store";
 import { createClient } from "@/utils/supabase/client";
 import { App } from "@capacitor/app";
@@ -312,7 +313,9 @@ export default function BiometricGate() {
       ({ isActive }) => {
         if (!isActive) {
           backgroundedAtRef.current = Date.now();
-          void pauseSupabaseAutoRefresh(supabase);
+          if (!isBiometricLockDeferred()) {
+            void pauseSupabaseAutoRefresh(supabase);
+          }
           return;
         }
 
@@ -323,7 +326,7 @@ export default function BiometricGate() {
 
         const elapsed = Date.now() - backgroundedAt;
 
-        if (elapsed < BACKGROUND_GRACE_MS) {
+        if (elapsed < BACKGROUND_GRACE_MS || isBiometricLockDeferred()) {
           void syncKeychainFromSession();
           void resumeSupabaseAutoRefresh(supabase);
           return;

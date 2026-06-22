@@ -77,8 +77,10 @@ export default function CampaignVideoPanel({
     return null;
   }
 
-  const exportControlsDisabled =
+  const exportButtonDisabled =
     disabled || isExportingVideo || isDownloadingLastExport || !canStartNewExport;
+  const configurationDisabled =
+    disabled || isExportingVideo || isDownloadingLastExport;
 
   const isSilentPreset = videoPreset === "silent_captions";
   const showFormatChooser =
@@ -126,7 +128,7 @@ export default function CampaignVideoPanel({
             {(["4:5", "9:16"] as const).map((aspectRatio) => {
               const isActive = videoExportAspectRatio === aspectRatio;
               const formatDisabled =
-                exportControlsDisabled || isFormatDisabled(aspectRatio);
+                configurationDisabled || isFormatDisabled(aspectRatio);
 
               return (
                 <button
@@ -177,7 +179,7 @@ export default function CampaignVideoPanel({
             <button
               key={preset.id}
               type="button"
-              disabled={exportControlsDisabled}
+              disabled={configurationDisabled}
               onClick={() => onPresetChange(preset.id)}
               className={`rounded-xl border px-3 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
                 isActive
@@ -212,7 +214,7 @@ export default function CampaignVideoPanel({
                 <button
                   key={option.id}
                   type="button"
-                  disabled={exportControlsDisabled}
+                  disabled={configurationDisabled}
                   onClick={() => onVoiceQualityChange(option.id)}
                   className={`rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                     isActive
@@ -234,7 +236,7 @@ export default function CampaignVideoPanel({
 
       <button
         type="button"
-        disabled={exportControlsDisabled}
+        disabled={exportButtonDisabled}
         onClick={onExportVideo}
         className="btn-primary mt-4 w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
       >

@@ -18,7 +18,7 @@ Single source of truth for where store setup, billing, and platform audits stand
 | **Web (Vercel)** | ✅ Live at `https://www.slidepress.co` |
 | **iOS TestFlight** | ✅ External beta review passed (build 2+); build **4** uploaded |
 | **iOS App Store** | 🟡 **1.0 draft ready** — build + subs attached; **not submitted** (waiting on platform reviews) |
-| **Android closed testing** | 🟡 AAB uploaded (`versionCode` **4**); **Play sandbox IAP verified** ([#26](https://github.com/reytek1201/SlidePress.co/issues/26) closed) |
+| **Android closed testing** | 🟡 AAB uploaded (`versionCode` **8**); **Play sandbox IAP verified** ([#26](https://github.com/reytek1201/SlidePress.co/issues/26) closed) |
 | **Billing v2 (code)** | ✅ Caps, gating, Stripe + RevenueCat integration in repo |
 | **Billing v2 (prod)** | 🟡 Migrations + Stripe Price IDs may still need applying in Supabase/Vercel |
 | **Platform audits** | 🚧 YouTube OAuth, Meta Instagram, TikTok public posting — **blockers for marketing “direct post”** |
@@ -61,7 +61,7 @@ Single source of truth for where store setup, billing, and platform audits stand
 
 ### Android — Play Console
 
-- [x] Package `co.slidepress.app`, `versionCode` **4**, `versionName` **1.0**
+- [x] Package `co.slidepress.app`, `versionCode` **8**, `versionName` **1.0**
 - [x] Store listing (Productivity), privacy, data safety, content ratings, 18+ audience
 - [x] Subscriptions: `slidepress_creator_monthly`, `slidepress_agency_monthly` ($29.99 / $99.99)
 - [x] RevenueCat Play products linked
@@ -138,8 +138,8 @@ Run on web + one native device after Phase A migrations:
 
 | Platform | Marketing | Build / versionCode |
 |----------|-----------|---------------------|
-| iOS | 1.0 | **4** (`CURRENT_PROJECT_VERSION`) |
-| Android | 1.0 | **4** (`versionCode`) |
+| iOS | 1.0 | **8** (`CURRENT_PROJECT_VERSION`) |
+| Android | 1.0 | **8** (`versionCode`) |
 
 Increment build numbers on every store upload.
 
