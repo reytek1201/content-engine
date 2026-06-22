@@ -1,6 +1,8 @@
 "use client";
 
 import type { PlatformConnectionPublic } from "@/types/platform-connection";
+import type { UsageSummary } from "@/types/usage";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
@@ -14,6 +16,14 @@ interface PlatformStatusResponse {
 type PlatformKey = "youtube" | "tiktok" | "instagram";
 
 const PLATFORM_KEYS: PlatformKey[] = ["youtube", "tiktok", "instagram"];
+
+function formatGraceDeadline(until: string): string {
+  return new Date(until).toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 const PLATFORM_LABELS: Record<
   PlatformKey,
@@ -56,6 +66,8 @@ const PLATFORM_ERROR_MESSAGES: Record<
     token:
       "Google token exchange failed. Check YouTube Client ID and secret in Vercel.",
     connect: "Could not start YouTube connection. Check server configuration.",
+    platform_limit:
+      "Your plan includes one platform connection. Disconnect your current account to switch, or upgrade in Settings → Usage.",
     unknown: "Could not connect YouTube. Try again.",
   },
   tiktok: {
@@ -70,6 +82,8 @@ const PLATFORM_ERROR_MESSAGES: Record<
     token:
       "TikTok token exchange failed. Check Client key and secret in Vercel.",
     connect: "Could not start TikTok connection. Check server configuration.",
+    platform_limit:
+      "Your plan includes one platform connection. Disconnect your current account to switch, or upgrade in Settings → Usage.",
     unknown: "Could not connect TikTok. Try again.",
   },
   instagram: {
@@ -86,6 +100,8 @@ const PLATFORM_ERROR_MESSAGES: Record<
       "Meta token exchange failed. Check META_APP_ID and META_APP_SECRET in Vercel.",
     connect:
       "Could not start Instagram connection. Check server configuration.",
+    platform_limit:
+      "Your plan includes one platform connection. Disconnect your current account to switch, or upgrade in Settings → Usage.",
     unknown: "Could not connect Instagram. Try again.",
   },
 };
@@ -143,6 +159,8 @@ function PlatformConnectionCard({
   busy,
   connectLabel,
   disconnectLabel,
+  connectBlocked,
+  connectBlockedMessage,
   onConnect,
   onDisconnect,
 }: {
@@ -155,6 +173,8 @@ function PlatformConnectionCard({
   busy: boolean;
   connectLabel: string;
   disconnectLabel: string;
+  connectBlocked?: boolean;
+  connectBlockedMessage?: string;
   onConnect: () => void;
   onDisconnect: () => void;
 }) {
@@ -206,6 +226,19 @@ function PlatformConnectionCard({
           >
             {busy ? "Disconnecting…" : disconnectLabel}
           </button>
+        ) : connectBlocked ? (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {connectBlockedMessage ??
+                "Your plan includes one platform connection. Disconnect your current account to switch, or upgrade for all platforms."}
+            </p>
+            <Link
+              href="/settings/usage"
+              className="inline-flex items-center justify-center rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/15"
+            >
+              Upgrade plan
+            </Link>
+          </div>
         ) : (
           <button
             type="button"
@@ -244,6 +277,23 @@ export default function ConnectedAccountsSettings() {
   const [busyPlatform, setBusyPlatform] = useState<PlatformKey | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [usage, setUsage] = useState<UsageSummary | null>(null);
+
+  const loadUsage = useCallback(async () => {
+    try {
+      const response = await fetch("/api/usage");
+      const data = (await response.json()) as {
+        success: boolean;
+        usage?: UsageSummary;
+      };
+
+      if (response.ok && data.success && data.usage) {
+        setUsage(data.usage);
+      }
+    } catch {
+      // Connection gating falls back to server-side enforcement only.
+    }
+  }, []);
 
   const loadPlatformStatus = useCallback(async (platform: PlatformKey) => {
     setLoading((current) => ({ ...current, [platform]: true }));
@@ -273,8 +323,11 @@ export default function ConnectedAccountsSettings() {
 
   const loadStatus = useCallback(async () => {
     setError(null);
-    await Promise.all(PLATFORM_KEYS.map((platform) => loadPlatformStatus(platform)));
-  }, [loadPlatformStatus]);
+    await Promise.all([
+      loadUsage(),
+      ...PLATFORM_KEYS.map((platform) => loadPlatformStatus(platform)),
+    ]);
+  }, [loadPlatformStatus, loadUsage]);
 
   useEffect(() => {
     void loadStatus();
@@ -337,6 +390,7 @@ export default function ConnectedAccountsSettings() {
 
       setConnections((current) => ({ ...current, [platform]: null }));
       setMessage(`${PLATFORM_LABELS[platform].name} disconnected.`);
+      void loadUsage();
     } catch (disconnectError) {
       setError(
         disconnectError instanceof Error
@@ -348,8 +402,60 @@ export default function ConnectedAccountsSettings() {
     }
   }
 
+  function connectBlockedFor(platform: PlatformKey): boolean {
+    if (!usage || connections[platform]) {
+      return false;
+    }
+
+    return !usage.platformConnections.canConnect[platform];
+  }
+
   return (
     <div className="space-y-4">
+      {usage && usage.platformConnections.limit === 1 ? (
+        <p className="text-sm text-muted-foreground">
+          {usage.platformConnections.count} of {usage.platformConnections.limit}{" "}
+          platform connection
+          {usage.platformConnections.count === 1
+            ? " used on your Free plan."
+            : " on your Free plan."}{" "}
+          {usage.platformConnections.canConnectMore ? (
+            <>Pick one platform to connect.</>
+          ) : (
+            <>
+              Disconnect your current account to switch, or{" "}
+              <Link href="/settings/usage" className="text-primary underline">
+                upgrade
+              </Link>{" "}
+              for YouTube, TikTok, and Instagram.
+            </>
+          )}
+        </p>
+      ) : null}
+
+      {usage?.platformConnections.grace.inGracePeriod &&
+      usage.platformConnections.grace.until ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          <p className="font-medium text-amber-50">
+            Platform connection grace period
+          </p>
+          <p className="mt-1 text-amber-100/90">
+            Your plan downgraded to Free with {usage.platformConnections.count}{" "}
+            connected platforms. You can publish from{" "}
+            {usage.platformConnections.grace.primaryPlatform
+              ? PLATFORM_LABELS[usage.platformConnections.grace.primaryPlatform]
+                  .name
+              : "your earliest connection"}{" "}
+            until {formatGraceDeadline(usage.platformConnections.grace.until)}.
+            Disconnect the accounts you do not want to keep, or{" "}
+            <Link href="/settings/usage" className="text-primary underline">
+              upgrade
+            </Link>{" "}
+            to keep all three.
+          </p>
+        </div>
+      ) : null}
+
       <PlatformConnectionCard
         title="YouTube"
         description="Connect your YouTube channel to post Shorts from SlidePress. Upload permission is requested the first time you publish."
@@ -360,6 +466,7 @@ export default function ConnectedAccountsSettings() {
         busy={busyPlatform === "youtube"}
         connectLabel={PLATFORM_LABELS.youtube.connect}
         disconnectLabel={PLATFORM_LABELS.youtube.disconnect}
+        connectBlocked={connectBlockedFor("youtube")}
         onConnect={() => {
           window.location.href = "/api/platforms/youtube/connect";
         }}
@@ -376,6 +483,7 @@ export default function ConnectedAccountsSettings() {
         busy={busyPlatform === "tiktok"}
         connectLabel={PLATFORM_LABELS.tiktok.connect}
         disconnectLabel={PLATFORM_LABELS.tiktok.disconnect}
+        connectBlocked={connectBlockedFor("tiktok")}
         onConnect={() => {
           window.location.href = "/api/platforms/tiktok/connect";
         }}
@@ -392,6 +500,7 @@ export default function ConnectedAccountsSettings() {
         busy={busyPlatform === "instagram"}
         connectLabel={PLATFORM_LABELS.instagram.connect}
         disconnectLabel={PLATFORM_LABELS.instagram.disconnect}
+        connectBlocked={connectBlockedFor("instagram")}
         onConnect={() => {
           window.location.href = "/api/platforms/instagram/connect";
         }}

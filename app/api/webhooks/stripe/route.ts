@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/utils/supabase/admin";
+import { applyTierEntitlement } from "@/utils/apply-tier-entitlement";
 import {
   getStripe,
   resolvePriceId,
@@ -43,18 +44,11 @@ async function applyTier(
   tier: string,
   periodEnd: number | null,
 ): Promise<void> {
-  const admin = createAdminClient();
   const periodEndIso = periodEnd
     ? new Date(periodEnd * 1000).toISOString()
     : null;
 
-  const { error } = await admin.rpc("apply_tier_entitlement", {
-    p_user_id: userId,
-    p_tier: tier,
-    p_period_end: periodEndIso,
-  });
-
-  if (error) throw new Error(`apply_tier_entitlement failed: ${error.message}`);
+  await applyTierEntitlement(userId, tier, periodEndIso);
 }
 
 async function getUserIdFromCustomer(

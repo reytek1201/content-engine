@@ -16,6 +16,8 @@ import { buildInstagramCaption } from "@/utils/instagram/video-metadata";
 import { resolveCarouselSlidesForCampaign } from "@/utils/platforms/resolve-carousel-slides";
 import { hasInstagramPublishScope } from "@/utils/platforms/scopes";
 import type { PlatformCaption } from "@/types/captions";
+import { assertPlatformPublishAllowed } from "@/utils/platform-connection-limits";
+import { isUsageLimitError } from "@/utils/usage-limits";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -58,6 +60,8 @@ export async function POST(request: Request) {
     }
 
     const { campaignId } = parsed.data;
+
+    await assertPlatformPublishAllowed(user.id, "instagram");
 
     const connection = await getInstagramConnectionRow(user.id);
 
@@ -254,6 +258,10 @@ export async function POST(request: Request) {
         },
         { status: 403 },
       );
+    }
+
+    if (isUsageLimitError(error)) {
+      return NextResponse.json(error.toJSON(), { status: 429 });
     }
 
     const message =

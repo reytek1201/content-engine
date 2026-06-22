@@ -12,6 +12,8 @@ import {
   buildOAuthSuccessRedirect,
 } from "@/utils/platforms/oauth-return";
 import { hasTikTokPublishScope } from "@/utils/platforms/scopes";
+import { assertPlatformConnectAllowed } from "@/utils/platform-connection-limits";
+import { isUsageLimitError } from "@/utils/usage-limits";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -81,6 +83,8 @@ export async function GET(request: NextRequest) {
     const profile = await fetchTikTokUserInfo(tokens.access_token);
     const existing = await getTikTokConnectionRow(userId);
 
+    await assertPlatformConnectAllowed(userId, "tiktok");
+
     await upsertTikTokConnection({
       userId,
       accessToken: tokens.access_token,
@@ -112,6 +116,16 @@ export async function GET(request: NextRequest) {
       }),
     );
   } catch (error) {
+    if (isUsageLimitError(error)) {
+      return NextResponse.redirect(
+        buildOAuthErrorRedirect({
+          platform: "tiktok",
+          reason: "platform_limit",
+          returnTo,
+        }),
+      );
+    }
+
     console.error("TikTok OAuth callback error:", error);
 
     const message = error instanceof Error ? error.message.toLowerCase() : "";

@@ -19,6 +19,8 @@ import {
 } from "@/utils/tiktok/publish-settings";
 import { estimateExportDurationSeconds } from "@/utils/tiktok/video-metadata";
 import { parseVideoExportMetadata } from "@/utils/fal-video";
+import { assertPlatformPublishAllowed } from "@/utils/platform-connection-limits";
+import { isUsageLimitError } from "@/utils/usage-limits";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -74,6 +76,8 @@ export async function POST(request: Request) {
     }
 
     const { campaignId, exportId, publishSettings } = parsed.data;
+
+    await assertPlatformPublishAllowed(user.id, "tiktok");
 
     const connection = await getTikTokConnectionRow(user.id);
 
@@ -291,6 +295,10 @@ export async function POST(request: Request) {
         },
         { status: 403 },
       );
+    }
+
+    if (isUsageLimitError(error)) {
+      return NextResponse.json(error.toJSON(), { status: 429 });
     }
 
     const message =

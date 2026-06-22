@@ -19,6 +19,7 @@ import {
 } from "@/utils/tiktok/video-metadata";
 import type { PlatformCaption } from "@/types/captions";
 import { parseVideoExportMetadata } from "@/utils/fal-video";
+import { getPlatformConnectionSummary } from "@/utils/platform-connection-limits";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -64,6 +65,9 @@ export async function GET(request: Request) {
     const connection = await getTikTokConnectionPublic(user.id);
     const connectionRow = await getTikTokConnectionRow(user.id);
     let hasPublishScope = hasTikTokPublishScope(connectionRow?.scopes);
+    const platformConnections = await getPlatformConnectionSummary(user.id);
+    const tierAllowed = platformConnections.canPublish.tiktok;
+    const canConnectPlatform = platformConnections.canConnect.tiktok;
 
     if (connectionRow && hasPublishScope) {
       try {
@@ -166,12 +170,16 @@ export async function GET(request: Request) {
       creatorInfoError,
       canPublish:
         Boolean(connection) &&
+        tierAllowed &&
         hasPublishScope &&
         Boolean(captionRow) &&
         hasVideoExport &&
         Boolean(creatorInfo) &&
         !alreadyPublished &&
         !isUploading,
+      tierAllowed,
+      canConnectPlatform,
+      upgradeUrl: "/settings/usage",
       postForCurrentExport,
     });
   } catch (error) {

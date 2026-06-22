@@ -4,6 +4,7 @@ import {
   getTikTokConnectionRow,
   revokeAndDeleteTikTokConnection,
 } from "@/utils/tiktok/connection-store";
+import { maybeClearPlatformConnectionGrace } from "@/utils/platform-connection-grace";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -69,6 +70,7 @@ export async function DELETE() {
     }
 
     await revokeAndDeleteTikTokConnection(user.id);
+    await maybeClearPlatformConnectionGrace(user.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

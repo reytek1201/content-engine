@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/utils/supabase/admin";
+import { applyTierEntitlement } from "@/utils/apply-tier-entitlement";
 import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
@@ -75,18 +76,11 @@ async function applyTier(
   tier: string,
   expirationMs: number | null | undefined,
 ): Promise<void> {
-  const admin = createAdminClient();
   const periodEndIso = expirationMs
     ? new Date(expirationMs).toISOString()
     : null;
 
-  const { error } = await admin.rpc("apply_tier_entitlement", {
-    p_user_id: userId,
-    p_tier: tier,
-    p_period_end: periodEndIso,
-  });
-
-  if (error) throw new Error(`apply_tier_entitlement failed: ${error.message}`);
+  await applyTierEntitlement(userId, tier, periodEndIso);
 }
 
 async function storeRCAppUserId(

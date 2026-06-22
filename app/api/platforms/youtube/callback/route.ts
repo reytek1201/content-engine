@@ -9,6 +9,8 @@ import {
   buildOAuthSuccessRedirect,
 } from "@/utils/platforms/oauth-return";
 import { hasYouTubeUploadScope } from "@/utils/platforms/scopes";
+import { assertPlatformConnectAllowed } from "@/utils/platform-connection-limits";
+import { isUsageLimitError } from "@/utils/usage-limits";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -78,6 +80,8 @@ export async function GET(request: NextRequest) {
     const channel = await fetchYouTubeChannel(tokens.access_token);
     const existing = await getYouTubeConnectionRow(userId);
 
+    await assertPlatformConnectAllowed(userId, "youtube");
+
     await upsertYouTubeConnection({
       userId,
       accessToken: tokens.access_token,
@@ -109,6 +113,16 @@ export async function GET(request: NextRequest) {
       }),
     );
   } catch (error) {
+    if (isUsageLimitError(error)) {
+      return NextResponse.redirect(
+        buildOAuthErrorRedirect({
+          platform: "youtube",
+          reason: "platform_limit",
+          returnTo,
+        }),
+      );
+    }
+
     console.error("YouTube OAuth callback error:", error);
 
     const message = error instanceof Error ? error.message.toLowerCase() : "";

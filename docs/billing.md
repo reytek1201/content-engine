@@ -58,9 +58,7 @@ Paid subscription tiers with credit-based usage enforcement, dual payment rails 
 
 ---
 
-## Platform connections (v2 — not yet enforced)
-
-Today all tiers can connect all three platforms. v2 adds a **connection cap**, not a separate credit pool.
+## Platform connections (v2 — connect + publish enforced)
 
 | Rule | Behavior |
 |------|----------|
@@ -356,11 +354,13 @@ Customers on old $19 / $49 Prices **keep that rate** until they cancel or switch
 
 ### Platform gating
 
-- [ ] `maxPlatformConnections` per tier in `plan-limits.ts`
-- [ ] Guard connect routes + OAuth callbacks
-- [ ] Guard publish routes (YouTube, TikTok, Instagram)
-- [ ] Connected accounts UI: locked cards + upgrade CTA on free
-- [ ] Downgrade webhook: enforce pick-1-connection flow
+- [x] `maxPlatformConnections` per tier in `plan-limits.ts`
+- [x] Guard connect routes + OAuth callbacks
+- [x] Guard publish routes (YouTube, TikTok, Instagram reel + carousel)
+- [x] Guard publish-authorize / upload-authorize routes
+- [x] Connected accounts UI: locked cards + upgrade CTA on free (Phase 2)
+- [x] Downgrade webhook: 7-day grace + auto-revoke extras (Phase 4)
+- [ ] Apply migration `20260624000001_platform_connection_grace.sql` in Supabase
 
 ### QA
 

@@ -13,6 +13,7 @@ import {
   isPlatformPostInFlight,
 } from "@/utils/platform-post-store";
 import { resolveCarouselSlidesForCampaign } from "@/utils/platforms/resolve-carousel-slides";
+import { getPlatformConnectionSummary } from "@/utils/platform-connection-limits";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -58,6 +59,9 @@ export async function GET(request: Request) {
     const connection = await getInstagramConnectionPublic(user.id);
     const connectionRow = await getInstagramConnectionRow(user.id);
     const hasPublishScope = hasInstagramPublishScope(connectionRow?.scopes);
+    const platformConnections = await getPlatformConnectionSummary(user.id);
+    const tierAllowed = platformConnections.canPublish.instagram;
+    const canConnectPlatform = platformConnections.canConnect.instagram;
 
     const { data: captionRow } = await supabase
       .from("platform_captions")
@@ -125,12 +129,16 @@ export async function GET(request: Request) {
       slidePreviewUrl,
       canPublish:
         Boolean(connection) &&
+        tierAllowed &&
         hasPublishScope &&
         Boolean(captionRow) &&
         hasCarouselSlides &&
         slideCountValid &&
         !alreadyPublished &&
         !isUploading,
+      tierAllowed,
+      canConnectPlatform,
+      upgradeUrl: "/settings/usage",
       postForCarousel,
     });
   } catch (error) {

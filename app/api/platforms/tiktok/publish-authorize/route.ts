@@ -6,6 +6,8 @@ import {
 } from "@/utils/tiktok/oauth";
 import { createTikTokOAuthState } from "@/utils/tiktok/oauth-state";
 import { buildOAuthErrorRedirect } from "@/utils/platforms/oauth-return";
+import { assertPlatformConnectAllowed } from "@/utils/platform-connection-limits";
+import { isUsageLimitError } from "@/utils/usage-limits";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -28,6 +30,8 @@ export async function GET(request: NextRequest) {
 
     getTikTokOAuthConfig();
 
+    await assertPlatformConnectAllowed(user.id, "tiktok");
+
     const state = createTikTokOAuthState(user.id, {
       returnTo,
       intent: "publish",
@@ -36,6 +40,16 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(authUrl);
   } catch (error) {
+    if (isUsageLimitError(error)) {
+      return NextResponse.redirect(
+        buildOAuthErrorRedirect({
+          platform: "tiktok",
+          reason: "platform_limit",
+          returnTo: returnTo ?? undefined,
+        }),
+      );
+    }
+
     console.error("TikTok publish authorize error:", error);
 
     return NextResponse.redirect(

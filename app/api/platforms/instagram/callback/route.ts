@@ -13,6 +13,8 @@ import {
   buildOAuthSuccessRedirect,
 } from "@/utils/platforms/oauth-return";
 import { hasInstagramPublishScope } from "@/utils/platforms/scopes";
+import { assertPlatformConnectAllowed } from "@/utils/platform-connection-limits";
+import { isUsageLimitError } from "@/utils/usage-limits";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -84,6 +86,8 @@ export async function GET(request: NextRequest) {
       (await fetchGrantedInstagramScopes(tokens.access_token)) ?? null;
     const existing = await getInstagramConnectionRow(userId);
 
+    await assertPlatformConnectAllowed(userId, "instagram");
+
     await upsertInstagramConnection({
       userId,
       accessToken: tokens.access_token,
@@ -116,6 +120,16 @@ export async function GET(request: NextRequest) {
       }),
     );
   } catch (error) {
+    if (isUsageLimitError(error)) {
+      return NextResponse.redirect(
+        buildOAuthErrorRedirect({
+          platform: "instagram",
+          reason: "platform_limit",
+          returnTo,
+        }),
+      );
+    }
+
     console.error("Instagram OAuth callback error:", error);
 
     const message = error instanceof Error ? error.message.toLowerCase() : "";

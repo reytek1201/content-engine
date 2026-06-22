@@ -25,6 +25,28 @@ export interface UsageBrands {
   canCreate: boolean;
 }
 
+export interface UsagePlatformConnections {
+  count: number;
+  limit: number;
+  canConnectMore: boolean;
+  canConnect: {
+    youtube: boolean;
+    tiktok: boolean;
+    instagram: boolean;
+  };
+  canPublish: {
+    youtube: boolean;
+    tiktok: boolean;
+    instagram: boolean;
+  };
+  grace: {
+    until: string | null;
+    inGracePeriod: boolean;
+    expiredPendingEnforcement: boolean;
+    primaryPlatform: "youtube" | "tiktok" | "instagram" | null;
+  };
+}
+
 export interface UsageSummary {
   tier: Tier;
   planLabel: string;
@@ -40,6 +62,7 @@ export interface UsageSummary {
   canExportAudio: boolean;
   canCreateBrand: boolean;
   brands: UsageBrands;
+  platformConnections: UsagePlatformConnections;
   /** ISO date — next renewal for paid tiers; null for free (credits never refill). */
   resetsAt: string | null;
   /** True for free tier (lifetime credits, no monthly reset). */

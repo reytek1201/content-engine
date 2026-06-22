@@ -6,6 +6,8 @@ import {
 } from "@/utils/instagram/oauth";
 import { createInstagramOAuthState } from "@/utils/instagram/oauth-state";
 import { buildOAuthErrorRedirect } from "@/utils/platforms/oauth-return";
+import { assertPlatformConnectAllowed } from "@/utils/platform-connection-limits";
+import { isUsageLimitError } from "@/utils/usage-limits";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -28,6 +30,8 @@ export async function GET(request: NextRequest) {
 
     getInstagramOAuthConfig();
 
+    await assertPlatformConnectAllowed(user.id, "instagram");
+
     const state = createInstagramOAuthState(user.id, {
       returnTo,
       intent: "publish",
@@ -36,6 +40,16 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(authUrl);
   } catch (error) {
+    if (isUsageLimitError(error)) {
+      return NextResponse.redirect(
+        buildOAuthErrorRedirect({
+          platform: "instagram",
+          reason: "platform_limit",
+          returnTo: returnTo ?? undefined,
+        }),
+      );
+    }
+
     console.error("Instagram publish authorize error:", error);
 
     return NextResponse.redirect(

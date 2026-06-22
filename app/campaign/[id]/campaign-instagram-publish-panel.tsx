@@ -1,6 +1,7 @@
 "use client";
 
 import CampaignInstagramReadinessChecklist from "@/app/campaign/[id]/campaign-instagram-readiness-checklist";
+import PlatformTierUpgradeNotice from "@/app/campaign/[id]/platform-tier-upgrade-notice";
 import { getInstagramPublishErrorMessage } from "@/utils/instagram/publish-errors";
 import { buildPlatformAuthorizeUrl } from "@/utils/platforms/oauth-return";
 import type { VerticalFormatPublishState } from "@/utils/slide-aspect-images";
@@ -21,6 +22,9 @@ interface PublishReadinessResponse {
   alreadyPublished: boolean;
   isUploading: boolean;
   canPublish: boolean;
+  tierAllowed?: boolean;
+  canConnectPlatform?: boolean;
+  upgradeUrl?: string;
   postForCurrentExport: PlatformPostPublic | null;
   error?: string;
 }
@@ -290,7 +294,13 @@ export default function CampaignInstagramPublishPanel({
   let helperText = "Post your 9:16 Quick Reel with your Instagram caption.";
 
   if (!readiness.connected) {
-    helperText = "Connect Instagram in Settings, then post your Reel.";
+    helperText =
+      readiness.canConnectPlatform === false
+        ? "Your plan includes one platform connection. Upgrade to connect YouTube, TikTok, and Instagram."
+        : "Connect Instagram in Settings, then post your Reel.";
+  } else if (!readiness.tierAllowed) {
+    helperText =
+      "Your plan allows publishing from one platform. Disconnect other accounts or upgrade to post to Instagram.";
   } else if (verticalFormatPublishState === "needs_add") {
     helperText =
       "Add 9:16 slides first (banner above), then export a vertical Quick Reel.";
@@ -333,11 +343,27 @@ export default function CampaignInstagramPublishPanel({
 
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         {!readiness.connected ? (
+          readiness.canConnectPlatform === false ? (
+            <Link
+              href={readiness.upgradeUrl ?? "/settings/usage"}
+              className="btn-primary inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto sm:px-6"
+            >
+              Upgrade to connect Instagram
+            </Link>
+          ) : (
+            <Link
+              href="/settings/connected-accounts"
+              className="btn-primary inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto sm:px-6"
+            >
+              Connect Instagram
+            </Link>
+          )
+        ) : !readiness.tierAllowed ? (
           <Link
-            href="/settings/connected-accounts"
+            href={readiness.upgradeUrl ?? "/settings/usage"}
             className="btn-primary inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto sm:px-6"
           >
-            Connect Instagram
+            Upgrade to post to Instagram
           </Link>
         ) : needsPublishScope ? (
           <button
@@ -387,6 +413,12 @@ export default function CampaignInstagramPublishPanel({
         <div className="mt-3 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-3 py-2.5 text-xs text-emerald-200">
           {message}
         </div>
+      ) : null}
+
+      {!readiness.connected && readiness.canConnectPlatform === false ? (
+        <PlatformTierUpgradeNotice message="Free includes one platform connection. Disconnect your current account in Settings to switch, or upgrade for all three platforms." />
+      ) : readiness.connected && readiness.tierAllowed === false ? (
+        <PlatformTierUpgradeNotice message="Publishing to Instagram requires upgrading or removing extra connected accounts in Settings." />
       ) : null}
 
       {error ? (

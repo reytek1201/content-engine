@@ -1,6 +1,7 @@
 import type { UsageSummary } from "@/types/usage";
 import { getPlanLabel, getPlanLimits, isLifetimeTier } from "@/utils/plan-limits";
 import type { Tier } from "@/utils/plan-limits";
+import { getPlatformConnectionSummary } from "@/utils/platform-connection-limits";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -77,7 +78,8 @@ export async function getUsageSummary(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<UsageSummary> {
-  const [balance, campaignResult, brandResult] = await Promise.all([
+  const [balance, campaignResult, brandResult, platformConnections] =
+    await Promise.all([
     fetchBalance(supabase, userId),
     supabase
       .from("campaigns")
@@ -87,6 +89,7 @@ export async function getUsageSummary(
       .from("brands")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId),
+    getPlatformConnectionSummary(userId),
   ]);
 
   const tier = balance.tier as Tier;
@@ -125,6 +128,7 @@ export async function getUsageSummary(
       limit: brandLimit,
       canCreate: brandCount < brandLimit,
     },
+    platformConnections,
     resetsAt: balance.current_period_end ?? null,
     isLifetimeTier: isLifetimeTier(tier),
     totalCampaigns: campaignResult.count ?? 0,
