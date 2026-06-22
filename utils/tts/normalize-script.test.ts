@@ -33,8 +33,8 @@ describe("normalizeVoiceoverScript", () => {
 
   it("expands currency", () => {
     assert.equal(
-      normalizeVoiceoverScript("Plans start at $19 per month."),
-      "Plans start at 19 dollars per month.",
+      normalizeVoiceoverScript("Plans start at $24 per month."),
+      "Plans start at 24 dollars per month.",
     );
   });
 

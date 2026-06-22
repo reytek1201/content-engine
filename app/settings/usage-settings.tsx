@@ -3,6 +3,12 @@
 import SettingsSection from "@/app/settings/settings-section";
 import type { UsageSummary } from "@/types/usage";
 import { isNativeAppRuntime } from "@/utils/is-native-app";
+import {
+  formatPlanPriceLabel,
+  getPlanFeatureBullets,
+  getPlanHighlight,
+  type PaidTier,
+} from "@/utils/plan-limits";
 import { Capacitor } from "@capacitor/core";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -52,45 +58,13 @@ function CreditTile({ label, remaining, limit, isLifetime }: CreditTileProps) {
   );
 }
 
-const PLAN_FEATURES: Record<
-  string,
-  { price: string; highlight: string; features: string[] }
-> = {
-  free: {
-    price: "Free",
-    highlight: "Get started",
-    features: [
-      "3 lifetime campaigns",
-      "10 slide regenerations",
-      "5 voice previews",
-      "1 brand workspace",
-    ],
-  },
-  creator: {
-    price: "$19 / mo",
-    highlight: "Most popular",
-    features: [
-      "15 campaigns / month",
-      "30 slide regenerations",
-      "5 video exports",
-      "30 voice previews",
-      "5 narration exports",
-      "3 brand workspaces",
-    ],
-  },
-  agency: {
-    price: "$49 / mo",
-    highlight: "High volume",
-    features: [
-      "50 campaigns / month",
-      "100 slide regenerations",
-      "15 video exports",
-      "60 voice previews",
-      "15 narration exports",
-      "15 brand workspaces",
-    ],
-  },
-};
+function planCardInfo(tier: PaidTier, isNative: boolean) {
+  return {
+    price: formatPlanPriceLabel(tier, isNative ? "iap" : "web"),
+    highlight: getPlanHighlight(tier),
+    features: getPlanFeatureBullets(tier),
+  };
+}
 
 // ─── Web upgrade / manage (Stripe) ───────────────────────────────────────────
 
@@ -560,8 +534,7 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
               </h3>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {(["creator", "agency"] as const).map((planTier) => {
-
-                  const info = PLAN_FEATURES[planTier];
+                  const info = planCardInfo(planTier, isNative);
                   const isCurrent = usage.tier === planTier;
 
                   return (
