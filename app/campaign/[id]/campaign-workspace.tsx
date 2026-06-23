@@ -56,6 +56,7 @@ import {
   shareCampaignZip,
 } from "@/utils/native-slide-export";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCampaignWidgetSync } from "@/app/hooks/use-widget-sync";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
 import type { VoiceQuality } from "@/utils/tts/types";
@@ -1770,6 +1771,72 @@ export default function CampaignWorkspace({
     onSaveAllToPhotos: handleSaveAllToPhotos,
     onAddVerticalFormat: () => setAddFormatSheetOpen(true),
   };
+
+  const widgetJourneyInput = useMemo(
+    () => ({
+      slideCount: journeyProps.slideCount,
+      imagesReadyCount: journeyProps.imagesReadyCount,
+      imagesComplete: journeyProps.imagesComplete,
+      isGeneratingImages: journeyProps.isGeneratingImages,
+      isStartingImages: journeyProps.isStartingImages,
+      captionsCount: journeyProps.captionsCount,
+      canGenerateImages: journeyProps.canGenerateImages,
+      canGenerateCaptions: journeyProps.canGenerateCaptions,
+      isGeneratingCaptions: journeyProps.isGeneratingCaptions,
+      isExporting: journeyProps.isExporting,
+      isExportingAudio: journeyProps.isExportingAudio,
+      hasVoiceoverScripts: journeyProps.hasVoiceoverScripts,
+      isSavingAllPhotos: journeyProps.isSavingAllPhotos,
+      saveAllPhotosProgress: journeyProps.saveAllPhotosProgress,
+      videoExportReady: journeyProps.videoExportReady,
+      verticalFormatPublishState: journeyProps.verticalFormatPublishState,
+      verticalVideoExportReady: journeyProps.verticalVideoExportReady,
+      hasVideoCredits: journeyProps.hasVideoCredits,
+      hasVideoExport: journeyProps.hasVideoExport,
+      youtubeAlreadyPublished: journeyProps.youtubeAlreadyPublished,
+      youtubeWatchUrl: journeyProps.youtubeWatchUrl,
+      tiktokAlreadyPublished: journeyProps.tiktokAlreadyPublished,
+      tiktokProfileUrl: journeyProps.tiktokProfileUrl,
+      instagramAlreadyPublished: journeyProps.instagramAlreadyPublished,
+      instagramProfileUrl: journeyProps.instagramProfileUrl,
+      isExportingVideo: journeyProps.isExportingVideo,
+    }),
+    [
+      journeyProps.slideCount,
+      journeyProps.imagesReadyCount,
+      journeyProps.imagesComplete,
+      journeyProps.isGeneratingImages,
+      journeyProps.isStartingImages,
+      journeyProps.captionsCount,
+      journeyProps.canGenerateImages,
+      journeyProps.canGenerateCaptions,
+      journeyProps.isGeneratingCaptions,
+      journeyProps.isExporting,
+      journeyProps.isExportingAudio,
+      journeyProps.hasVoiceoverScripts,
+      journeyProps.isSavingAllPhotos,
+      journeyProps.saveAllPhotosProgress,
+      journeyProps.videoExportReady,
+      journeyProps.verticalFormatPublishState,
+      journeyProps.verticalVideoExportReady,
+      journeyProps.hasVideoCredits,
+      journeyProps.hasVideoExport,
+      journeyProps.youtubeAlreadyPublished,
+      journeyProps.youtubeWatchUrl,
+      journeyProps.tiktokAlreadyPublished,
+      journeyProps.tiktokProfileUrl,
+      journeyProps.instagramAlreadyPublished,
+      journeyProps.instagramProfileUrl,
+      journeyProps.isExportingVideo,
+    ],
+  );
+
+  useCampaignWidgetSync({
+    campaignId: campaign.id,
+    title: campaign.title ?? campaign.topic,
+    journeyInput: widgetJourneyInput,
+    enabled: isNativeApp === true,
+  });
 
   useEffect(() => {
     if (previewOpen) {

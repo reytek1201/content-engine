@@ -5,6 +5,7 @@ import BiometricGate from "@/app/components/biometric-gate";
 import NativeAuthListener from "@/app/components/native-auth-listener";
 import NativeConnectivity from "@/app/components/native-connectivity";
 import NativePushListener from "@/app/components/native-push-listener";
+import NativeWidgetSync from "@/app/components/native-widget-sync";
 import NativeShell from "@/app/components/native-shell";
 import { NativeOverlayProvider } from "@/app/contexts/native-overlay-context";
 import {
@@ -55,6 +56,7 @@ export default function RootLayout({
         <NativeOverlayProvider>
           <NativeAuthListener />
           <NativePushListener />
+          <NativeWidgetSync />
           <NativeShell />
           <NativeConnectivity />
           <BiometricGate />

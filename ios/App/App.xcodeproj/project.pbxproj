@@ -17,6 +17,12 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		50C1A0012FEDC1A000F3C39C /* NativeAppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C1A0002FEDC1A000F3C39C /* NativeAppleSignInPlugin.swift */; };
 		50C1A0032FEDC1A000F3C39E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C1A0022FEDC1A000F3C39D /* ViewController.swift */; };
+		50D1A0022FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0012FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift */; };
+		50D1A0042FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0032FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift */; };
+		50D1A0202FEDC1A000F3C3B0 /* WidgetSnapshotReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0212FEDC1A000F3C3B0 /* WidgetSnapshotReader.swift */; };
+		50D1A0222FEDC1A000F3C3B0 /* ContinueCampaignWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0232FEDC1A000F3C3B0 /* ContinueCampaignWidget.swift */; };
+		50D1A0242FEDC1A000F3C3B0 /* SlidePressWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0252FEDC1A000F3C3B0 /* SlidePressWidgetBundle.swift */; };
+		50D1A0302FEDC1A000F3C3C0 /* SlidePressWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 50D1A0102FEDC1A000F3C3B0 /* SlidePressWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,10 +37,49 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		50C1A0002FEDC1A000F3C39C /* NativeAppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAppleSignInPlugin.swift; sourceTree = "<group>"; };
 		50C1A0022FEDC1A000F3C39D /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		50D1A0012FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
+		50D1A0032FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeWidgetPlugin.swift; sourceTree = "<group>"; };
+		50D1A0102FEDC1A000F3C3B0 /* SlidePressWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SlidePressWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		50D1A0212FEDC1A000F3C3B0 /* WidgetSnapshotReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotReader.swift; sourceTree = "<group>"; };
+		50D1A0232FEDC1A000F3C3B0 /* ContinueCampaignWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinueCampaignWidget.swift; sourceTree = "<group>"; };
+		50D1A0252FEDC1A000F3C3B0 /* SlidePressWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidePressWidgetBundle.swift; sourceTree = "<group>"; };
+		50D1A0262FEDC1A000F3C3B0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		50D1A0272FEDC1A000F3C3B0 /* SlidePressWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SlidePressWidget.entitlements; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
+/* Begin PBXContainerItemProxy section */
+		50D1A0312FEDC1A000F3C3C0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 50D1A0122FEDC1A000F3C3B0;
+			remoteInfo = SlidePressWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		50D1A0322FEDC1A000F3C3C0 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				50D1A0302FEDC1A000F3C3C0 /* SlidePressWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		50D1A0142FEDC1A000F3C3B0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3011FED79650016851F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -51,14 +96,29 @@
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
+				50D1A0112FEDC1A000F3C3B0 /* SlidePressWidget */,
 				504EC3051FED79650016851F /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		50D1A0112FEDC1A000F3C3B0 /* SlidePressWidget */ = {
+			isa = PBXGroup;
+			children = (
+				50D1A0212FEDC1A000F3C3B0 /* WidgetSnapshotReader.swift */,
+				50D1A0232FEDC1A000F3C3B0 /* ContinueCampaignWidget.swift */,
+				50D1A0252FEDC1A000F3C3B0 /* SlidePressWidgetBundle.swift */,
+				50D1A0262FEDC1A000F3C3B0 /* Info.plist */,
+				50D1A0272FEDC1A000F3C3B0 /* SlidePressWidget.entitlements */,
+			);
+			name = SlidePressWidget;
+			path = ../SlidePressWidget;
 			sourceTree = "<group>";
 		};
 		504EC3051FED79650016851F /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				50D1A0102FEDC1A000F3C3B0 /* SlidePressWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -69,6 +129,8 @@
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				50C1A0002FEDC1A000F3C39C /* NativeAppleSignInPlugin.swift */,
+				50D1A0032FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift */,
+				50D1A0012FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift */,
 				50C1A0022FEDC1A000F3C39D /* ViewController.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
@@ -83,6 +145,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		50D1A0122FEDC1A000F3C3B0 /* SlidePressWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 50D1A0422FEDC1A000F3C3C0 /* Build configuration list for PBXNativeTarget "SlidePressWidgetExtension" */;
+			buildPhases = (
+				50D1A0132FEDC1A000F3C3B0 /* Sources */,
+				50D1A0142FEDC1A000F3C3B0 /* Frameworks */,
+				50D1A0152FEDC1A000F3C3B0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SlidePressWidgetExtension;
+			productName = SlidePressWidgetExtension;
+			productReference = 50D1A0102FEDC1A000F3C3B0 /* SlidePressWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		504EC3031FED79650016851F /* App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */;
@@ -90,10 +169,12 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				50D1A0322FEDC1A000F3C3C0 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				50D1A0332FEDC1A000F3C3C0 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -117,6 +198,10 @@
 						LastSwiftMigration = 1100;
 						ProvisioningStyle = Automatic;
 					};
+					50D1A0122FEDC1A000F3C3B0 = {
+						CreatedOnToolsVersion = 15.0;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */;
@@ -136,11 +221,19 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				50D1A0122FEDC1A000F3C3B0 /* SlidePressWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		50D1A0152FEDC1A000F3C3B0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3021FED79650016851F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -157,17 +250,37 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		50D1A0132FEDC1A000F3C3B0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				50D1A0202FEDC1A000F3C3B0 /* WidgetSnapshotReader.swift in Sources */,
+				50D1A0222FEDC1A000F3C3B0 /* ContinueCampaignWidget.swift in Sources */,
+				50D1A0242FEDC1A000F3C3B0 /* SlidePressWidgetBundle.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				50C1A0012FEDC1A000F3C39C /* NativeAppleSignInPlugin.swift in Sources */,
+				50D1A0042FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift in Sources */,
+				50D1A0022FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift in Sources */,
 				50C1A0032FEDC1A000F3C39E /* ViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		50D1A0332FEDC1A000F3C3C0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 50D1A0122FEDC1A000F3C3B0 /* SlidePressWidgetExtension */;
+			targetProxy = 50D1A0312FEDC1A000F3C3C0 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -305,7 +418,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = N39VS8S63M;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -329,7 +442,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = N39VS8S63M;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -341,6 +454,55 @@
 				PRODUCT_BUNDLE_IDENTIFIER = co.slidepress.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		50D1A0402FEDC1A000F3C3C0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ../SlidePressWidget/SlidePressWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 9;
+				DEVELOPMENT_TEAM = N39VS8S63M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ../SlidePressWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.slidepress.app.SlidePressWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		50D1A0412FEDC1A000F3C3C0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ../SlidePressWidget/SlidePressWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 9;
+				DEVELOPMENT_TEAM = N39VS8S63M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ../SlidePressWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.slidepress.app.SlidePressWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -363,6 +525,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		50D1A0422FEDC1A000F3C3C0 /* Build configuration list for PBXNativeTarget "SlidePressWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				50D1A0402FEDC1A000F3C3C0 /* Debug */,
+				50D1A0412FEDC1A000F3C3C0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
