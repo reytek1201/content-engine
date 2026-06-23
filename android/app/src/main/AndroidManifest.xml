@@ -32,7 +32,38 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="co.slidepress.app" android:host="platforms" android:pathPrefix="/callback" />
             </intent-filter>
+
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="co.slidepress.app" />
+            </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".widget.ContinueCampaignWidgetReceiver"
+            android:exported="true"
+            android:label="@string/continue_campaign_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/continue_campaign_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.QuickCreateWidgetReceiver"
+            android:exported="true"
+            android:label="@string/quick_create_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quick_create_widget_info" />
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

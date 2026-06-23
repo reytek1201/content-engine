@@ -1,7 +1,7 @@
 import type { WidgetSnapshot } from "@/types/widget-snapshot";
 import {
   fetchAndSyncWidgetSnapshot,
-  isIosWidgetBridgeAvailable,
+  isNativeWidgetBridgeAvailable,
   writeWidgetSnapshot,
 } from "@/utils/native-widget-plugin";
 
@@ -32,7 +32,7 @@ export function getCampaignIdFromPushData(
 export async function syncWidgetFromPushData(
   data: Record<string, unknown> | undefined,
 ): Promise<void> {
-  if (!isIosWidgetBridgeAvailable()) {
+  if (!isNativeWidgetBridgeAvailable()) {
     return;
   }
 

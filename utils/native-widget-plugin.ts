@@ -19,8 +19,48 @@ export function isIosWidgetBridgeAvailable(): boolean {
   return isNativeAppRuntime() && Capacitor.getPlatform() === "ios";
 }
 
+export function isAndroidWidgetBridgeAvailable(): boolean {
+  return isNativeAppRuntime() && Capacitor.getPlatform() === "android";
+}
+
+export function isNativeWidgetBridgeAvailable(): boolean {
+  return isIosWidgetBridgeAvailable() || isAndroidWidgetBridgeAvailable();
+}
+
+function widgetPluginAvailable(): boolean {
+  return (
+    isNativeWidgetBridgeAvailable() && Capacitor.isPluginAvailable("NativeWidget")
+  );
+}
+
+function widgetSnapshotApiUrl(preferredCampaignId?: string | null): string {
+  const params = new URLSearchParams();
+  const campaignId = preferredCampaignId ?? getLastCampaignId();
+
+  if (campaignId) {
+    params.set("campaignId", campaignId);
+  }
+
+  const query = params.toString();
+  const origin =
+    typeof window !== "undefined" && window.location.origin
+      ? window.location.origin
+      : "";
+
+  return `${origin}/api/widget/snapshot${query ? `?${query}` : ""}`;
+}
+
+function logWidgetSyncWarning(message: string, error?: unknown): void {
+  if (process.env.NODE_ENV === "production") {
+    return;
+  }
+
+  console.warn(`[widget] ${message}`, error);
+}
+
 export async function writeWidgetSnapshot(snapshot: WidgetSnapshot): Promise<void> {
-  if (!isIosWidgetBridgeAvailable()) {
+  if (!widgetPluginAvailable()) {
+    logWidgetSyncWarning("NativeWidget plugin unavailable");
     return;
   }
 
@@ -28,44 +68,35 @@ export async function writeWidgetSnapshot(snapshot: WidgetSnapshot): Promise<voi
     await NativeWidget.setSnapshot({
       snapshot: JSON.stringify(snapshot),
     });
-  } catch {
-    // Widget bridge unavailable or extension not installed.
+  } catch (error) {
+    logWidgetSyncWarning("Failed to write widget snapshot", error);
   }
 }
 
 export async function clearWidgetSnapshot(): Promise<void> {
-  if (!isIosWidgetBridgeAvailable()) {
+  if (!widgetPluginAvailable()) {
     return;
   }
 
   try {
     await NativeWidget.clearSnapshot();
-  } catch {
-    // Widget bridge unavailable.
+  } catch (error) {
+    logWidgetSyncWarning("Failed to clear widget snapshot", error);
   }
 }
 
 export async function fetchAndSyncWidgetSnapshot(
   preferredCampaignId?: string | null,
 ): Promise<void> {
-  if (!isIosWidgetBridgeAvailable()) {
+  if (!widgetPluginAvailable()) {
+    logWidgetSyncWarning("NativeWidget plugin unavailable");
     return;
   }
 
   try {
-    const params = new URLSearchParams();
-
-    const campaignId = preferredCampaignId ?? getLastCampaignId();
-
-    if (campaignId) {
-      params.set("campaignId", campaignId);
-    }
-
-    const query = params.toString();
-    const response = await fetch(
-      `/api/widget/snapshot${query ? `?${query}` : ""}`,
-      { credentials: "include" },
-    );
+    const response = await fetch(widgetSnapshotApiUrl(preferredCampaignId), {
+      credentials: "include",
+    });
 
     if (response.status === 401) {
       await writeWidgetSnapshot(buildSignedOutWidgetSnapshot());
@@ -73,13 +104,14 @@ export async function fetchAndSyncWidgetSnapshot(
     }
 
     if (!response.ok) {
+      logWidgetSyncWarning(`Snapshot API returned ${response.status}`);
       return;
     }
 
     const snapshot = (await response.json()) as WidgetSnapshot;
     await writeWidgetSnapshot(snapshot);
-  } catch {
-    // Network or bridge failure — keep the last snapshot.
+  } catch (error) {
+    logWidgetSyncWarning("Failed to fetch widget snapshot", error);
   }
 }
 

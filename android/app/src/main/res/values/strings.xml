@@ -4,4 +4,8 @@
     <string name="title_activity_main">SlidePress</string>
     <string name="package_name">co.slidepress.app</string>
     <string name="custom_url_scheme">co.slidepress.app</string>
+    <string name="continue_campaign_widget_name">Continue Campaign</string>
+    <string name="continue_campaign_widget_description">See your active campaign and jump back in.</string>
+    <string name="quick_create_widget_name">New Campaign</string>
+    <string name="quick_create_widget_description">Start a new SlidePress campaign.</string>
 </resources>
