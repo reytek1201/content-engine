@@ -29,7 +29,7 @@ struct ContinueCampaignProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<ContinueCampaignEntry>) -> Void) {
         let snapshot = WidgetSnapshotReader.load() ?? WidgetSnapshotReader.emptyState()
         let entry = ContinueCampaignEntry(date: Date(), snapshot: snapshot)
-        let refresh = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date().addingTimeInterval(1800)
+        let refresh = Calendar.current.date(byAdding: .minute, value: 15, to: Date()) ?? Date().addingTimeInterval(900)
         completion(Timeline(entries: [entry], policy: .after(refresh)))
     }
 }

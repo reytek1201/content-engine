@@ -19,6 +19,7 @@
 		50C1A0032FEDC1A000F3C39E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C1A0022FEDC1A000F3C39D /* ViewController.swift */; };
 		50D1A0022FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0012FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift */; };
 		50D1A0042FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0032FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift */; };
+		50D1A0062FEDC1A000F3C3A2 /* WidgetPushHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0052FEDC1A000F3C3A2 /* WidgetPushHandler.swift */; };
 		50D1A0202FEDC1A000F3C3B0 /* WidgetSnapshotReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0212FEDC1A000F3C3B0 /* WidgetSnapshotReader.swift */; };
 		50D1A0222FEDC1A000F3C3B0 /* ContinueCampaignWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0232FEDC1A000F3C3B0 /* ContinueCampaignWidget.swift */; };
 		50D1A0242FEDC1A000F3C3B0 /* SlidePressWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50D1A0252FEDC1A000F3C3B0 /* SlidePressWidgetBundle.swift */; };
@@ -39,6 +40,7 @@
 		50C1A0022FEDC1A000F3C39D /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		50D1A0012FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
 		50D1A0032FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeWidgetPlugin.swift; sourceTree = "<group>"; };
+		50D1A0052FEDC1A000F3C3A2 /* WidgetPushHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPushHandler.swift; sourceTree = "<group>"; };
 		50D1A0102FEDC1A000F3C3B0 /* SlidePressWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SlidePressWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		50D1A0212FEDC1A000F3C3B0 /* WidgetSnapshotReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotReader.swift; sourceTree = "<group>"; };
 		50D1A0232FEDC1A000F3C3B0 /* ContinueCampaignWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinueCampaignWidget.swift; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				50C1A0002FEDC1A000F3C39C /* NativeAppleSignInPlugin.swift */,
 				50D1A0032FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift */,
+				50D1A0052FEDC1A000F3C3A2 /* WidgetPushHandler.swift */,
 				50D1A0012FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift */,
 				50C1A0022FEDC1A000F3C39D /* ViewController.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -267,6 +270,7 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				50C1A0012FEDC1A000F3C39C /* NativeAppleSignInPlugin.swift in Sources */,
 				50D1A0042FEDC1A000F3C3A1 /* NativeWidgetPlugin.swift in Sources */,
+				50D1A0062FEDC1A000F3C3A2 /* WidgetPushHandler.swift in Sources */,
 				50D1A0022FEDC1A000F3C3A0 /* WidgetSnapshotStore.swift in Sources */,
 				50C1A0032FEDC1A000F3C39E /* ViewController.swift in Sources */,
 			);

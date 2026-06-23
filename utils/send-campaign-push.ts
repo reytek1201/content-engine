@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getFirebaseServiceAccount, isFcmConfigured } from "@/utils/fcm-config";
 import { userWantsPushNotification } from "@/utils/push-notification-preferences";
+import { buildWidgetSnapshotForUser } from "@/utils/widget-snapshot-server";
 import {
   formatApnsFailureMessage,
   probeApnsEnvironments,
@@ -16,6 +17,7 @@ export interface PushDataPayload {
   campaignId?: string;
   title?: string;
   tab?: string;
+  widgetSnapshot?: string;
 }
 
 interface FcmSendResult {
@@ -71,6 +73,10 @@ async function sendFcmToDevice(
     dataPayload.tab = data.tab;
   }
 
+  if (data.widgetSnapshot) {
+    dataPayload.widgetSnapshot = data.widgetSnapshot;
+  }
+
   const response = await fetch(
     `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
     {
@@ -91,6 +97,7 @@ async function sendFcmToDevice(
             payload: {
               aps: {
                 sound: "default",
+                "content-available": 1,
               },
             },
           },
@@ -128,6 +135,32 @@ export interface SendTestPushResult extends SendPushToUserResult {
   apnsEnvironment?: ApnsEnvironment;
   environmentHint?: string;
   diagnostics?: Partial<Record<ApnsEnvironment, string>>;
+}
+
+async function attachWidgetSnapshotToPushData(
+  userId: string,
+  data: PushDataPayload,
+): Promise<PushDataPayload> {
+  if (!data.campaignId) {
+    return data;
+  }
+
+  try {
+    const supabase = createAdminClient();
+    const snapshot = await buildWidgetSnapshotForUser(
+      supabase,
+      userId,
+      data.campaignId,
+    );
+
+    return {
+      ...data,
+      widgetSnapshot: JSON.stringify(snapshot),
+    };
+  } catch (error) {
+    console.error("Failed to build widget snapshot for push:", error);
+    return data;
+  }
 }
 
 async function sendPushToTokenEntries(
@@ -375,13 +408,15 @@ export async function maybeSendCampaignImagesReadyPush(
 
   const campaignTitle = campaign.title?.trim() || "Your campaign";
 
-  await sendPushToUser(campaign.user_id, {
-    title: "Images ready",
-    body: `${campaignTitle} — all slide images are ready to review.`,
-  }, {
+  const pushData = await attachWidgetSnapshotToPushData(campaign.user_id, {
     campaignId,
     title: campaignTitle,
   });
+
+  await sendPushToUser(campaign.user_id, {
+    title: "Images ready",
+    body: `${campaignTitle} — all slide images are ready to review.`,
+  }, pushData);
 }
 
 export async function maybeSendVideoExportReadyPush(
@@ -448,17 +483,22 @@ export async function maybeSendVideoExportReadyPush(
 
   const campaignTitle = campaignPreview.title?.trim() || "Your campaign";
 
+  const pushData = await attachWidgetSnapshotToPushData(
+    campaignPreview.user_id,
+    {
+      campaignId: exportRow.campaign_id,
+      title: campaignTitle,
+      tab: "publish",
+    },
+  );
+
   await sendPushToUser(
     campaignPreview.user_id,
     {
       title: "Video ready",
       body: `${campaignTitle} — your MP4 is ready to download or publish.`,
     },
-    {
-      campaignId: exportRow.campaign_id,
-      title: campaignTitle,
-      tab: "publish",
-    },
+    pushData,
   );
 }
 
@@ -539,20 +579,28 @@ export async function maybeSendPlatformPublishPush(
   );
 
   if (post.status === "published") {
+    const pushData = await attachWidgetSnapshotToPushData(post.user_id, {
+      campaignId: post.campaign_id,
+      title: campaignTitle,
+      tab: "publish",
+    });
+
     await sendPushToUser(
       post.user_id,
       {
         title: `Published to ${platformLabel}`,
         body: `${campaignTitle} is live on ${platformLabel}.`,
       },
-      {
-        campaignId: post.campaign_id,
-        title: campaignTitle,
-        tab: "publish",
-      },
+      pushData,
     );
     return;
   }
+
+  const pushData = await attachWidgetSnapshotToPushData(post.user_id, {
+    campaignId: post.campaign_id,
+    title: campaignTitle,
+    tab: "publish",
+  });
 
   await sendPushToUser(
     post.user_id,
@@ -560,10 +608,6 @@ export async function maybeSendPlatformPublishPush(
       title: `${platformLabel} publish failed`,
       body: `${campaignTitle} — tap to open Publish and try again.`,
     },
-    {
-      campaignId: post.campaign_id,
-      title: campaignTitle,
-      tab: "publish",
-    },
+    pushData,
   );
 }

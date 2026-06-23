@@ -1,5 +1,6 @@
 import CampaignList from "@/app/campaigns/campaign-list";
 import CampaignsRefreshShell from "@/app/campaigns/campaigns-refresh-shell";
+import CampaignsWidgetSync from "@/app/campaigns/campaigns-widget-sync";
 import GenerationErrorBanner from "@/app/campaigns/generation-error-banner";
 import CampaignsPageHeader from "@/app/components/campaigns-page-header";
 import NewCampaignButton from "@/app/components/new-campaign-button";
@@ -76,6 +77,7 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
 
   return (
     <CampaignsRefreshShell>
+      <CampaignsWidgetSync />
       <div className="min-h-full bg-background text-foreground">
         <main className="page-main">
           <CampaignsPageHeader

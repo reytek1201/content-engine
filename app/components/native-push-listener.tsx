@@ -11,6 +11,7 @@ import {
   setPushNotificationsEnabled,
   setStoredPushDeviceToken,
 } from "@/utils/push-preferences";
+import { syncWidgetFromPushData } from "@/utils/widget-sync-from-push";
 import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import {
@@ -255,11 +256,24 @@ export default function NativePushListener() {
     const actionListener = PushNotifications.addListener(
       "pushNotificationActionPerformed",
       (action) => {
+        void syncWidgetFromPushData(
+          action.notification.data as Record<string, unknown> | undefined,
+        );
+
         const route = getCampaignRouteFromNotification(action);
 
         if (route) {
           router.push(route);
         }
+      },
+    );
+
+    const receivedListener = PushNotifications.addListener(
+      "pushNotificationReceived",
+      (notification) => {
+        void syncWidgetFromPushData(
+          notification.data as Record<string, unknown> | undefined,
+        );
       },
     );
 
@@ -319,6 +333,7 @@ export default function NativePushListener() {
       void registrationListener.then((listener) => listener.remove());
       void registrationErrorListener.then((listener) => listener.remove());
       void actionListener.then((listener) => listener.remove());
+      void receivedListener.then((listener) => listener.remove());
       subscription.unsubscribe();
       appStateListener?.remove();
     };

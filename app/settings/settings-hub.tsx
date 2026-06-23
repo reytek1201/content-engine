@@ -12,6 +12,7 @@ import {
   SettingsListRow,
   SettingsSectionLabel,
   UsageIcon,
+  WidgetsIcon,
 } from "@/app/settings/settings-list";
 import SettingsAppVersionFootnote from "@/app/components/settings-app-version-footnote";
 import { useUsageSummary } from "@/app/settings/usage-settings";
@@ -47,6 +48,7 @@ export default function SettingsHub({ user }: SettingsHubProps) {
   );
   const [signingOut, setSigningOut] = useState(false);
   const showNotificationsLink = isNativeAppRuntime();
+  const showWidgetsLink = isNativeAppRuntime();
 
   useEffect(() => {
     if (!isBiometricSupported() || !isBiometricLockEnabled()) {
@@ -137,6 +139,13 @@ export default function SettingsHub({ user }: SettingsHubProps) {
                     label="Notifications"
                     value={notificationsLabel}
                     icon={<NotificationsIcon />}
+                  />
+                ) : null}
+                {showWidgetsLink ? (
+                  <SettingsListRow
+                    href="/settings/widgets"
+                    label="Widgets"
+                    icon={<WidgetsIcon />}
                   />
                 ) : null}
                 <SettingsListRow

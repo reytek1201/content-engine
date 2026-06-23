@@ -94,6 +94,10 @@ export async function sendApnsToDevice(
     dataPayload.tab = data.tab;
   }
 
+  if (data.widgetSnapshot) {
+    dataPayload.widgetSnapshot = data.widgetSnapshot;
+  }
+
   try {
     const apnsNotification = new Notification(
       normalizeDeviceToken(deviceToken),
@@ -103,6 +107,7 @@ export async function sendApnsToDevice(
           body: notification.body,
         },
         sound: "default",
+        contentAvailable: true,
         data: dataPayload,
       },
     );

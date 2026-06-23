@@ -7,6 +7,7 @@ import BiometricSettings from "@/app/components/biometric-settings";
 import PasswordResetForm from "@/app/components/password-reset-form";
 import PushSettings from "@/app/components/push-settings";
 import PushTestSection from "@/app/components/push-test-section";
+import WidgetSettings from "@/app/components/widget-settings";
 import SettingsAboutContent from "@/app/components/settings-about";
 import SettingsAppVersionFootnote from "@/app/components/settings-app-version-footnote";
 import AccountSettings from "@/app/settings/account-settings";
@@ -72,6 +73,13 @@ export default function SettingsDesktop({
               description="Choose when SlidePress can alert you on this device."
             >
               <PushSettings />
+            </SettingsSection>
+
+            <SettingsSection
+              title="Widgets"
+              description="Add SlidePress to your home screen and see campaign progress at a glance."
+            >
+              <WidgetSettings />
             </SettingsSection>
 
             <PushTestSection />
