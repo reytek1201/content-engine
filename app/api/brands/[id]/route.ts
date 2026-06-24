@@ -1,5 +1,6 @@
 import type { Brand } from "@/types/brand";
 import { BrandPatchSchema } from "@/utils/campaign-generation";
+import { ensureDefaultBrand } from "@/utils/brands-server";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -187,11 +188,79 @@ export async function DELETE(_request: Request, context: RouteContext) {
       );
     }
 
-    if (existing.is_default) {
+    const { count: brandCount, error: brandCountError } = await supabase
+      .from("brands")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    if (brandCountError) {
       return NextResponse.json(
-        { success: false, error: "Cannot delete your default brand" },
-        { status: 400 },
+        { success: false, error: "Failed to delete brand" },
+        { status: 500 },
       );
+    }
+
+    const isOnlyBrand = (brandCount ?? 0) === 1;
+    const wasDefault = existing.is_default;
+    const deleteCampaigns = wasDefault || isOnlyBrand;
+
+    if (wasDefault && !isOnlyBrand) {
+      const { data: replacement, error: replacementError } = await supabase
+        .from("brands")
+        .select("id")
+        .eq("user_id", user.id)
+        .neq("id", id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (replacementError || !replacement) {
+        return NextResponse.json(
+          { success: false, error: "Failed to delete brand" },
+          { status: 500 },
+        );
+      }
+
+      const { error: clearDefaultError } = await supabase
+        .from("brands")
+        .update({ is_default: false })
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (clearDefaultError) {
+        return NextResponse.json(
+          { success: false, error: "Failed to delete brand" },
+          { status: 500 },
+        );
+      }
+
+      const { error: promoteError } = await supabase
+        .from("brands")
+        .update({ is_default: true })
+        .eq("id", replacement.id)
+        .eq("user_id", user.id);
+
+      if (promoteError) {
+        return NextResponse.json(
+          { success: false, error: "Failed to delete brand" },
+          { status: 500 },
+        );
+      }
+    }
+
+    if (deleteCampaigns) {
+      const { error: deleteCampaignsError } = await supabase
+        .from("campaigns")
+        .delete()
+        .eq("brand_id", id)
+        .eq("user_id", user.id);
+
+      if (deleteCampaignsError) {
+        return NextResponse.json(
+          { success: false, error: "Failed to delete brand campaigns" },
+          { status: 500 },
+        );
+      }
     }
 
     const { error } = await supabase
@@ -207,7 +276,14 @@ export async function DELETE(_request: Request, context: RouteContext) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    let replacementBrandId: string | undefined;
+
+    if (isOnlyBrand) {
+      const replacementBrand = await ensureDefaultBrand(supabase, user.id);
+      replacementBrandId = replacementBrand.id;
+    }
+
+    return NextResponse.json({ success: true, replacementBrandId });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unexpected server error";

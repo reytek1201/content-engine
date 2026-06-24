@@ -7,8 +7,8 @@ import {
 } from "@/utils/brands-back-target";
 import {
   createBrand,
-  deleteBrand,
 } from "@/utils/brands-client";
+import DeleteBrandButton from "@/app/components/delete-brand-button";
 import type { UsageSummary } from "@/types/usage";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -23,7 +23,6 @@ export default function BrandsManager() {
     useActiveBrand();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
@@ -100,39 +99,37 @@ export default function BrandsManager() {
     }
   }
 
-  async function handleDelete(brandId: string) {
+  async function handleBrandDeleted(replacementBrandId?: string) {
     setError(null);
-    setDeletingId(brandId);
 
-    try {
-      await deleteBrand(brandId);
-      await refreshBrands();
-      setUsage((current) =>
-        current
-          ? {
-              ...current,
-              brands: {
-                ...current.brands,
-                count: Math.max(0, current.brands.count - 1),
-                canCreate:
-                  Math.max(0, current.brands.count - 1) < current.brands.limit,
-              },
-              canCreateBrand:
-                Math.max(0, current.brands.count - 1) < current.brands.limit,
-            }
-          : current,
-      );
-      router.refresh();
-    } catch (deleteError) {
-      setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Failed to delete brand",
-      );
-    } finally {
-      setDeletingId(null);
+    if (replacementBrandId) {
+      setActiveBrandId(replacementBrandId);
     }
+
+    await refreshBrands();
+    setUsage((current) =>
+      current
+        ? {
+            ...current,
+            brands: {
+              ...current.brands,
+              count: replacementBrandId
+                ? current.brands.count
+                : Math.max(0, current.brands.count - 1),
+              canCreate: replacementBrandId
+                ? current.brands.count < current.brands.limit
+                : Math.max(0, current.brands.count - 1) < current.brands.limit,
+            },
+            canCreateBrand: replacementBrandId
+              ? current.brands.count < current.brands.limit
+              : Math.max(0, current.brands.count - 1) < current.brands.limit,
+          }
+        : current,
+    );
+    router.refresh();
   }
+
+  const isOnlyBrand = brands.length === 1;
 
   return (
     <div className="space-y-6">
@@ -212,16 +209,15 @@ export default function BrandsManager() {
               >
                 Open
               </Link>
-              {!brand.is_default ? (
-                <button
-                  type="button"
-                  disabled={deletingId === brand.id}
-                  onClick={() => void handleDelete(brand.id)}
-                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10 disabled:opacity-60"
-                >
-                  {deletingId === brand.id ? "Deleting…" : "Delete"}
-                </button>
-              ) : null}
+              <DeleteBrandButton
+                brandId={brand.id}
+                brandName={brand.name}
+                isDefault={brand.is_default}
+                isOnlyBrand={isOnlyBrand}
+                onDeleted={handleBrandDeleted}
+                label="Delete"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10 disabled:opacity-60"
+              />
             </div>
           </div>
         ))}

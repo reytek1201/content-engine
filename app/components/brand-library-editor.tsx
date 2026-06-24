@@ -2,9 +2,11 @@
 
 import BrandProductsSection from "@/app/components/brand-products-section";
 import BrandVoiceSettings from "@/app/components/brand-voice-settings";
+import DeleteBrandButton from "@/app/components/delete-brand-button";
 import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
 import { useActiveBrandOptional } from "@/app/components/active-brand-provider";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
+import { brandDetailHref } from "@/utils/brands-back-target";
 import { createClient } from "@/utils/supabase/client";
 import { fetchBrand, updateBrand } from "@/utils/brands-client";
 import { uploadReferenceImage } from "@/utils/upload-reference";
@@ -429,6 +431,39 @@ export default function BrandLibraryEditor({
       ) : null}
 
       <BrandProductsSection brandId={resolvedBrandId} user={user} />
+
+      {brand ? (
+        <div className="mt-10 rounded-xl border border-red-900/40 bg-red-950/10 p-4">
+          <h3 className="text-sm font-semibold text-red-200">Delete brand</h3>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            {activeBrandContext && activeBrandContext.brands.length === 1
+              ? "Remove this workspace and all of its campaigns. A fresh empty brand will be created."
+              : brand.is_default
+                ? "Remove this brand kit and all campaigns linked to it. Another brand will become your default."
+                : "Remove this brand kit. Linked campaigns will stay in your account without a brand."}
+          </p>
+          <div className="mt-4">
+            <DeleteBrandButton
+              brandId={brand.id}
+              brandName={brand.name}
+              isDefault={brand.is_default}
+              isOnlyBrand={(activeBrandContext?.brands.length ?? 1) === 1}
+              label="Delete brand"
+              onDeleted={async (replacementBrandId) => {
+                await activeBrandContext?.refreshBrands();
+
+                if (replacementBrandId) {
+                  activeBrandContext?.setActiveBrandId(replacementBrandId);
+                  router.push(brandDetailHref(replacementBrandId, "settings"));
+                  return;
+                }
+
+                router.push("/settings/brands");
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

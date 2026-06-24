@@ -82,15 +82,28 @@ export async function updateBrand(
   return data.brand;
 }
 
-export async function deleteBrand(brandId: string): Promise<void> {
+export interface DeleteBrandResult {
+  replacementBrandId?: string;
+}
+
+export async function deleteBrand(brandId: string): Promise<DeleteBrandResult> {
   const response = await fetch(`/api/brands/${brandId}`, {
     method: "DELETE",
   });
 
+  const data = (await response.json()) as {
+    success?: boolean;
+    error?: string;
+    replacementBrandId?: string;
+  };
+
   if (!response.ok) {
-    const data = (await response.json()) as { error?: string };
     throw new Error(data.error ?? "Failed to delete brand");
   }
+
+  return {
+    replacementBrandId: data.replacementBrandId,
+  };
 }
 
 export async function fetchBrandProducts(
