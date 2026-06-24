@@ -6,6 +6,8 @@ import {
   slidesCompleteForAspect,
 } from "@/utils/slide-aspect-images";
 import { loadSlideImagesForCampaign } from "@/utils/slide-image-persistence";
+import { maybeAutoGenerateCampaignCaptions } from "@/utils/run-campaign-caption-generation";
+import { maybeSendCampaignDraftReadyPush } from "@/utils/send-campaign-push";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -68,6 +70,18 @@ export async function refreshCampaignImageStatus(
       ...(allComplete ? { image_generation_aspect: null } : {}),
     })
     .eq("id", campaignId);
+
+  if (allComplete) {
+    void maybeAutoGenerateCampaignCaptions(
+      supabase,
+      campaignId,
+      typedCampaign.user_id,
+    ).finally(() => {
+      void maybeSendCampaignDraftReadyPush(campaignId);
+    });
+
+    void maybeSendCampaignDraftReadyPush(campaignId);
+  }
 }
 
 export async function primaryImagesComplete(

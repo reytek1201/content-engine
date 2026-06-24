@@ -2,6 +2,7 @@
 
 import BottomSheet from "@/app/components/bottom-sheet";
 import CreateCampaignForm from "@/app/components/create-campaign-form";
+import { buildCampaignWorkspaceHref } from "@/utils/campaign-auto-images-preference";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
@@ -20,9 +21,12 @@ export default function CreateCampaignSheet({
 }: CreateCampaignSheetProps) {
   const router = useRouter();
 
-  function handleSuccess(campaignId: string) {
+  function handleSuccess(
+    campaignId: string,
+    options?: { autoImages?: boolean },
+  ) {
     onClose();
-    router.push(`/campaign/${campaignId}`);
+    router.push(buildCampaignWorkspaceHref(campaignId, options));
   }
 
   return (

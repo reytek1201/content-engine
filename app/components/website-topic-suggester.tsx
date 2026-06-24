@@ -13,6 +13,7 @@ import {
   getCachedWebsiteIngest,
   getHostnameFromUrl,
   setCachedWebsiteIngest,
+  updateCachedWebsiteIngestSelection,
   type CachedWebsiteIngest,
 } from "@/utils/website-ingest-cache";
 import {
@@ -49,6 +50,10 @@ const ANGLE_LABELS: Record<WebsiteTopicAngle, string> = {
 
 interface WebsiteTopicSuggesterProps {
   onSelectTopic: (topic: string, options?: TopicSelectionOptions) => void;
+  onUseTopicAndGenerate?: (
+    topic: string,
+    options?: TopicSelectionOptions,
+  ) => void;
   onIngestComplete?: (payload: WebsiteIngestCompletePayload) => void;
   onSaveBrandKit?: (payload: WebsiteIngestCompletePayload) => Promise<void>;
   brandId?: string | null;
@@ -64,6 +69,7 @@ function isSameTopic(left: string, right: string): boolean {
 
 export default function WebsiteTopicSuggester({
   onSelectTopic,
+  onUseTopicAndGenerate,
   onIngestComplete,
   onSaveBrandKit,
   brandId = null,
@@ -96,7 +102,13 @@ export default function WebsiteTopicSuggester({
   const [brandKitError, setBrandKitError] = useState<string | null>(null);
 
   useEffect(() => {
-    setCachedIngest(getCachedWebsiteIngest());
+    const cache = getCachedWebsiteIngest();
+    setCachedIngest(cache);
+
+    if (cache?.inputUrl) {
+      setUrl(cache.inputUrl);
+      setConsent(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -104,6 +116,14 @@ export default function WebsiteTopicSuggester({
       setExpanded(true);
     }
   }, [defaultExpanded]);
+
+  function handleSelectTopic(
+    topic: string,
+    options?: TopicSelectionOptions,
+  ) {
+    updateCachedWebsiteIngestSelection(topic, options?.recommendedFormat);
+    onSelectTopic(topic, options);
+  }
 
   function toCompletePayload(
     data: WebsiteIngestApiResponse & { success: true },
@@ -170,6 +190,12 @@ export default function WebsiteTopicSuggester({
     applyIngestResult(cache, cache.inputUrl);
     setState("suggestions");
     setError(null);
+
+    if (cache.selectedTopic) {
+      handleSelectTopic(cache.selectedTopic, {
+        recommendedFormat: cache.selectedFormat,
+      });
+    }
   }
 
   function handleReset() {
@@ -424,8 +450,8 @@ export default function WebsiteTopicSuggester({
         ) : null}
 
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          Pick one idea for this campaign. You can switch between them, then
-          generate below.
+          Pick one idea for this campaign, or use &amp; generate to start
+          immediately.
         </p>
 
         <div className="mt-3 space-y-3">
@@ -433,19 +459,12 @@ export default function WebsiteTopicSuggester({
             const isSelected = isSameTopic(suggestion.topic, selectedTopic);
 
             return (
-              <button
+              <div
                 key={suggestion.topic}
-                type="button"
-                disabled={disabled}
-                onClick={() => {
-                  onSelectTopic(suggestion.topic, {
-                    recommendedFormat: suggestion.recommendedFormat,
-                  });
-                }}
-                className={`w-full rounded-lg border px-3 py-3 text-left transition active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`rounded-lg border px-3 py-3 transition ${
                   isSelected
                     ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                    : "border-border bg-background hover:border-primary/60 hover:bg-primary/5"
+                    : "border-border bg-background"
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-2">
@@ -469,14 +488,39 @@ export default function WebsiteTopicSuggester({
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
                   {suggestion.rationale}
                 </p>
-                <p
-                  className={`mt-3 text-xs font-semibold ${
-                    isSelected ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  {isSelected ? "Using this topic" : "Use this topic"}
-                </p>
-              </button>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      handleSelectTopic(suggestion.topic, {
+                        recommendedFormat: suggestion.recommendedFormat,
+                      });
+                    }}
+                    className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                      isSelected
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-border text-secondary-foreground hover:border-ring/60 hover:text-foreground"
+                    }`}
+                  >
+                    {isSelected ? "Using this topic" : "Use this topic"}
+                  </button>
+                  {onUseTopicAndGenerate ? (
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => {
+                        onUseTopicAndGenerate(suggestion.topic, {
+                          recommendedFormat: suggestion.recommendedFormat,
+                        });
+                      }}
+                      className="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Use &amp; generate
+                    </button>
+                  ) : null}
+                </div>
+              </div>
             );
           })}
         </div>

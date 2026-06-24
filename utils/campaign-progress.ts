@@ -272,51 +272,46 @@ function buildJourneySteps(input: {
   imagesComplete: boolean;
   isGeneratingImages: boolean;
   captionsCount: number;
+  isGeneratingCaptions: boolean;
   hasVideoExport: boolean;
   anyPlatformPublished: boolean;
 }): CampaignJourneyStep[] {
   const copyDone = input.slideCount > 0;
-  const imagesDone = input.imagesComplete;
-  const captionsDone = input.captionsCount > 0;
+  const assetsDone = input.imagesComplete && input.captionsCount > 0;
   const videoDone = input.hasVideoExport;
   const publishDone = input.anyPlatformPublished;
 
-  const stepCompletions: Record<CampaignJourneyStepId, boolean> = {
+  type VisibleJourneyStepId = "copy" | "images" | "video" | "publish";
+
+  const stepCompletions: Record<VisibleJourneyStepId, boolean> = {
     copy: copyDone,
-    images: imagesDone,
-    captions: captionsDone,
+    images: assetsDone,
     video: videoDone,
     publish: publishDone,
   };
 
-  const order: CampaignJourneyStepId[] = [
-    "copy",
-    "images",
-    "captions",
-    "video",
-    "publish",
-  ];
+  const order: VisibleJourneyStepId[] = ["copy", "images", "video", "publish"];
 
   const currentIndex = order.findIndex((id) => !stepCompletions[id]);
 
-  const imagesDetail = input.imagesComplete
-    ? undefined
+  const assetsDetail = input.imagesComplete
+    ? input.captionsCount === 0 && input.isGeneratingCaptions
+      ? "Generating captions…"
+      : undefined
     : input.isGeneratingImages || input.imagesReadyCount > 0
       ? formatImageProgressLabel(input.imagesReadyCount, input.slideCount)
       : undefined;
 
-  const scrollTargets: Record<CampaignJourneyStepId, string> = {
+  const scrollTargets: Record<VisibleJourneyStepId, string> = {
     copy: "section-slides",
     images: "section-slides",
-    captions: "section-publish-captions",
     video: "section-publish-video",
     publish: "section-publish",
   };
 
-  const labels: Record<CampaignJourneyStepId, string> = {
+  const labels: Record<VisibleJourneyStepId, string> = {
     copy: "Copy",
-    images: "Images",
-    captions: "Captions",
+    images: "Assets",
     video: "Video",
     publish: "Publish",
   };
@@ -335,11 +330,11 @@ function buildJourneySteps(input: {
           : "current";
 
     return {
-      id,
+      id: id as CampaignJourneyStepId,
       label: labels[id],
       status,
       scrollTargetId: scrollTargets[id],
-      detail: id === "images" && isCurrent ? imagesDetail : undefined,
+      detail: id === "images" && isCurrent ? assetsDetail : undefined,
     };
   });
 }
@@ -413,6 +408,7 @@ export function getCampaignJourney(input: CampaignJourneyInput): CampaignJourney
     imagesComplete,
     isGeneratingImages: input.isGeneratingImages,
     captionsCount,
+    isGeneratingCaptions: input.isGeneratingCaptions,
     hasVideoExport,
     anyPlatformPublished,
   };
@@ -562,7 +558,8 @@ function getCampaignNextStepFromInput(
     return {
       action: "generate_images",
       label: isStartingImages ? "Starting…" : "Generate images",
-      description: "Review slide copy, then generate visuals for every slide.",
+      description:
+        "Review slide copy, then generate slide visuals and platform captions together.",
       disabled: isStartingImages,
       loading: isStartingImages,
       scrollTargetId: "section-slides",
@@ -577,6 +574,17 @@ function getCampaignNextStepFromInput(
       disabled: true,
       loading: true,
       scrollTargetId: "section-slides",
+    };
+  }
+
+  if (imagesComplete && captionsCount === 0 && isGeneratingCaptions) {
+    return {
+      action: "generate_captions",
+      label: "Generating captions…",
+      description: "Creating TikTok, Instagram, and YouTube post copy for your slides.",
+      disabled: true,
+      loading: true,
+      scrollTargetId: "section-publish",
     };
   }
 

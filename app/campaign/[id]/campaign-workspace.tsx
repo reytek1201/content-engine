@@ -34,9 +34,6 @@ import CampaignPublishPanel from "@/app/campaign/[id]/campaign-publish-panel";
 import type { LastVideoExportInfo } from "@/app/campaign/[id]/campaign-video-panel";
 import CampaignOperationOverlay from "@/app/campaign/[id]/campaign-operation-overlay";
 import { pickActiveCampaignOperation } from "@/utils/campaign-operation-overlay";
-import CampaignCaptionsPrompt, {
-  shouldShowCaptionsPrompt,
-} from "@/app/campaign/[id]/campaign-captions-prompt";
 import CampaignWorkspaceTour from "@/app/campaign/[id]/campaign-workspace-tour";
 import CampaignSlidesMobileView from "@/app/campaign/[id]/campaign-slides-mobile-view";
 import CampaignTitleEditor from "@/app/campaign/[id]/campaign-title-editor";
@@ -176,9 +173,11 @@ export default function CampaignWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [workspaceTab, setWorkspaceTab] = useState<CampaignWorkspaceTab>("slides");
   const [publishTabHint, setPublishTabHint] = useState<string | null>(null);
+  const [pendingAutoImages, setPendingAutoImages] = useState(
+    () => searchParams.get("auto_images") === "1",
+  );
   const [mobileActiveSlideIndex, setMobileActiveSlideIndex] = useState(0);
   const [actionsSheetOpen, setActionsSheetOpen] = useState(false);
-  const [captionsPromptOpen, setCaptionsPromptOpen] = useState(false);
   const [isRetryingText, setIsRetryingText] = useState(false);
   const [preferredVoicePersona, setPreferredVoicePersona] = useState<VoicePersona>(
     initialPreferredVoicePersona,
@@ -190,11 +189,13 @@ export default function CampaignWorkspace({
   const [usageLoading, setUsageLoading] = useState(true);
   const textGenerationStarted = useRef(false);
   const prevSlidesRef = useRef(initialSlides);
-  const prevImagesCompleteRef = useRef(
+  const prevDraftReadyRef = useRef(
     initialSlides.length > 0 &&
-      initialSlides.every((slide) => slide.image_url),
+      initialSlides.every((slide) => slide.image_url) &&
+      initialCaptions.length > 0,
   );
   const skipPublishAutoNavRef = useRef(false);
+  const autoImagesStartedRef = useRef(false);
   const lastUserScrollAtRef = useRef(0);
   const isGeneratingImagesRef = useRef(false);
   const pendingSlideUpdatesRef = useRef<Map<string, Slide>>(new Map());
@@ -269,6 +270,7 @@ export default function CampaignWorkspace({
   );
 
   const imagesComplete = primaryImagesComplete;
+  const draftReady = imagesComplete && captions.length > 0;
   const slideCount = campaign.slide_count ?? slides.length;
   const imagesReadyCount = displaySlides.filter((slide) => slide.image_url).length;
   const canShowFormatUpsell =
@@ -674,24 +676,34 @@ export default function CampaignWorkspace({
   }, [displaySlides, isGeneratingImages]);
 
   useEffect(() => {
-    if (imagesComplete && !prevImagesCompleteRef.current) {
+    if (
+      captions.length === 0 &&
+      (isGeneratingImages || campaign.status === "generating_images")
+    ) {
+      setIsGeneratingCaptions(true);
+    }
+  }, [campaign.status, captions.length, isGeneratingImages]);
+
+  useEffect(() => {
+    if (captions.length > 0) {
+      setIsGeneratingCaptions(false);
+    }
+  }, [captions.length]);
+
+  useEffect(() => {
+    if (draftReady && !prevDraftReadyRef.current) {
       if (!skipPublishAutoNavRef.current) {
         setWorkspaceTab("publish");
         setPublishTabHint(
-          "Images ready — generate captions to continue to video and YouTube.",
+          "Images and captions are ready — export video or post below.",
         );
-
-        if (captions.length === 0 && shouldShowCaptionsPrompt(campaign.id)) {
-          setActionsSheetOpen(false);
-          setCaptionsPromptOpen(true);
-        }
       }
 
       skipPublishAutoNavRef.current = false;
     }
 
-    prevImagesCompleteRef.current = imagesComplete;
-  }, [campaign.id, captions.length, imagesComplete]);
+    prevDraftReadyRef.current = draftReady;
+  }, [draftReady]);
 
   useEffect(() => {
     return () => {
@@ -941,6 +953,44 @@ export default function CampaignWorkspace({
           setCampaign(payload.new as Campaign);
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "platform_captions",
+          filter: `campaign_id=eq.${campaign.id}`,
+        },
+        (payload) => {
+          const newCaption = payload.new as PlatformCaption;
+          setCaptions((current) => {
+            if (current.some((caption) => caption.id === newCaption.id)) {
+              return current;
+            }
+
+            return [...current, newCaption];
+          });
+          setIsGeneratingCaptions(false);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "platform_captions",
+          filter: `campaign_id=eq.${campaign.id}`,
+        },
+        (payload) => {
+          const updatedCaption = payload.new as PlatformCaption;
+          setCaptions((current) =>
+            current.map((caption) =>
+              caption.id === updatedCaption.id ? updatedCaption : caption,
+            ),
+          );
+          setIsGeneratingCaptions(false);
+        }
+      )
       .subscribe();
 
     return () => {
@@ -954,9 +1004,52 @@ export default function CampaignWorkspace({
     };
   }, [campaign.id, supabase]);
 
+  useEffect(() => {
+    if (!pendingAutoImages || autoImagesStartedRef.current) {
+      return;
+    }
+
+    if (
+      isAwaitingTextGeneration ||
+      slides.length === 0 ||
+      imagesComplete ||
+      isGeneratingImages ||
+      isGenerating
+    ) {
+      return;
+    }
+
+    autoImagesStartedRef.current = true;
+    setPendingAutoImages(false);
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("auto_images");
+    const query = nextParams.toString();
+    router.replace(
+      query ? `/campaign/${campaign.id}?${query}` : `/campaign/${campaign.id}`,
+      { scroll: false },
+    );
+
+    void handleGenerateImages();
+  }, [
+    campaign.id,
+    imagesComplete,
+    isAwaitingTextGeneration,
+    isGenerating,
+    isGeneratingImages,
+    pendingAutoImages,
+    router,
+    searchParams,
+    slides.length,
+  ]);
+
   async function handleGenerateImages() {
     setError(null);
     setIsGenerating(true);
+
+    if (captions.length === 0) {
+      setIsGeneratingCaptions(true);
+    }
 
     try {
       const response = await fetch("/api/generate-images", {
@@ -988,6 +1081,11 @@ export default function CampaignWorkspace({
           .eq("id", campaign.id)
           .single();
 
+        const { data: refreshedCaptions } = await supabase
+          .from("platform_captions")
+          .select("*")
+          .eq("campaign_id", campaign.id);
+
         if (refreshedSlides) {
           setSlides(refreshedSlides as Slide[]);
         }
@@ -995,6 +1093,12 @@ export default function CampaignWorkspace({
         if (refreshedCampaign) {
           setCampaign(refreshedCampaign as Campaign);
         }
+
+        if (refreshedCaptions) {
+          setCaptions(refreshedCaptions as PlatformCaption[]);
+        }
+
+        setIsGeneratingCaptions(false);
       } else {
         setCampaign((current) => ({
           ...current,
@@ -1480,12 +1584,11 @@ export default function CampaignWorkspace({
       setCaptionsMessage(
         captions.length > 0
           ? "Captions regenerated — slide images unchanged"
-          : "Platform captions generated"
+          : "Platform captions generated",
       );
 
       setWorkspaceTab("publish");
       setPublishTabHint(null);
-      setCaptionsPromptOpen(false);
       requestAnimationFrame(() => {
         scrollToCampaignSection("section-publish-video");
       });
@@ -2138,18 +2241,9 @@ export default function CampaignWorkspace({
         onTabChange={setWorkspaceTab}
         {...journeyProps}
       />
-      <CampaignCaptionsPrompt
-        open={captionsPromptOpen}
-        campaignId={campaign.id}
-        canGenerateCaptions={canGenerateCaptions}
-        isGeneratingCaptions={isGeneratingCaptions}
-        onGenerateCaptions={handleGenerateCaptions}
-        onClose={() => setCaptionsPromptOpen(false)}
-      />
       <CampaignWorkspaceTour
         enabled={
           workspaceTab !== "details" &&
-          !captionsPromptOpen &&
           !actionsSheetOpen &&
           !previewOpen
         }

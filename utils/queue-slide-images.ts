@@ -1,7 +1,7 @@
 import {
   markCampaignFailed,
 } from "@/utils/campaign-image-status";
-import { maybeSendCampaignImagesReadyPush } from "@/utils/send-campaign-push";
+import { maybeSendCampaignDraftReadyPush } from "@/utils/send-campaign-push";
 import {
   buildFalWebhookUrl,
   getAppBaseUrl,
@@ -11,6 +11,7 @@ import {
 } from "@/utils/fal";
 import { buildSlideImagePrompt } from "@/utils/slide-image-prompt";
 import { refreshCampaignImageStatus } from "@/utils/campaign-image-status";
+import { maybeAutoGenerateCampaignCaptions } from "@/utils/run-campaign-caption-generation";
 import { upsertSlideImageRecord } from "@/utils/slide-image-persistence";
 import type { AspectRatio, Campaign, Slide } from "@/types/campaign";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -55,6 +56,12 @@ export async function queueSlideImagesForAspect(
     throw new Error(statusError.message);
   }
 
+  const autoCaptionsPromise = maybeAutoGenerateCampaignCaptions(
+    supabase,
+    campaign.id,
+    campaign.user_id,
+  );
+
   const appBaseUrl = getAppBaseUrl(request);
   const useLocalSync = isLocalAppUrl(appBaseUrl);
 
@@ -90,7 +97,8 @@ export async function queueSlideImagesForAspect(
     }
 
     await refreshCampaignImageStatus(supabase, campaign.id);
-    await maybeSendCampaignImagesReadyPush(campaign.id);
+    await autoCaptionsPromise;
+    await maybeSendCampaignDraftReadyPush(campaign.id);
 
     return { mode: "sync" };
   }

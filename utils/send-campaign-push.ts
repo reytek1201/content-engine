@@ -360,7 +360,7 @@ export async function sendTestPushToUser(
   });
 }
 
-export async function maybeSendCampaignImagesReadyPush(
+export async function maybeSendCampaignDraftReadyPush(
   campaignId: string,
 ): Promise<void> {
   if (!isPushConfigured()) {
@@ -381,6 +381,15 @@ export async function maybeSendCampaignImagesReadyPush(
     campaignPreview.status !== "completed" ||
     campaignPreview.images_ready_notified_at
   ) {
+    return;
+  }
+
+  const { count: captionsCount, error: captionsError } = await supabase
+    .from("platform_captions")
+    .select("*", { count: "exact", head: true })
+    .eq("campaign_id", campaignId);
+
+  if (captionsError || (captionsCount ?? 0) === 0) {
     return;
   }
 
@@ -414,9 +423,16 @@ export async function maybeSendCampaignImagesReadyPush(
   });
 
   await sendPushToUser(campaign.user_id, {
-    title: "Images ready",
-    body: `${campaignTitle} — all slide images are ready to review.`,
+    title: "Draft ready",
+    body: `${campaignTitle} — images and captions are ready to review.`,
   }, pushData);
+}
+
+/** @deprecated Use `maybeSendCampaignDraftReadyPush` */
+export async function maybeSendCampaignImagesReadyPush(
+  campaignId: string,
+): Promise<void> {
+  await maybeSendCampaignDraftReadyPush(campaignId);
 }
 
 export async function maybeSendVideoExportReadyPush(

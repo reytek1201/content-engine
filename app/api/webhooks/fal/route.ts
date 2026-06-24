@@ -7,7 +7,6 @@ import {
 } from "@/utils/fal";
 import type { FalVideoWebhookPayload } from "@/utils/fal-video";
 import { refreshCampaignImageStatus } from "@/utils/campaign-image-status";
-import { maybeSendCampaignImagesReadyPush } from "@/utils/send-campaign-push";
 import { upsertSlideImageRecord } from "@/utils/slide-image-persistence";
 import { handleVideoExportWebhook } from "@/utils/video-export-webhook";
 import type { Campaign } from "@/types/campaign";
@@ -120,7 +119,6 @@ export async function POST(request: Request) {
       });
 
       await refreshCampaignImageStatus(supabase, campaignId);
-      await maybeSendCampaignImagesReadyPush(campaignId);
 
       return NextResponse.json({ success: true, handled: "slide_image" });
     }
@@ -214,7 +212,6 @@ export async function POST(request: Request) {
     });
 
     await refreshCampaignImageStatus(supabase, slide.campaign_id);
-    await maybeSendCampaignImagesReadyPush(slide.campaign_id);
 
     return NextResponse.json({ success: true, handled: "updated" });
   } catch (error) {

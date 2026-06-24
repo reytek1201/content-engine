@@ -18,7 +18,19 @@ import {
 } from "@/types/brand";
 import type { ReferenceType } from "@/types/references";
 import type { UsageSummary } from "@/types/usage";
-import type { WebsiteIngestCompletePayload } from "@/types/website-ingest";
+import type {
+  TopicSelectionOptions,
+  WebsiteIngestCompletePayload,
+} from "@/types/website-ingest";
+import {
+  buildCampaignWorkspaceHref,
+  getAutoGenerateImagesPreference,
+  setAutoGenerateImagesPreference,
+} from "@/utils/campaign-auto-images-preference";
+import {
+  getCachedWebsiteIngest,
+  updateCachedWebsiteIngestSelection,
+} from "@/utils/website-ingest-cache";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -55,7 +67,10 @@ interface CreateCampaignFormProps {
   user: User;
   idPrefix?: string;
   compact?: boolean;
-  onSuccess?: (campaignId: string) => void;
+  onSuccess?: (
+    campaignId: string,
+    options?: { autoImages?: boolean },
+  ) => void;
 }
 
 function formatSubmitError(data: GenerateTextFailure): string {
@@ -92,6 +107,7 @@ export default function CreateCampaignForm({
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [useSavedBrand, setUseSavedBrand] = useState(false);
   const [isSavingBrand, setIsSavingBrand] = useState(false);
+  const [autoGenerateImages, setAutoGenerateImages] = useState(false);
   const [clearedLibrarySlots, setClearedLibrarySlots] = useState<
     Set<ReferenceType>
   >(new Set());
@@ -113,6 +129,24 @@ export default function CreateCampaignForm({
     selectedProduct,
     activeBrand,
   );
+
+  useEffect(() => {
+    setAutoGenerateImages(getAutoGenerateImagesPreference());
+
+    const cache = getCachedWebsiteIngest();
+
+    if (!cache) {
+      return;
+    }
+
+    if (cache.selectedTopic) {
+      setTopic(cache.selectedTopic);
+    }
+
+    if (cache.selectedFormat) {
+      setAspectRatio(cache.selectedFormat);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -370,11 +404,12 @@ export default function CreateCampaignForm({
     return references;
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  async function createCampaign(options?: { autoImages?: boolean }) {
     setError(null);
     setIsLoading(true);
+
+    const shouldAutoGenerateImages =
+      options?.autoImages ?? autoGenerateImages;
 
     try {
       const references = await resolveReferencesForSubmit();
@@ -421,10 +456,12 @@ export default function CreateCampaignForm({
         }
       }
 
+      const destinationOptions = { autoImages: shouldAutoGenerateImages };
+
       if (onSuccess) {
-        onSuccess(data.campaignId);
+        onSuccess(data.campaignId, destinationOptions);
       } else {
-        router.push(`/campaign/${data.campaignId}`);
+        router.push(buildCampaignWorkspaceHref(data.campaignId, destinationOptions));
       }
     } catch (submitError) {
       setError(
@@ -436,6 +473,45 @@ export default function CreateCampaignForm({
       setIsLoading(false);
       setIsSavingBrand(false);
     }
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await createCampaign();
+  }
+
+  async function handleUseTopicAndGenerate(
+    nextTopic: string,
+    options?: TopicSelectionOptions,
+  ) {
+    setTopic(nextTopic);
+
+    if (options?.recommendedFormat) {
+      setAspectRatio(options.recommendedFormat);
+    }
+
+    updateCachedWebsiteIngestSelection(
+      nextTopic,
+      options?.recommendedFormat,
+    );
+
+    await createCampaign({ autoImages: true });
+  }
+
+  function handleSelectTopic(
+    nextTopic: string,
+    options?: TopicSelectionOptions,
+  ) {
+    setTopic(nextTopic);
+
+    if (options?.recommendedFormat) {
+      setAspectRatio(options.recommendedFormat);
+    }
+
+    updateCachedWebsiteIngestSelection(
+      nextTopic,
+      options?.recommendedFormat,
+    );
   }
 
   async function handleSaveIngestBrandKit(
@@ -576,11 +652,9 @@ export default function CreateCampaignForm({
             defaultExpanded={isFirstCampaign}
             selectedTopic={topic}
             brandId={activeBrand?.id ?? null}
-            onSelectTopic={(topic, options) => {
-              setTopic(topic);
-              if (options?.recommendedFormat) {
-                setAspectRatio(options.recommendedFormat);
-              }
+            onSelectTopic={handleSelectTopic}
+            onUseTopicAndGenerate={(nextTopic, options) => {
+              void handleUseTopicAndGenerate(nextTopic, options);
             }}
             onIngestComplete={(payload) => {
               if (
@@ -778,6 +852,22 @@ export default function CreateCampaignForm({
           </div>
         )}
 
+        <label className="mt-6 flex items-start gap-2 text-sm leading-6 text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={autoGenerateImages}
+            onChange={(event) => {
+              const enabled = event.target.checked;
+              setAutoGenerateImages(enabled);
+              setAutoGenerateImagesPreference(enabled);
+            }}
+            className="mt-1 h-4 w-4 rounded border-border"
+          />
+          <span>
+            Generate images and captions automatically when slide copy is ready.
+          </span>
+        </label>
+
         <button
           type="submit"
           disabled={
@@ -785,7 +875,7 @@ export default function CreateCampaignForm({
             campaignLimitReached ||
             usageLoading
           }
-          className="btn-primary-full mt-8"
+          className="btn-primary-full mt-6"
         >
           Generate campaign
         </button>

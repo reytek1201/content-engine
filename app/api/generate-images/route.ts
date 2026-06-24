@@ -3,7 +3,7 @@ import {
   markCampaignFailed,
   refreshCampaignImageStatus,
 } from "@/utils/campaign-image-status";
-import { maybeSendCampaignImagesReadyPush } from "@/utils/send-campaign-push";
+import { maybeAutoGenerateCampaignCaptions } from "@/utils/run-campaign-caption-generation";
 import { queueSlideImagesForAspect } from "@/utils/queue-slide-images";
 import { assertAiRateLimit, isRateLimitError } from "@/utils/rate-limit";
 import { createClient } from "@/utils/supabase/server";
@@ -98,6 +98,12 @@ export async function POST(request: Request) {
     const slidesToGenerate = typedSlides.filter((slide) => !slide.image_url);
 
     if (slidesToGenerate.length === 0) {
+      void maybeAutoGenerateCampaignCaptions(
+        supabase,
+        campaignId,
+        typedCampaign.user_id,
+      );
+
       return NextResponse.json(
         { success: true, message: "All slide images already exist" },
         { status: 200 },
