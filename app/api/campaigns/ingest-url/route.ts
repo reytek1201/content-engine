@@ -4,6 +4,7 @@ import {
   uploadIngestedProductImage,
 } from "@/utils/ingest-product-image";
 import { PublicUrlFetchError } from "@/utils/fetch-public-url";
+import { GeminiServiceError, mapGeminiError } from "@/utils/map-gemini-error";
 import { isRateLimitError, assertRateLimit } from "@/utils/rate-limit";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
@@ -109,9 +110,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : "Unexpected server error";
+    if (error instanceof GeminiServiceError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message,
+          ...(error.retryable ? { code: "ai_busy" as const } : {}),
+        },
+        { status: error.retryable ? 503 : 500 },
+      );
+    }
 
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    const message = mapGeminiError(error);
+
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 500 },
+    );
   }
 }

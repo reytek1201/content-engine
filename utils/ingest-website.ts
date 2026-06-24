@@ -6,9 +6,15 @@ import type {
   WebsiteTopicFormat,
 } from "@/types/website-ingest";
 import { fetchPublicWebsiteHtml } from "@/utils/fetch-public-url";
+import {
+  GeminiServiceError,
+  isRetryableGeminiError,
+} from "@/utils/map-gemini-error";
 import { GoogleGenAI } from "@google/genai";
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-2.5-flash";
+const GEMINI_MAX_ATTEMPTS = 3;
+const GEMINI_RETRY_DELAY_MS = 600;
 const MAX_PROMPT_CHARS = 24_000;
 const MIN_PAGE_TEXT_CHARS = 120;
 
@@ -72,6 +78,16 @@ function getGeminiClient(): GoogleGenAI {
   }
 
   return new GoogleGenAI({ apiKey });
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function getIngestModel(): string {
+  return process.env.GEMINI_MODEL ?? DEFAULT_MODEL;
 }
 
 function decodeHtmlEntities(value: string): string {
@@ -379,6 +395,85 @@ function normalizeTopicSuggestions(
   return normalized;
 }
 
+async function generateIngestTopicsFromPage(input: {
+  finalUrl: string;
+  title: string | null;
+  ogTitle: string | null;
+  metaDescription: string | null;
+  pageText: string;
+  excludeTopics: string[];
+}): Promise<{
+  businessName?: unknown;
+  description?: unknown;
+  audience?: unknown;
+  topics?: unknown;
+}> {
+  const ai = getGeminiClient();
+  const model = getIngestModel();
+  const promptText = [
+    "You are a performance marketing strategist for Instagram and TikTok carousel campaigns.",
+    "Analyse the website content and return JSON only.",
+    "Write exactly 3 distinct campaign topic suggestions.",
+    "Each topic must be a pain-point, curiosity, or contrarian hook (5–12 words).",
+    "Each topic needs angle (pain_point, curiosity, or contrarian), a one-sentence rationale explaining why it fits this business, and recommendedFormat (4:5 for feed carousels or 9:16 for Reels/TikTok).",
+    "Topics must be specific to this business, not generic social media advice.",
+    input.excludeTopics.length > 0
+      ? `Do not repeat or closely paraphrase these previously suggested topics: ${input.excludeTopics.join("; ")}. Use fresh angles.`
+      : "",
+    `Website URL: ${input.finalUrl}`,
+    input.title ? `Page title: ${input.title}` : "",
+    input.ogTitle ? `Open Graph title: ${input.ogTitle}` : "",
+    input.metaDescription ? `Meta description: ${input.metaDescription}` : "",
+    "",
+    "Website text excerpt:",
+    input.pageText,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < GEMINI_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: [{ text: promptText }],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: INGEST_RESPONSE_SCHEMA,
+        },
+      });
+
+      const rawText = response.text;
+
+      if (!rawText) {
+        throw new Error("No response from AI");
+      }
+
+      return JSON.parse(rawText) as {
+        businessName?: unknown;
+        description?: unknown;
+        audience?: unknown;
+        topics?: unknown;
+      };
+    } catch (error) {
+      lastError = error;
+
+      if (
+        attempt < GEMINI_MAX_ATTEMPTS - 1 &&
+        isRetryableGeminiError(error)
+      ) {
+        await sleep(GEMINI_RETRY_DELAY_MS * (attempt + 1));
+        continue;
+      }
+
+      throw new GeminiServiceError(error);
+    }
+  }
+
+  throw new GeminiServiceError(lastError);
+}
+
 export async function ingestWebsiteForCampaign(
   rawUrl: string,
   options: IngestWebsiteOptions = {},
@@ -402,51 +497,14 @@ export async function ingestWebsiteForCampaign(
     .map((topic) => topic.trim())
     .filter(Boolean);
 
-  const ai = getGeminiClient();
-  const response = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: [
-      {
-        text: [
-          "You are a performance marketing strategist for Instagram and TikTok carousel campaigns.",
-          "Analyse the website content and return JSON only.",
-          "Write exactly 3 distinct campaign topic suggestions.",
-          "Each topic must be a pain-point, curiosity, or contrarian hook (5–12 words).",
-          "Each topic needs angle (pain_point, curiosity, or contrarian), a one-sentence rationale explaining why it fits this business, and recommendedFormat (4:5 for feed carousels or 9:16 for Reels/TikTok).",
-          "Topics must be specific to this business, not generic social media advice.",
-          excludeTopics.length > 0
-            ? `Do not repeat or closely paraphrase these previously suggested topics: ${excludeTopics.join("; ")}. Use fresh angles.`
-            : "",
-          `Website URL: ${finalUrl}`,
-          title ? `Page title: ${title}` : "",
-          ogTitle ? `Open Graph title: ${ogTitle}` : "",
-          metaDescription ? `Meta description: ${metaDescription}` : "",
-          "",
-          "Website text excerpt:",
-          pageText,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      },
-    ],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: INGEST_RESPONSE_SCHEMA,
-    },
+  const parsed = await generateIngestTopicsFromPage({
+    finalUrl,
+    title,
+    ogTitle,
+    metaDescription,
+    pageText,
+    excludeTopics,
   });
-
-  const rawText = response.text;
-
-  if (!rawText) {
-    throw new Error("No response from AI");
-  }
-
-  const parsed = JSON.parse(rawText) as {
-    businessName?: unknown;
-    description?: unknown;
-    audience?: unknown;
-    topics?: unknown;
-  };
 
   const topics = normalizeTopicSuggestions(parsed.topics);
 

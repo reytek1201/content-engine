@@ -65,6 +65,16 @@ export function isRetryableGeminiError(error: unknown): boolean {
   return isUnavailableMessage(raw);
 }
 
+export class GeminiServiceError extends Error {
+  readonly retryable: boolean;
+
+  constructor(error: unknown) {
+    super(mapGeminiError(error));
+    this.name = "GeminiServiceError";
+    this.retryable = isRetryableGeminiError(error);
+  }
+}
+
 export function mapGeminiError(error: unknown): string {
   if (error instanceof z.ZodError) {
     return "AI returned invalid slide data. Try again or use fewer slides.";
@@ -81,6 +91,10 @@ export function mapGeminiError(error: unknown): string {
   }
 
   if (raw === "Gemini returned an empty response") {
+    return "AI returned an empty response. Please try again.";
+  }
+
+  if (raw === "No response from AI") {
     return "AI returned an empty response. Please try again.";
   }
 

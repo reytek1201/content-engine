@@ -73,8 +73,24 @@ interface CreateCampaignFormProps {
   ) => void;
 }
 
+interface CreateCampaignOptions {
+  autoImages?: boolean;
+  topic?: string;
+  aspectRatio?: AspectRatio;
+}
+
 function formatSubmitError(data: GenerateTextFailure): string {
   if (typeof data.details === "object" && data.details !== null) {
+    const fieldErrors = (
+      data.details as { fieldErrors?: Record<string, string[]> }
+    ).fieldErrors;
+
+    const topicError = fieldErrors?.topic?.[0];
+
+    if (topicError) {
+      return topicError;
+    }
+
     return `${data.error}. Check your inputs and try again.`;
   }
 
@@ -404,12 +420,28 @@ export default function CreateCampaignForm({
     return references;
   }
 
-  async function createCampaign(options?: { autoImages?: boolean }) {
+  async function createCampaign(options?: CreateCampaignOptions) {
     setError(null);
     setIsLoading(true);
 
+    const resolvedTopic = (options?.topic ?? topic).trim();
+    const resolvedAspectRatio = options?.aspectRatio ?? aspectRatio;
     const shouldAutoGenerateImages =
       options?.autoImages ?? autoGenerateImages;
+
+    if (!resolvedTopic) {
+      setError("Choose a topic before generating your campaign.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (options?.topic) {
+      setTopic(options.topic);
+    }
+
+    if (options?.aspectRatio) {
+      setAspectRatio(options.aspectRatio);
+    }
 
     try {
       const references = await resolveReferencesForSubmit();
@@ -418,8 +450,8 @@ export default function CreateCampaignForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          topic,
-          aspect_ratio: aspectRatio,
+          topic: resolvedTopic,
+          aspect_ratio: resolvedAspectRatio,
           slide_count: slideCount,
           brand_id: activeBrand?.id,
           brand_product_id: selectedProductId || undefined,
@@ -484,18 +516,16 @@ export default function CreateCampaignForm({
     nextTopic: string,
     options?: TopicSelectionOptions,
   ) {
-    setTopic(nextTopic);
-
-    if (options?.recommendedFormat) {
-      setAspectRatio(options.recommendedFormat);
-    }
-
     updateCachedWebsiteIngestSelection(
       nextTopic,
       options?.recommendedFormat,
     );
 
-    await createCampaign({ autoImages: true });
+    await createCampaign({
+      autoImages: true,
+      topic: nextTopic,
+      aspectRatio: options?.recommendedFormat,
+    });
   }
 
   function handleSelectTopic(
