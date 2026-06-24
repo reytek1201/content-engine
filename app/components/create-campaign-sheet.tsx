@@ -31,7 +31,7 @@ export default function CreateCampaignSheet({
       onClose={onClose}
       title="New campaign"
       titleId="create-campaign-sheet-title"
-      description="Draft slides from a topic or pain point."
+      description="Paste your website for ideas, or enter a topic manually."
       mobileOnly
       zIndexClass="z-[60]"
     >

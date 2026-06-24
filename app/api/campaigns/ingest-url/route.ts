@@ -1,4 +1,5 @@
 import { ingestWebsiteForCampaign } from "@/utils/ingest-website";
+import { uploadIngestedProductImage } from "@/utils/ingest-product-image";
 import { PublicUrlFetchError } from "@/utils/fetch-public-url";
 import { isRateLimitError, assertRateLimit } from "@/utils/rate-limit";
 import { createClient } from "@/utils/supabase/server";
@@ -52,13 +53,24 @@ export async function POST(request: Request) {
 
     const result = await ingestWebsiteForCampaign(parsed.data.url);
 
+    let productImageUrl = result.productImageUrl;
+
+    if (productImageUrl) {
+      const uploadedProductImageUrl = await uploadIngestedProductImage(
+        supabase,
+        user.id,
+        productImageUrl,
+      );
+      productImageUrl = uploadedProductImageUrl;
+    }
+
     return NextResponse.json({
       success: true,
       businessName: result.businessName,
       description: result.description,
       audience: result.audience,
       topics: result.topics,
-      productImageUrl: result.productImageUrl,
+      productImageUrl,
       sourceUrl: result.sourceUrl,
     });
   } catch (error) {

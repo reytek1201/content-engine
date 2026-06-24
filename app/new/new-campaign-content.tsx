@@ -32,8 +32,9 @@ export default function NewCampaignContent({ user }: NewCampaignContentProps) {
               Generate your next campaign
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-              Enter a marketing topic or pain point. We&apos;ll draft slide
-              scripts with overlays, voiceover, and image prompts.
+              Paste your website for topic ideas, or enter a marketing pain
+              point manually. We&apos;ll draft slide scripts with overlays,
+              voiceover, and image prompts.
             </p>
           </header>
 

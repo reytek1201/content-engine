@@ -1,7 +1,14 @@
 "use client";
 
-import type { WebsiteIngestApiResponse } from "@/types/website-ingest";
-import { useState } from "react";
+import type {
+  WebsiteIngestApiResponse,
+  WebsiteIngestCompletePayload,
+} from "@/types/website-ingest";
+import {
+  hasUsedWebsiteIngest,
+  markWebsiteIngestUsed,
+} from "@/utils/website-ingest-preference";
+import { useEffect, useState } from "react";
 
 function GlobeIcon() {
   return (
@@ -25,13 +32,17 @@ function GlobeIcon() {
 
 interface WebsiteTopicSuggesterProps {
   onSelectTopic: (topic: string) => void;
+  onIngestComplete?: (payload: WebsiteIngestCompletePayload) => void;
   disabled?: boolean;
+  defaultExpanded?: boolean;
   inputId?: string;
 }
 
 export default function WebsiteTopicSuggester({
   onSelectTopic,
+  onIngestComplete,
   disabled = false,
+  defaultExpanded = false,
   inputId = "website-url",
 }: WebsiteTopicSuggesterProps) {
   const [expanded, setExpanded] = useState(false);
@@ -42,14 +53,22 @@ export default function WebsiteTopicSuggester({
   );
   const [businessName, setBusinessName] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
+  const [productImageUrl, setProductImageUrl] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (defaultExpanded && !hasUsedWebsiteIngest()) {
+      setExpanded(true);
+    }
+  }, [defaultExpanded]);
 
   function handleReset() {
     setState("idle");
     setSuggestions([]);
     setBusinessName(null);
     setDescription(null);
+    setProductImageUrl(null);
     setError(null);
   }
 
@@ -95,8 +114,19 @@ export default function WebsiteTopicSuggester({
 
       setBusinessName(data.businessName);
       setDescription(data.description);
+      setProductImageUrl(data.productImageUrl);
       setSuggestions(data.topics);
       setState("suggestions");
+      markWebsiteIngestUsed();
+
+      onIngestComplete?.({
+        businessName: data.businessName,
+        description: data.description,
+        audience: data.audience,
+        topics: data.topics,
+        productImageUrl: data.productImageUrl,
+        sourceUrl: data.sourceUrl,
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not read that website",
@@ -150,6 +180,11 @@ export default function WebsiteTopicSuggester({
                 {description}
               </p>
             ) : null}
+            {productImageUrl ? (
+              <p className="mt-2 text-xs text-primary">
+                Site image added as your product reference.
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -187,16 +222,19 @@ export default function WebsiteTopicSuggester({
             Start from your website
           </p>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            We&apos;ll read your public homepage and suggest campaign topics.
+            Paste your homepage and we&apos;ll suggest campaign topics grounded
+            in your business.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleCollapse}
-          className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground"
-        >
-          Cancel
-        </button>
+        {!defaultExpanded ? (
+          <button
+            type="button"
+            onClick={handleCollapse}
+            className="shrink-0 text-xs text-muted-foreground transition hover:text-foreground"
+          >
+            Cancel
+          </button>
+        ) : null}
       </div>
 
       <label htmlFor={inputId} className="sr-only">

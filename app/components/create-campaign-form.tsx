@@ -1,11 +1,9 @@
 "use client";
 
 import BrandLibraryPanel from "@/app/components/brand-library-panel";
-import PhotoTopicSuggester from "@/app/components/photo-topic-suggester";
-import WebsiteTopicSuggester from "@/app/components/website-topic-suggester";
+import CampaignTopicSuggester from "@/app/components/campaign-topic-suggester";
 import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
 import { useActiveBrandOptional } from "@/app/components/active-brand-provider";
-import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { brandDetailHref } from "@/utils/brands-back-target";
 import { createClient } from "@/utils/supabase/client";
 import {
@@ -88,7 +86,6 @@ export default function CreateCampaignForm({
   const [usageLoading, setUsageLoading] = useState(true);
 
   const campaignLimitReached = usage !== null && !usage.canCreateCampaign;
-  const isNativeApp = useIsNativeApp();
 
   const [brandProducts, setBrandProducts] = useState<BrandProduct[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
@@ -101,6 +98,9 @@ export default function CreateCampaignForm({
   const [productFile, setProductFile] = useState<File | null>(null);
   const [styleFile, setStyleFile] = useState<File | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [ingestedProductUrl, setIngestedProductUrl] = useState<string | null>(
+    null,
+  );
   const [productPreview, setProductPreview] = useState<string | null>(null);
   const [stylePreview, setStylePreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -204,6 +204,10 @@ export default function CreateCampaignForm({
 
     setFile(file);
 
+    if (type === "product" && !file) {
+      setIngestedProductUrl(null);
+    }
+
     if (file) {
       setClearedLibrarySlots((current) => {
         const next = new Set(current);
@@ -247,6 +251,14 @@ export default function CreateCampaignForm({
 
     if (localPreview) {
       return localPreview;
+    }
+
+    if (
+      type === "product" &&
+      ingestedProductUrl &&
+      !clearedLibrarySlots.has("product")
+    ) {
+      return ingestedProductUrl;
     }
 
     if (
@@ -296,6 +308,14 @@ export default function CreateCampaignForm({
     async function resolveSlot(type: ReferenceType, file: File | null) {
       if (file) {
         return uploadReferenceImage(supabase, file, user.id, type);
+      }
+
+      if (
+        type === "product" &&
+        ingestedProductUrl &&
+        !clearedLibrarySlots.has("product")
+      ) {
+        return ingestedProductUrl;
       }
 
       if (
@@ -428,6 +448,7 @@ export default function CreateCampaignForm({
   }
 
   const topicId = `${idPrefix}topic`;
+  const isFirstCampaign = usage !== null && usage.totalCampaigns === 0;
   const hasAnyReferencePreview =
     Boolean(getSlotPreview("product")) ||
     Boolean(getSlotPreview("style")) ||
@@ -483,9 +504,25 @@ export default function CreateCampaignForm({
         ) : null}
 
         <div className="mb-4">
-          <WebsiteTopicSuggester
+          {isFirstCampaign ? (
+            <p className="mb-3 text-sm leading-6 text-muted-foreground">
+              New here? Paste your website to get campaign ideas in seconds.
+            </p>
+          ) : null}
+          <CampaignTopicSuggester
             inputId={`${idPrefix}website-url`}
+            defaultExpanded={isFirstCampaign}
             onSelectTopic={(t) => setTopic(t)}
+            onIngestComplete={(payload) => {
+              if (
+                payload.productImageUrl &&
+                !productFile &&
+                !clearedLibrarySlots.has("product")
+              ) {
+                setIngestedProductUrl(payload.productImageUrl);
+                setProductPreview(payload.productImageUrl);
+              }
+            }}
             disabled={isLoading}
           />
         </div>
@@ -505,15 +542,6 @@ export default function CreateCampaignForm({
           required
           className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
         />
-
-        {isNativeApp === true && (
-          <div className="mt-3">
-            <PhotoTopicSuggester
-              onSelectTopic={(t) => setTopic(t)}
-              disabled={isLoading}
-            />
-          </div>
-        )}
 
         <div className={compact ? "space-y-3" : "mt-8"}>
           <p className="text-sm font-medium text-secondary-foreground">
