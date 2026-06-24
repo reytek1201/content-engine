@@ -14,6 +14,7 @@ type SuggesterMode = "website" | "photo";
 interface CampaignTopicSuggesterProps {
   onSelectTopic: (topic: string, options?: TopicSelectionOptions) => void;
   onIngestComplete?: (payload: WebsiteIngestCompletePayload) => void;
+  selectedTopic?: string;
   disabled?: boolean;
   defaultExpanded?: boolean;
   inputId?: string;
@@ -22,6 +23,7 @@ interface CampaignTopicSuggesterProps {
 export default function CampaignTopicSuggester({
   onSelectTopic,
   onIngestComplete,
+  selectedTopic = "",
   disabled = false,
   defaultExpanded = false,
   inputId,
@@ -61,6 +63,7 @@ export default function CampaignTopicSuggester({
           <WebsiteTopicSuggester
             inputId={inputId}
             defaultExpanded={defaultExpanded}
+            selectedTopic={selectedTopic}
             onSelectTopic={onSelectTopic}
             onIngestComplete={onIngestComplete}
             disabled={disabled}
@@ -79,6 +82,7 @@ export default function CampaignTopicSuggester({
     <WebsiteTopicSuggester
       inputId={inputId}
       defaultExpanded={defaultExpanded}
+      selectedTopic={selectedTopic}
       onSelectTopic={onSelectTopic}
       onIngestComplete={onIngestComplete}
       disabled={disabled}

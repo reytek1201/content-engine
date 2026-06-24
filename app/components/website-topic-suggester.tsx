@@ -43,14 +43,20 @@ const ANGLE_LABELS: Record<WebsiteTopicAngle, string> = {
 interface WebsiteTopicSuggesterProps {
   onSelectTopic: (topic: string, options?: TopicSelectionOptions) => void;
   onIngestComplete?: (payload: WebsiteIngestCompletePayload) => void;
+  selectedTopic?: string;
   disabled?: boolean;
   defaultExpanded?: boolean;
   inputId?: string;
 }
 
+function isSameTopic(left: string, right: string): boolean {
+  return left.trim().toLowerCase() === right.trim().toLowerCase();
+}
+
 export default function WebsiteTopicSuggester({
   onSelectTopic,
   onIngestComplete,
+  selectedTopic = "",
   disabled = false,
   defaultExpanded = false,
   inputId = "website-url",
@@ -234,37 +240,62 @@ export default function WebsiteTopicSuggester({
           </p>
         )}
 
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">
+          Pick one idea for this campaign. You can switch between them, then
+          generate below.
+        </p>
+
         <div className="mt-3 space-y-3">
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion.topic}
-              type="button"
-              onClick={() => {
-                onSelectTopic(suggestion.topic, {
-                  recommendedFormat: suggestion.recommendedFormat,
-                });
-                handleCollapse();
-              }}
-              className="w-full rounded-lg border border-border bg-background px-3 py-3 text-left transition hover:border-primary/60 hover:bg-primary/5 active:opacity-80"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
-                  {ANGLE_LABELS[suggestion.angle]}
-                </span>
-                <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  {suggestion.recommendedFormat === "9:16"
-                    ? "9:16 Reels"
-                    : "4:5 Feed"}
-                </span>
-              </div>
-              <p className="mt-2 text-sm font-medium text-foreground">
-                {suggestion.topic}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                {suggestion.rationale}
-              </p>
-            </button>
-          ))}
+          {suggestions.map((suggestion) => {
+            const isSelected = isSameTopic(suggestion.topic, selectedTopic);
+
+            return (
+              <button
+                key={suggestion.topic}
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  onSelectTopic(suggestion.topic, {
+                    recommendedFormat: suggestion.recommendedFormat,
+                  });
+                }}
+                className={`w-full rounded-lg border px-3 py-3 text-left transition active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  isSelected
+                    ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                    : "border-border bg-background hover:border-primary/60 hover:bg-primary/5"
+                }`}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                    {ANGLE_LABELS[suggestion.angle]}
+                  </span>
+                  <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    {suggestion.recommendedFormat === "9:16"
+                      ? "9:16 Reels"
+                      : "4:5 Feed"}
+                  </span>
+                  {isSelected ? (
+                    <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+                      Selected
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-sm font-medium text-foreground">
+                  {suggestion.topic}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  {suggestion.rationale}
+                </p>
+                <p
+                  className={`mt-3 text-xs font-semibold ${
+                    isSelected ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {isSelected ? "Using this topic" : "Use this topic"}
+                </p>
+              </button>
+            );
+          })}
         </div>
       </div>
     );

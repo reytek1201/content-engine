@@ -533,6 +533,7 @@ export default function CreateCampaignForm({
           <CampaignTopicSuggester
             inputId={`${idPrefix}website-url`}
             defaultExpanded={isFirstCampaign}
+            selectedTopic={topic}
             onSelectTopic={(topic, options) => {
               setTopic(topic);
               if (options?.recommendedFormat) {
