@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SlidePress
 
-## Getting Started
+**Turn a topic into post-ready carousel campaigns and AI-narrated video in minutes.**
 
-First, run the development server:
+Live at [slidepress.co](https://www.slidepress.co) · Native apps via Capacitor (iOS + Android).
+
+## What it does
+
+- **Create** — topic, website URL ingest, or brand kit → Gemini slide copy + voiceover scripts
+- **Assets** — Fal AI slide images + platform captions (auto-chained)
+- **Export** — zip, narration MP3s, Reel-ready MP4 (4:5 or 9:16)
+- **Publish** — post to YouTube Shorts, TikTok, and Instagram (Reels + carousel)
+
+## Docs
+
+| Doc | Purpose |
+|-----|---------|
+| [`docs/client-features.md`](docs/client-features.md) | Product features, workflow, roadmap |
+| [`docs/launch-status.md`](docs/launch-status.md) | Store launch, billing, migrations, QA checklist |
+| [`docs/beta-release.md`](docs/beta-release.md) | TestFlight / Play testing checklist |
+| [`docs/billing.md`](docs/billing.md) | Tiers, Stripe, RevenueCat |
+| [`docs/platform-posting.md`](docs/platform-posting.md) | YouTube, TikTok, Instagram posting |
+| [`docs/capacitor.md`](docs/capacitor.md) | Native app build, push, widgets |
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Requires Supabase, Gemini, Fal, and other env vars — see deployment config on Vercel.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build   # production build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Stack
 
-## Learn More
+Next.js 16 · React 19 · Tailwind · Supabase · Vercel · Capacitor · Gemini · Fal · ElevenLabs
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Proprietary — KeyMacro LLC

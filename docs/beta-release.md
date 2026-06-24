@@ -2,13 +2,13 @@
 
 Use this before **TestFlight** (iOS) and **Play internal testing** (Android).
 
-**Launch status (stores, billing, audits):** see **[`docs/launch-status.md`](launch-status.md)** — updated June 22, 2026.
+**Launch status (stores, billing, audits):** see **[`docs/launch-status.md`](launch-status.md)** — updated June 24, 2026.
 
 ### Store setup snapshot
 
 | | iOS | Android |
 |--|-----|---------|
-| **Binary** | Build **4** (1.0) on ASC | AAB `versionCode` **2** |
+| **Binary** | Build **4** (1.0) on ASC | AAB `versionCode` **8** |
 | **Subscriptions** | Ready to Submit; attached to 1.0 draft | Created in Play; linked in RevenueCat |
 | **Submitted for store review?** | **No** — waiting on platform audits + QA | Closed testing — submit when ready |
 | **TestFlight / testing** | ✅ External beta passed; internal testing on build 4 | Closed/internal track |
@@ -22,6 +22,8 @@ Use this before **TestFlight** (iOS) and **Play internal testing** (Android).
 - [x] `/privacy` and `/terms` live (includes YouTube, TikTok, Instagram sections)
 - [x] `/api/health` returns `{ "ok": true }` (native connectivity checks)
 - [x] Smoke test: sign in, create campaign, generate images, save to Photos (native)
+- [ ] **Website ingest:** paste URL on `/new` → topic cards → Use & generate → images + captions without refresh
+- [ ] **Fix slide:** regenerate one slide → spinner + new image without browser refresh
 - [ ] YouTube (optional): connect channel, publish 9:16 Short — see `docs/youtube-phase3-runbook.md`
 - [ ] TikTok (optional): connect, publish 9:16 video — sandbox / private account until audit
 - [ ] Instagram (optional): connect, post Reel + carousel — Meta app testers until App Review — see `docs/instagram-phase3-runbook.md`

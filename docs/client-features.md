@@ -21,13 +21,29 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 ### Create a campaign
 
-- Enter a **topic or pain point**
+- Enter a **topic or pain point** — or paste your **website URL** for AI topic suggestions (see below)
 - Choose **aspect ratio**: 4:5 (feed/carousel) or 9:16 (Reels/Shorts/TikTok) — both support **video export**
 - Choose **slide count**: 3, 5, or 7 slides
 - Optionally upload **product, style, and logo** reference images to steer copy and visuals
 - **Brand workspaces** — each brand has its own reference images, products, and campaigns; switch brands from the campaigns header when you manage more than one
+- **Auto-generate images** — optional checkbox on create (remembered per device) starts image generation as soon as slide copy lands in the workspace
 - **Instant redirect** to the campaign workspace — a waiting screen runs while Gemini writes slide scripts (usually 15–30 seconds)
 - **Retry** if text generation fails, with a clear error message
+
+### Website URL ingest (Phase A)
+
+Paste a public business URL on the create form to skip the blank-page start:
+
+- **Analyze site** — fetches homepage metadata and sends content to Gemini for structured suggestions
+- **Rich topic cards** — 2–3 campaign ideas with angle labels (pain point, curiosity, contrarian), audience, and format hints
+- **Use topic** — pre-fills topic and recommended aspect ratio on the create form
+- **Use & generate** — creates the campaign and auto-starts images in one tap
+- **Ingest cache** — revisiting the same hostname restores suggestions without re-fetching
+- **Sparse-site fallback** — thin pages still get usable topics; amber error UI with **Try again** on AI/service failures
+- **Optional brand kit** — save extracted hero/logo images to the active brand after ingest
+- **No credits until Generate** — ingest is free; normal campaign limits apply when you run text/images
+
+**API:** `POST /api/campaigns/ingest-url` · UI: `website-topic-suggester.tsx` on web `/new` and mobile create sheet
 
 **Desktop:** full create form at **`/new`** (New campaign in nav) — redirects straight to workspace on submit.
 
@@ -53,11 +69,11 @@ SlidePress is a marketing automation app for creators and small teams who need s
 
 ### Campaign workspace
 
-- **Campaign journey strip** — one guided flow: Copy → Images → Captions → Video → **Publish**, with honest checkmarks, next-step CTA, and step navigation (hidden on Details tab). The Publish step turns green when posted to **YouTube, TikTok, or Instagram**
-- **Captions prompt** — after all images finish, a modal offers one-tap **Generate captions** (dismissible per session)
+- **Campaign journey strip** — guided flow: **Copy → Assets → Video → Publish**, with honest checkmarks, next-step CTA, and step navigation (hidden on Details tab). **Assets** covers slide images *and* platform captions. Publish turns green when posted to **YouTube, TikTok, or Instagram**
+- **Auto-captions** — captions generate automatically when images finish (no modal); workspace switches to **Publish** when both images and captions are ready
 - **First-time workspace tour** — three coach marks (journey strip, Publish tab, publish sections); dismiss once via localStorage
 - **Inline campaign rename** — edit title from the workspace header
-- **Tabbed workspace** — **Slides | Publish | Details** on web and mobile; auto-switch to Publish when images complete
+- **Tabbed workspace** — **Slides | Publish | Details** on web and mobile; auto-switch to Publish when **images and captions** are both ready
 - **Scroll-to-top** button when deep in the page (above mobile tab bar)
 - View all slides with **text overlay** and **voiceover script** (written for natural spoken delivery)
 - **Edit headlines** inline (up to 12 words per slide)
@@ -78,12 +94,14 @@ SlidePress is a marketing automation app for creators and small teams who need s
 - Headline text is rendered **on the slide** as part of the creative
 - Reference images (product/style/logo) are respected when uploaded
 - **Production webhooks** on SlidePress.co — images queue and update live via Fal callbacks
+- **Realtime + polling** — Supabase realtime on slides, slide images, campaigns, and platform captions; 5s polling fallback if realtime lags
 - **Regenerate a single slide** without redoing the whole campaign
   - **Fix this slide** sheet — shared bottom sheet with swipe-to-dismiss; feedback chips, optional notes, optional snap-a-new product photo (native)
   - Quick feedback chips: **Fix headline text**, Brighter, Minimal, Bold colors, Product larger, Different layout, Try again
   - Edit the headline first when on-slide text should change; unsaved headline edits are saved when you regenerate
   - Optional free-text notes for what to change
   - Regeneration respects the **active format** when you have both 4:5 and 9:16
+  - **Live regen UI** — spinner shows immediately; new image appears without refresh when Fal completes
 
 ### Dual format (4:5 + 9:16 from one campaign)
 
@@ -129,8 +147,9 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 
 ### Publish copy & direct posting
 
-- **Platform captions** for TikTok, Instagram, and YouTube Shorts
+- **Platform captions** for TikTok, Instagram, and YouTube Shorts — **auto-generated** when slide images complete
 - Publish section in the **Publish** tab — captions; **9:16 video export**; **Post to YouTube Shorts**, **TikTok**, and **Instagram** (Reels + carousel); file **downloads** (zip, narration) at the bottom
+- **Writing post copy overlay** — appears while captions generate; amber error + **Try again** if generation fails; polling recovery if realtime misses the insert
 - **Copy all** (via journey strip) or **copy per field** (title, caption, hashtags) to clipboard
 - **Regenerate captions only** — updates publish copy without touching slide images
 
@@ -252,13 +271,14 @@ Available in the **iOS and Android apps** (not mobile Safari):
 ```
 1. Visit slidepress.co → sign in → My campaigns
 2. Pick a brand (or use your default) → New campaign
-3. Enter topic + pick format (4:5 or 9:16) + slide count (+ optional references)
-4. Land on workspace → slide scripts + voiceover appear
-5. Review copy → edit or rewrite voiceover → Generate images
-6. Preview carousel → fix any slide (edit headline → **Fix this slide** regenerate)
-7. Optional: add the other format (4:5 or 9:16) when primary images are ready
-8. Generate captions
-9. Publish: copy captions, download zip, export narration ZIP, export video MP4, or **post to YouTube Shorts, TikTok, and/or Instagram** (Reels and/or carousel)
+3. Enter topic OR paste website URL → pick a suggested idea (optional: Use & generate)
+4. Choose format (4:5 or 9:16) + slide count (+ optional references) → Generate
+5. Land on workspace → slide scripts + voiceover appear
+6. Review copy → edit or rewrite voiceover → images auto-start (or tap Generate images)
+7. Preview carousel → fix any slide (edit headline → **Fix this slide** regenerate)
+8. Optional: add the other format (4:5 or 9:16) when primary images are ready
+9. Captions generate automatically → workspace opens Publish when draft is ready
+10. Export video, copy captions, download zip, or post to YouTube / TikTok / Instagram
 ```
 
 **Goal:** Fewest steps between idea and publish-ready assets — carousel, narration, or video from one campaign.
@@ -269,7 +289,8 @@ Available in the **iOS and Android apps** (not mobile Safari):
 
 | Area | Status |
 |------|--------|
-| **Paid tiers & billing** | Stripe subscriptions, higher video/narration limits — [Epic #14](https://github.com/reytek1201/SlidePress.co/issues/14) |
+| **Paid tiers & billing** | Stripe + RevenueCat shipped; launch QA in progress — [Epic #14](https://github.com/reytek1201/SlidePress.co/issues/14) · [#25](https://github.com/reytek1201/SlidePress.co/issues/25) |
+| **Website URL ingest** | **Phase A shipped** — topic suggestions + pre-fill ([#45](https://github.com/reytek1201/SlidePress.co/issues/45)); Phase B one-click full draft planned |
 | **On-screen video captions** | Deferred — export MP4 + platform captions; burned-in captions not in current build |
 | **Direct platform posting** | **YouTube**, **TikTok**, **Instagram** (Reels + carousel) shipped in code; Google OAuth + TikTok audit + Meta App Review pending for public users — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · runbooks in `docs/` |
 | **Voice library browser** | Curated personas today (warm / energetic / professional) |
@@ -312,6 +333,8 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | **6C** | **YouTube Shorts posting** — connect, upload API, Publish UI ✅; Google OAuth verification 🚧 |
 | **6D** | **TikTok posting** — connect, FILE_UPLOAD API, Publish UI ✅; app audit 🚧 |
 | **6E** | **Instagram posting** — OAuth, Reels + carousel API, Publish UI ✅; Meta App Review 🚧 |
+| **6F** | **Website URL ingest (Phase A)** — paste URL, topic cards, Use & generate, ingest cache ✅ |
+| **6F+** | **Streamlined assets flow** — auto-captions, Assets journey step, draft-ready push, regen/polling hardening ✅ |
 
 ### Phase 5 — Mobile app (Capacitor) ✅ (largely complete)
 
@@ -331,7 +354,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 | Tabbed campaign workspace (Slides / Publish / Details) | ✅ |
 | Campaign journey strip (progress + next step unified) | ✅ |
 | Campaign list publish-status badges | ✅ |
-| First-time workspace tour + captions prompt | ✅ |
+| First-time workspace tour | ✅ |
 | Filmstrip + inline generation feedback | ✅ |
 | Mobile settings hub + sub-pages | ✅ |
 | Face ID / biometric app unlock + Keychain session | ✅ |
@@ -409,7 +432,7 @@ Mobile engagement: push alerts when async work finishes, and home-screen widgets
 | YouTube posting | YouTube Data API v3 (OAuth + resumable upload) |
 | TikTok posting | TikTok Content Posting API (Login Kit OAuth + FILE_UPLOAD) |
 | Instagram posting | Meta Graph API (Facebook Login + Reels + Carousel containers) |
-| Realtime | Supabase Realtime on slides, slide images & campaigns |
+| Realtime | Supabase Realtime on slides, slide images, campaigns & platform captions |
 
 Approximate **variable cost per 5-slide campaign** today (images + AI text): **~$0.45–0.65** depending on regenerations. **Video export** adds roughly **~$0.10–0.30** per Reel (TTS + render) at beta scale. End-user pricing will include tier limits above these costs.
 
@@ -429,4 +452,4 @@ SlidePress turns a topic into a full social campaign: headlines on every slide, 
 
 ---
 
-*Last updated: June 21, 2026*
+*Last updated: June 24, 2026*

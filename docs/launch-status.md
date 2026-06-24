@@ -1,12 +1,12 @@
 # SlidePress — Launch status & next phase
 
-**Last updated:** June 23, 2026
+**Last updated:** June 24, 2026
 
 Single source of truth for where store setup, billing, and platform audits stand — and what to work on next.
 
 **Related:** [`beta-release.md`](beta-release.md) · [`billing.md`](billing.md) · [`platform-posting.md`](platform-posting.md) · [`app-store-review-notes.md`](app-store-review-notes.md)
 
-**GitHub:** [Epic #14 Billing](https://github.com/reytek1201/SlidePress.co/issues/14) · [Epic #27 Platform posting](https://github.com/reytek1201/SlidePress.co/issues/27) · [Epic #44 Launch](https://github.com/reytek1201/SlidePress.co/issues/44)
+**GitHub:** [Epic #14 Billing](https://github.com/reytek1201/SlidePress.co/issues/14) · [Epic #27 Platform posting](https://github.com/reytek1201/SlidePress.co/issues/27) · [Epic #44 Launch](https://github.com/reytek1201/SlidePress.co/issues/44) · [#45 Website ingest Phase A](https://github.com/reytek1201/SlidePress.co/issues/45) ✅
 
 ---
 
@@ -14,7 +14,7 @@ Single source of truth for where store setup, billing, and platform audits stand
 
 | Area | Status |
 |------|--------|
-| **Product code** | ✅ Shipped — campaigns, video, billing paywall, 4 platform integrations |
+| **Product code** | ✅ Shipped — campaigns, video, billing paywall, 4 platform integrations, **website URL ingest (Phase A)** |
 | **Web (Vercel)** | ✅ Live at `https://www.slidepress.co` |
 | **iOS TestFlight** | ✅ External beta review passed (build 2+); build **4** uploaded |
 | **iOS App Store** | 🟡 **1.0 draft ready** — build + subs attached; **not submitted** (waiting on platform reviews) |
@@ -37,6 +37,8 @@ Single source of truth for where store setup, billing, and platform audits stand
 - [x] Home screen widgets (Phases 0–3 closed — [#36](https://github.com/reytek1201/SlidePress.co/issues/36); iOS + Android Continue + Quick Create)
 - [x] Privacy policy, terms, health endpoint
 - [x] v2 tier caps in `utils/plan-limits.ts` (Creator $24 web / $29.99 IAP; Agency $79 / $99.99)
+- [x] **Website URL ingest (Phase A)** — paste URL → topic cards → pre-fill create form ([#45](https://github.com/reytek1201/SlidePress.co/issues/45) closed Jun 2026)
+- [x] **Streamlined campaign flow** — auto-captions with images, merged **Assets** journey step, draft-ready push, regen/polling hardening (Jun 2026)
 
 ### Platform posting (code)
 
@@ -103,6 +105,7 @@ Priority: unblock billing QA and platform gating in production.
 - [x] Create **reviewer demo account** (`reviewer@slidepress.co`) with sample campaign — live (Jun 23, 2026); credentials in [`app-store-review-notes.md`](app-store-review-notes.md)
 - [ ] Apply `20260625000001_clamp_v1_usage_balances.sql` in Supabase production
 - [ ] Apply `20260625000002_security_lockdown.sql` in Supabase production
+- [ ] Apply `20260627000001_platform_captions_realtime.sql` in Supabase production *(caption realtime + recovery)*
 - [ ] Enable **leaked password protection** in Supabase Dashboard → Authentication → Settings
 
 ### Phase B — Platform review submissions (parallel)
@@ -121,6 +124,7 @@ Run on web + one native device after Phase A migrations:
 - [ ] Stripe upgrade Agency → v2 credits (30/60/20)
 - [ ] Downgrade → 7-day connection grace then revoke
 - [ ] Brand limits 1 / 3 / 15
+- [ ] **Campaign flow:** create from website URL → Use & generate → images + captions without refresh; fix slide regen shows spinner + new image without refresh
 
 ### Phase D — Mobile store QA ([#44](https://github.com/reytek1201/SlidePress.co/issues/44))
 
@@ -163,10 +167,13 @@ Increment build numbers on every store upload.
 | Jun 23, 2026 | **Dual-rail billing UX** — web Usage shows App Store / Play manage links for IAP subscribers; v1 balance clamp migration added |
 | Jun 23, 2026 | **DB security lockdown** — billing RPCs service_role-only; campaign-refs listing restricted (`20260625000002_security_lockdown.sql`) |
 | Jun 23, 2026 | **Home screen widgets shipped** — iOS WidgetKit + Android Glance; Epic [#36](https://github.com/reytek1201/SlidePress.co/issues/36) closed ([#39](https://github.com/reytek1201/SlidePress.co/issues/39)–[#43](https://github.com/reytek1201/SlidePress.co/issues/43)) |
+| Jun 24, 2026 | **Website ingest Phase A shipped** — URL → topic cards, ingest cache, Use & generate, brand kit save ([#45](https://github.com/reytek1201/SlidePress.co/issues/45) closed) |
+| Jun 24, 2026 | **Campaign flow hardening** — auto-captions with images, Assets journey step, caption/slide realtime + polling fallbacks, regen UI fixes, draft-ready push |
 
 ---
 
 ## Deferred (post-launch)
 
+- **Website ingest Phase B** — one-click full draft (text → images → captions → optional video); push when ready — track in GitHub issues
 - Studio tier (~$129 web) — reassess H2 2026 per [`billing.md`](billing.md)
 - YouTube API quota increase — only if >~6 Shorts uploads/day

@@ -4,7 +4,7 @@
 
 **GitHub epic:** [Epic — Direct Platform Posting](https://github.com/reytek1201/SlidePress.co/issues/27)
 
-**Current state (June 22, 2026):** All four platform integrations **shipped in code** — connect in Settings, publish from campaign. **Public launch** blocked only by platform audits:
+**Current state (June 24, 2026):** All four platform integrations **shipped in code** — connect in Settings, publish from campaign. **Public launch** blocked only by platform audits:
 
 | Platform | Code | Public users |
 |----------|------|----------------|
