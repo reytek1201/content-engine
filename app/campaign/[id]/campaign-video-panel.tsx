@@ -31,6 +31,8 @@ interface CampaignVideoPanelProps {
   videoExportError?: string | null;
   lastVideoExport?: LastVideoExportInfo | null;
   videoPreset: VideoExportPreset;
+  burnCaptions: boolean;
+  showBurnCaptionsToggle?: boolean;
   voiceQuality: VoiceQuality;
   dualFormatEnabled?: boolean;
   verticalFormatState?: VerticalFormatPublishState;
@@ -38,6 +40,7 @@ interface CampaignVideoPanelProps {
   onVideoExportAspectRatioChange?: (aspectRatio: AspectRatio) => void;
   onAddVerticalFormat?: () => void;
   onPresetChange: (preset: VideoExportPreset) => void;
+  onBurnCaptionsChange: (enabled: boolean) => void;
   onVoiceQualityChange: (voiceQuality: VoiceQuality) => void;
   onExportVideo: () => void;
   onDownloadLastExport?: () => void;
@@ -62,6 +65,8 @@ export default function CampaignVideoPanel({
   videoExportError = null,
   lastVideoExport = null,
   videoPreset,
+  burnCaptions,
+  showBurnCaptionsToggle = false,
   voiceQuality,
   dualFormatEnabled = false,
   verticalFormatState = "not_applicable",
@@ -69,6 +74,7 @@ export default function CampaignVideoPanel({
   onVideoExportAspectRatioChange,
   onAddVerticalFormat,
   onPresetChange,
+  onBurnCaptionsChange,
   onVoiceQualityChange,
   onExportVideo,
   onDownloadLastExport,
@@ -230,6 +236,42 @@ export default function CampaignVideoPanel({
           <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
             Studio uses a higher-quality AI voice model and may take slightly
             longer to render.
+          </p>
+        </div>
+      )}
+
+      {!isSilentPreset && showBurnCaptionsToggle && (
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-foreground">On-screen captions</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(
+              [
+                { id: false, label: "Off" },
+                { id: true, label: "Burn in" },
+              ] as const
+            ).map((option) => {
+              const isActive = burnCaptions === option.id;
+
+              return (
+                <button
+                  key={String(option.id)}
+                  type="button"
+                  disabled={configurationDisabled}
+                  onClick={() => onBurnCaptionsChange(option.id)}
+                  className={`rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    isActive
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border text-secondary-foreground hover:border-ring/60 hover:text-foreground"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+            Burns dynamic captions into the video, synced to narration. Turn off
+            if you prefer adding captions in TikTok or CapCut.
           </p>
         </div>
       )}

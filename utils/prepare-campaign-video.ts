@@ -1,12 +1,12 @@
-import type { Slide } from "@/types/campaign";
+import type { AspectRatio, Slide } from "@/types/campaign";
 import { estimateSlideDurationSeconds } from "@/utils/build-caption-srt";
+import { prepareBurnCaptionsAss } from "@/utils/captions/prepare-burn-captions";
 import { uploadFalMedia } from "@/utils/fal-video";
 import { concatMp3Buffers, getMp3DurationSeconds } from "@/utils/merge-mp3-buffers";
 import { loadCampaignNarrationFromCache } from "@/utils/tts/load-campaign-narration-from-cache";
 import { synthesizeCampaignNarration } from "@/utils/tts/synthesize-campaign-narration";
-import { resolveTtsModelId, type VoiceQuality } from "@/utils/tts/types";
+import { resolveTtsModelId, type VoiceQuality, type TtsUsageContext } from "@/utils/tts/types";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
-import type { TtsUsageContext } from "@/utils/tts/types";
 import {
   presetIncludesNarration,
   type VideoExportPreset,
@@ -18,6 +18,9 @@ export interface PrepareCampaignVideoInput {
   preset: VideoExportPreset;
   voiceQuality?: VoiceQuality;
   usage: TtsUsageContext;
+  aspectRatio?: AspectRatio;
+  burnCaptions?: boolean;
+  narrationFingerprint?: string;
   /** Skip TTS synthesis and Fal audio upload when narration is unchanged. */
   reusedAudioUrl?: string;
 }
@@ -32,6 +35,11 @@ export interface PrepareCampaignVideoResult {
   audioUrl?: string;
   slideCount: number;
   totalChars: number;
+  assStoragePath?: string;
+  burnCaptionTimingMs?: {
+    alignment?: number;
+    assGeneration?: number;
+  };
 }
 
 export function assertVideoExportPreconditions(slides: Slide[]): void {
@@ -75,6 +83,7 @@ export async function prepareCampaignVideo(
   if (includeNarration) {
     let useReusedAudio = Boolean(input.reusedAudioUrl);
     let narrationSlides;
+    const withTimestamps = Boolean(input.burnCaptions);
 
     if (useReusedAudio) {
       try {
@@ -94,6 +103,7 @@ export async function prepareCampaignVideo(
           slides: sortedSlides,
           persona: input.persona,
           modelId,
+          withTimestamps,
           usage: input.usage,
         });
       }
@@ -102,6 +112,7 @@ export async function prepareCampaignVideo(
         slides: sortedSlides,
         persona: input.persona,
         modelId,
+        withTimestamps,
         usage: input.usage,
       });
     }
@@ -111,6 +122,33 @@ export async function prepareCampaignVideo(
     );
 
     const audioBuffers: Buffer[] = [];
+    let preparedAss:
+      | Awaited<ReturnType<typeof prepareBurnCaptionsAss>>
+      | undefined;
+
+    if (
+      input.burnCaptions &&
+      input.narrationFingerprint &&
+      input.aspectRatio &&
+      input.usage.campaignId
+    ) {
+      preparedAss = await prepareBurnCaptionsAss({
+        userId: input.usage.userId,
+        campaignId: input.usage.campaignId,
+        narrationFingerprint: input.narrationFingerprint,
+        aspectRatio: input.aspectRatio,
+        slides: sortedSlides.map((slide) => {
+          const narration = narrationByIndex.get(slide.slide_index)!;
+          return {
+            slideIndex: slide.slide_index,
+            script: slide.voiceover_script!.trim(),
+            audio: narration.audio,
+            wordTimings: narration.wordTimings,
+            timingSource: narration.timingSource,
+          };
+        }),
+      });
+    }
 
     for (const slide of sortedSlides) {
       const narration = narrationByIndex.get(slide.slide_index);
@@ -134,6 +172,13 @@ export async function prepareCampaignVideo(
         audioUrl: input.reusedAudioUrl,
         slideCount: sortedSlides.length,
         totalChars,
+        assStoragePath: preparedAss?.assStoragePath,
+        burnCaptionTimingMs: preparedAss
+          ? {
+              alignment: preparedAss.alignmentMs,
+              assGeneration: preparedAss.assGenerationMs,
+            }
+          : undefined,
       };
     }
 
@@ -149,6 +194,13 @@ export async function prepareCampaignVideo(
       audioUrl,
       slideCount: sortedSlides.length,
       totalChars,
+      assStoragePath: preparedAss?.assStoragePath,
+      burnCaptionTimingMs: preparedAss
+        ? {
+            alignment: preparedAss.alignmentMs,
+            assGeneration: preparedAss.assGenerationMs,
+          }
+        : undefined,
     };
   }
 

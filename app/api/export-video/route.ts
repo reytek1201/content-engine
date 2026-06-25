@@ -31,6 +31,7 @@ import {
   mergeSlidesWithAspect,
 } from "@/utils/slide-aspect-images";
 import { loadSlideImagesForCampaign } from "@/utils/slide-image-persistence";
+import { isBurnCaptionsEnabled } from "@/utils/burn-captions-feature";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -42,6 +43,7 @@ const RequestSchema = z.object({
   preset: z.enum(["quick_reel", "silent_captions"]).optional(),
   voiceQuality: z.enum(["standard", "studio"]).optional(),
   aspectRatio: z.enum(["4:5", "9:16"]).optional(),
+  burn_captions: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -84,10 +86,34 @@ export async function POST(request: Request) {
       preset: presetInput,
       voiceQuality: voiceQualityInput,
       aspectRatio: aspectRatioInput,
+      burn_captions: burnCaptionsInput,
     } = parsedInput.data;
 
     const preset = presetInput ?? "quick_reel";
     const voiceQuality = voiceQualityInput ?? "standard";
+    const burnCaptionsRequested = burnCaptionsInput ?? false;
+
+    if (burnCaptionsRequested && !isBurnCaptionsEnabled()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Burned captions are not enabled on this environment",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (burnCaptionsRequested && !presetIncludesNarration(preset)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Burned captions require the Quick Reel preset with narration",
+        },
+        { status: 422 },
+      );
+    }
+
+    const burnCaptions = burnCaptionsRequested && isBurnCaptionsEnabled();
 
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
@@ -226,12 +252,14 @@ export async function POST(request: Request) {
         campaign_id: campaignId,
         export_type: "video",
         status: "processing",
+        burn_captions: burnCaptions,
         metadata: {
           stage: "compose_slides",
           preset,
           voiceQuality,
           persona,
           aspectRatio: targetAspectRatio,
+          burnCaptions,
         } satisfies VideoExportMetadata,
       })
       .select("id")
@@ -268,6 +296,9 @@ export async function POST(request: Request) {
       persona,
       preset,
       voiceQuality,
+      aspectRatio: targetAspectRatio,
+      burnCaptions,
+      narrationFingerprint: fingerprints.narrationFingerprint,
       usage: {
         userId: user.id,
         campaignId,
@@ -286,6 +317,7 @@ export async function POST(request: Request) {
       narrationFingerprint: fingerprints.narrationFingerprint,
       slideFingerprints: fingerprints.slides,
       reusedNarration: Boolean(reusedAudioUrl),
+      burnCaptions,
     });
 
     const { error: exportUpdateError } = await supabase

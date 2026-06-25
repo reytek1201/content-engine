@@ -52,10 +52,25 @@ export interface TtsUsageMetadata {
   errorCode?: TtsErrorCode;
 }
 
+export interface WordTiming {
+  word: string;
+  startSeconds: number;
+  endSeconds: number;
+}
+
+export type WordTimingSource = "elevenlabs" | "estimated";
+
+export interface CachedWordTimings {
+  source: WordTimingSource;
+  words: WordTiming[];
+}
+
 export interface SynthesizeInput {
   text: string;
   voiceId: string;
   modelId?: TtsModelId;
+  /** Request character alignment from ElevenLabs (with-timestamps endpoint). */
+  withTimestamps?: boolean;
   /** When set, synthesis is metered to usage_events for this user. */
   usage?: TtsUsageContext;
 }
@@ -65,6 +80,8 @@ export interface SynthesizeResult {
   charCount: number;
   modelId: TtsModelId;
   latencyMs: number;
+  wordTimings?: WordTiming[];
+  timingSource?: WordTimingSource;
 }
 
 export interface TtsProvider {

@@ -197,6 +197,7 @@ export default function CampaignWorkspace({
   const [isSavingVoicePersona, setIsSavingVoicePersona] = useState(false);
   const [voiceQuality, setVoiceQuality] = useState<VoiceQuality>("standard");
   const [videoPreset, setVideoPreset] = useState<VideoExportPreset>("quick_reel");
+  const [burnCaptions, setBurnCaptions] = useState(false);
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
   const textGenerationStarted = useRef(false);
@@ -1602,6 +1603,7 @@ export default function CampaignWorkspace({
           preset: videoPreset,
           voiceQuality,
           aspectRatio: videoExportAspectRatio,
+          burn_captions: burnCaptions,
         }),
       });
 
@@ -1765,6 +1767,7 @@ export default function CampaignWorkspace({
     preferredVoicePersona,
     voiceQuality,
     videoPreset,
+    burnCaptions,
     aspectRatioLabel: formatAspectRatio(videoExportAspectRatio),
     dualFormatVideoReady,
     verticalFormatPublishState,
@@ -1800,7 +1803,13 @@ export default function CampaignWorkspace({
     onCopyAllCaptions: handleCopyAllCaptions,
     onPersonaChange: (persona: VoicePersona) => void handleVoicePersonaChange(persona),
     onVoiceQualityChange: setVoiceQuality,
-    onVideoPresetChange: setVideoPreset,
+    onVideoPresetChange: (preset: VideoExportPreset) => {
+      setVideoPreset(preset);
+      if (preset === "silent_captions") {
+        setBurnCaptions(false);
+      }
+    },
+    onBurnCaptionsChange: setBurnCaptions,
     onVideoExportAspectRatioChange: setVideoExportAspectRatio,
     onDownloadZip: handleDownloadZip,
     onDownloadNarration: handleDownloadNarration,

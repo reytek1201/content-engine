@@ -7,15 +7,20 @@ import {
   getCachedNarrationAudio,
   setCachedNarrationAudio,
 } from "@/utils/tts/narration-cache";
+import {
+  buildNarrationTimingsCachePath,
+  getCachedNarrationTimings,
+  setCachedNarrationTimings,
+} from "@/utils/tts/narration-timings-cache";
 import { normalizeVoiceoverScript } from "@/utils/tts/normalize-script";
 import { getVoiceIdForPersona, type VoicePersona } from "@/utils/tts/voice-catalog";
 import { getTtsProvider } from "@/utils/tts/provider";
 import {
-  ELEVEN_FLASH_MODEL,
   resolveTtsModelId,
   type TtsModelId,
   type TtsUsageContext,
   type VoiceQuality,
+  type WordTiming,
 } from "@/utils/tts/types";
 import JSZip from "jszip";
 
@@ -24,6 +29,8 @@ export interface CampaignNarrationSlide {
   filename: string;
   audio: Buffer;
   charCount: number;
+  wordTimings?: WordTiming[];
+  timingSource?: "elevenlabs" | "estimated";
 }
 
 export interface SynthesizeCampaignNarrationInput {
@@ -32,6 +39,7 @@ export interface SynthesizeCampaignNarrationInput {
   voiceId?: string;
   modelId?: TtsModelId;
   voiceQuality?: VoiceQuality;
+  withTimestamps?: boolean;
   usage: TtsUsageContext;
 }
 
@@ -78,16 +86,31 @@ export async function synthesizeCampaignNarration(
         campaignId && slide.id
           ? buildNarrationCachePath(userId, campaignId, slide.id, cacheKey)
           : null;
+      const timingsCachePath =
+        cachePath && campaignId && slide.id
+          ? buildNarrationTimingsCachePath(
+              userId,
+              campaignId,
+              slide.id,
+              cacheKey,
+            )
+          : null;
 
       if (cachePath) {
         const cachedAudio = await getCachedNarrationAudio(cachePath);
 
         if (cachedAudio) {
+          const cachedTimings = timingsCachePath
+            ? await getCachedNarrationTimings(timingsCachePath)
+            : null;
+
           return {
             slideIndex: slide.slide_index,
             filename: `slide-${padSlideIndex(slide.slide_index)}.mp3`,
             audio: cachedAudio,
             charCount: normalizedText.length,
+            wordTimings: cachedTimings?.words,
+            timingSource: cachedTimings?.source,
           };
         }
       }
@@ -96,6 +119,7 @@ export async function synthesizeCampaignNarration(
         text: slide.voiceover_script!,
         voiceId,
         modelId,
+        withTimestamps: input.withTimestamps,
         usage: {
           userId,
           campaignId,
@@ -107,11 +131,20 @@ export async function synthesizeCampaignNarration(
         await setCachedNarrationAudio(cachePath, result.audio);
       }
 
+      if (timingsCachePath && result.wordTimings?.length) {
+        await setCachedNarrationTimings(timingsCachePath, {
+          source: result.timingSource ?? "elevenlabs",
+          words: result.wordTimings,
+        });
+      }
+
       return {
         slideIndex: slide.slide_index,
         filename: `slide-${padSlideIndex(slide.slide_index)}.mp3`,
         audio: result.audio,
         charCount: result.charCount,
+        wordTimings: result.wordTimings,
+        timingSource: result.timingSource,
       };
     }),
   );

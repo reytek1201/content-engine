@@ -4,6 +4,10 @@ import {
   buildNarrationCachePath,
 } from "@/utils/tts/narration-cache-keys";
 import { getCachedNarrationAudio } from "@/utils/tts/narration-cache";
+import {
+  buildNarrationTimingsCachePath,
+  getCachedNarrationTimings,
+} from "@/utils/tts/narration-timings-cache";
 import { normalizeVoiceoverScript } from "@/utils/tts/normalize-script";
 import type { CampaignNarrationSlide } from "@/utils/tts/synthesize-campaign-narration";
 import { getVoiceIdForPersona, type VoicePersona } from "@/utils/tts/voice-catalog";
@@ -62,11 +66,21 @@ export async function loadCampaignNarrationFromCache(input: {
       );
     }
 
+    const timingsCachePath = buildNarrationTimingsCachePath(
+      userId,
+      campaignId,
+      slide.id,
+      cacheKey,
+    );
+    const cachedTimings = await getCachedNarrationTimings(timingsCachePath);
+
     results.push({
       slideIndex: slide.slide_index,
       filename: `slide-${padSlideIndex(slide.slide_index)}.mp3`,
       audio: cachedAudio,
       charCount: normalizedText.length,
+      wordTimings: cachedTimings?.words,
+      timingSource: cachedTimings?.source,
     });
   }
 

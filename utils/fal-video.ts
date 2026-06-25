@@ -37,6 +37,13 @@ export interface VideoExportMetadata {
   narrationFingerprint?: string;
   slideFingerprints?: SlideExportFingerprint[];
   reusedNarration?: boolean;
+  burnCaptions?: boolean;
+  assStoragePath?: string;
+  timingMs?: {
+    alignment?: number;
+    assGeneration?: number;
+    ffmpegBurn?: number;
+  };
 }
 
 interface FalQueueResponse {
@@ -240,6 +247,36 @@ export function parseVideoExportMetadata(
       typeof record.reusedNarration === "boolean"
         ? record.reusedNarration
         : undefined,
+    burnCaptions:
+      typeof record.burnCaptions === "boolean"
+        ? record.burnCaptions
+        : undefined,
+    assStoragePath:
+      typeof record.assStoragePath === "string"
+        ? record.assStoragePath
+        : undefined,
+    timingMs: parseTimingMs(record.timingMs),
+  };
+}
+
+function parseTimingMs(
+  value: unknown,
+): VideoExportMetadata["timingMs"] | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return {
+    alignment:
+      typeof record.alignment === "number" ? record.alignment : undefined,
+    assGeneration:
+      typeof record.assGeneration === "number"
+        ? record.assGeneration
+        : undefined,
+    ffmpegBurn:
+      typeof record.ffmpegBurn === "number" ? record.ffmpegBurn : undefined,
   };
 }
 

@@ -124,6 +124,7 @@ export function buildComposeStageMetadata(input: {
   narrationFingerprint: string;
   slideFingerprints: SlideExportFingerprint[];
   reusedNarration?: boolean;
+  burnCaptions?: boolean;
 }): VideoExportMetadata {
   return {
     stage: "compose_slides",
@@ -136,5 +137,8 @@ export function buildComposeStageMetadata(input: {
     narrationFingerprint: input.narrationFingerprint,
     slideFingerprints: input.slideFingerprints,
     reusedNarration: input.reusedNarration,
+    burnCaptions: input.burnCaptions,
+    assStoragePath: input.prepared.assStoragePath,
+    timingMs: input.prepared.burnCaptionTimingMs,
   };
 }

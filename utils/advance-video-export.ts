@@ -11,6 +11,7 @@ import {
 } from "@/utils/fal-video";
 import { includesVideoNarration } from "@/utils/complete-video-export";
 import { runComposeSlidesStage } from "@/utils/compose-video-export-stage";
+import { burnCaptionsOnMergedVideo } from "@/utils/captions/prepare-burn-captions";
 import { maybeSendVideoExportReadyPush } from "@/utils/send-campaign-push";
 
 interface ProcessingExportRow {
@@ -52,6 +53,63 @@ async function completeVideoExport(
   await maybeSendVideoExportReadyPush(exportId);
 }
 
+async function finalizeMergedVideoExport(
+  exportId: string,
+  metadata: VideoExportMetadata,
+  videoUrl: string,
+): Promise<void> {
+  if (!metadata.burnCaptions || !metadata.assStoragePath) {
+    await completeVideoExport(exportId, videoUrl);
+    return;
+  }
+
+  const supabase = createAdminClient();
+  const burnStartedAt = Date.now();
+
+  await supabase
+    .from("exports")
+    .update({
+      metadata: {
+        ...metadata,
+        stage: "burn_captions",
+        pendingVideoUrl: videoUrl,
+      },
+    })
+    .eq("id", exportId);
+
+  try {
+    const burnedUrl = await burnCaptionsOnMergedVideo({
+      exportId,
+      videoUrl,
+      assStoragePath: metadata.assStoragePath,
+    });
+
+    await completeVideoExport(exportId, burnedUrl);
+
+    await supabase
+      .from("exports")
+      .update({
+        metadata: {
+          ...metadata,
+          stage: "burn_captions",
+          pendingVideoUrl: videoUrl,
+          timingMs: {
+            ...metadata.timingMs,
+            ffmpegBurn: Date.now() - burnStartedAt,
+          },
+        },
+      })
+      .eq("id", exportId);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to burn captions into video";
+
+    await markExportFailed(exportId, message);
+  }
+}
+
 /**
  * Advances in-flight video exports when Fal jobs finish.
  */
@@ -64,12 +122,6 @@ export async function advanceVideoExportIfReady(
 
   const metadata = parseVideoExportMetadata(exportRow.metadata);
   if (!metadata) return;
-
-  // Legacy exports stuck on the removed caption-burn stage — complete as-is.
-  if (metadata.stage === "burn_captions" && metadata.pendingVideoUrl) {
-    await completeVideoExport(exportRow.id, metadata.pendingVideoUrl);
-    return;
-  }
 
   if (
     metadata.stage === "compose_slides" &&
@@ -121,7 +173,7 @@ export async function advanceVideoExportIfReady(
       .update({ fal_request_id: mergeRequestId, metadata: nextMetadata })
       .eq("id", exportRow.id);
   } else if (metadata.stage === "merge_audio") {
-    await completeVideoExport(exportRow.id, videoUrl);
+    await finalizeMergedVideoExport(exportRow.id, metadata, videoUrl);
   }
 }
 
@@ -170,8 +222,8 @@ export async function handleImagesToVideoComplete(
 
 export async function handleMergeAudioComplete(
   exportId: string,
-  _metadata: VideoExportMetadata,
+  metadata: VideoExportMetadata,
   videoUrl: string,
 ): Promise<void> {
-  await completeVideoExport(exportId, videoUrl);
+  await finalizeMergedVideoExport(exportId, metadata, videoUrl);
 }
