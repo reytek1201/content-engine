@@ -32,7 +32,6 @@ interface CampaignVideoPanelProps {
   lastVideoExport?: LastVideoExportInfo | null;
   videoPreset: VideoExportPreset;
   burnCaptions: boolean;
-  showBurnCaptionsToggle?: boolean;
   voiceQuality: VoiceQuality;
   dualFormatEnabled?: boolean;
   verticalFormatState?: VerticalFormatPublishState;
@@ -66,7 +65,6 @@ export default function CampaignVideoPanel({
   lastVideoExport = null,
   videoPreset,
   burnCaptions,
-  showBurnCaptionsToggle = false,
   voiceQuality,
   dualFormatEnabled = false,
   verticalFormatState = "not_applicable",
@@ -240,7 +238,7 @@ export default function CampaignVideoPanel({
         </div>
       )}
 
-      {!isSilentPreset && showBurnCaptionsToggle && (
+      {!isSilentPreset && (
         <div className="mt-4">
           <p className="text-xs font-semibold text-foreground">On-screen captions</p>
           <div className="mt-2 flex flex-wrap gap-2">

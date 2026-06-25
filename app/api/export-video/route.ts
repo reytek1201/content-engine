@@ -31,7 +31,6 @@ import {
   mergeSlidesWithAspect,
 } from "@/utils/slide-aspect-images";
 import { loadSlideImagesForCampaign } from "@/utils/slide-image-persistence";
-import { isBurnCaptionsEnabled } from "@/utils/burn-captions-feature";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -93,16 +92,6 @@ export async function POST(request: Request) {
     const voiceQuality = voiceQualityInput ?? "standard";
     const burnCaptionsRequested = burnCaptionsInput ?? false;
 
-    if (burnCaptionsRequested && !isBurnCaptionsEnabled()) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Burned captions are not enabled on this environment",
-        },
-        { status: 400 },
-      );
-    }
-
     if (burnCaptionsRequested && !presetIncludesNarration(preset)) {
       return NextResponse.json(
         {
@@ -113,7 +102,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const burnCaptions = burnCaptionsRequested && isBurnCaptionsEnabled();
+    const burnCaptions = burnCaptionsRequested;
 
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")

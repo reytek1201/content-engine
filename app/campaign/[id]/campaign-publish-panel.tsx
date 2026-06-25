@@ -19,7 +19,6 @@ import type { VoiceQuality } from "@/utils/tts/types";
 import type { AspectRatio } from "@/types/campaign";
 import type { VideoExportPreset } from "@/utils/video-export-presets";
 import type { VerticalFormatPublishState, CarouselFormatPublishState } from "@/utils/slide-aspect-images";
-import { isBurnCaptionsUiEnabled } from "@/utils/burn-captions-feature";
 
 interface CampaignPublishPanelProps {
   campaignId: string;
@@ -335,7 +334,6 @@ export default function CampaignPublishPanel({
                   lastVideoExport={lastVideoExport}
                   videoPreset={videoPreset}
                   burnCaptions={burnCaptions}
-                  showBurnCaptionsToggle={isBurnCaptionsUiEnabled()}
                   voiceQuality={voiceQuality}
                   dualFormatEnabled={dualFormatVideoReady}
                   verticalFormatState={verticalFormatPublishState}
