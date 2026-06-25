@@ -8,7 +8,7 @@ import {
 import type { AspectRatio } from "@/types/campaign";
 import type { VideoExportPreset } from "@/utils/video-export-presets";
 import type { VideoExportUiStage } from "@/utils/video-export-stages";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface CampaignOperationOverlayProps {
   open: boolean;
@@ -46,19 +46,41 @@ export default function CampaignOperationOverlay({
   error = null,
   onDismiss,
 }: CampaignOperationOverlayProps) {
+  const startedAtRef = useRef<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useEffect(() => {
     if (!open || error) {
+      startedAtRef.current = null;
       return;
     }
 
+    startedAtRef.current = Date.now();
     setElapsedSeconds(0);
-    const intervalId = window.setInterval(() => {
-      setElapsedSeconds((current) => current + 1);
-    }, 1000);
 
-    return () => window.clearInterval(intervalId);
+    const syncElapsed = () => {
+      if (startedAtRef.current) {
+        setElapsedSeconds(
+          Math.floor((Date.now() - startedAtRef.current) / 1000),
+        );
+      }
+    };
+
+    syncElapsed();
+    const intervalId = window.setInterval(syncElapsed, 1000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        syncElapsed();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [open, error, kind]);
 
   const model = useMemo(
@@ -132,7 +154,10 @@ export default function CampaignOperationOverlay({
               {headline}
             </h2>
             <p className="mt-4 text-sm leading-7 text-muted-foreground">
-              {model.description} {model.durationHint} Keep this page open.
+              {model.description} {model.durationHint}
+              {kind === "video_export"
+                ? " You can lock your phone — we'll notify you when it's ready."
+                : " Keep this page open."}
             </p>
 
             <ol className="mt-6 space-y-2 text-left">

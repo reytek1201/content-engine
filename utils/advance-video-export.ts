@@ -58,8 +58,24 @@ async function finalizeMergedVideoExport(
   metadata: VideoExportMetadata,
   videoUrl: string,
 ): Promise<void> {
-  if (!metadata.burnCaptions || (!metadata.assStoragePath && !metadata.assContent)) {
+  if (!metadata.burnCaptions) {
     await completeVideoExport(exportId, videoUrl);
+    return;
+  }
+
+  if (!metadata.assContent && !metadata.assStoragePath) {
+    await markExportFailed(
+      exportId,
+      "Burned captions were requested but caption timing data is missing. Try exporting again.",
+    );
+    return;
+  }
+
+  if (metadata.assContent && !metadata.assContent.includes("Dialogue:")) {
+    await markExportFailed(
+      exportId,
+      "Burned captions were requested but the caption track was empty. Try exporting again.",
+    );
     return;
   }
 

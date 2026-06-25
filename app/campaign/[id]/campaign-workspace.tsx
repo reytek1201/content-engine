@@ -416,14 +416,35 @@ export default function CampaignWorkspace({
   ]);
 
   useEffect(() => {
-    if (!isNativeApp) {
-      return;
-    }
-
-    async function recoverStaleVideoExportError() {
+    async function recoverVideoExportOnResume() {
       const exportId = activeVideoExportIdRef.current;
 
-      if (!exportId || !videoExportError) {
+      if (!exportId || document.visibilityState !== "visible") {
+        return;
+      }
+
+      if (videoExportError) {
+        const outputUrl = await tryRecoverCompletedExport(
+          exportId,
+          setVideoExportStage,
+        );
+
+        if (!outputUrl) {
+          return;
+        }
+
+        setVideoExportError(null);
+        setIsExportingVideo(false);
+        setPublishRefreshKey((current) => current + 1);
+        setVideoExportMessage(
+          "Your video finished rendering while you were away. Use Download last export on Publish.",
+        );
+        activeVideoExportIdRef.current = null;
+        syncVideoExportBiometricDefer();
+        return;
+      }
+
+      if (!isExportingVideo) {
         return;
       }
 
@@ -436,19 +457,17 @@ export default function CampaignWorkspace({
         return;
       }
 
-      setVideoExportError(null);
+      setIsExportingVideo(false);
       setPublishRefreshKey((current) => current + 1);
       setVideoExportMessage(
-        "Your video finished rendering while you were away. Use Download last export on Publish.",
+        "Your video finished while you were away. Use Download last export on Publish.",
       );
+      activeVideoExportIdRef.current = null;
+      syncVideoExportBiometricDefer();
     }
 
     function handleResume() {
-      if (document.visibilityState !== "visible") {
-        return;
-      }
-
-      void recoverStaleVideoExportError();
+      void recoverVideoExportOnResume();
     }
 
     document.addEventListener("visibilitychange", handleResume);
@@ -456,7 +475,7 @@ export default function CampaignWorkspace({
     return () => {
       document.removeEventListener("visibilitychange", handleResume);
     };
-  }, [isNativeApp, videoExportError]);
+  }, [videoExportError, isExportingVideo]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2543,7 +2562,7 @@ export default function CampaignWorkspace({
         headline={campaign.title?.trim() || campaign.topic}
         videoStage={videoExportStage}
         videoPreset={videoPreset}
-        aspectRatio={campaign.aspect_ratio}
+        aspectRatio={videoExportAspectRatio}
         slideCount={slides.length}
         draftBuild={
           activeCampaignOperation === "draft_build"

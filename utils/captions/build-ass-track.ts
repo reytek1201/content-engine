@@ -2,14 +2,16 @@ import { createHash } from "node:crypto";
 import type { WordTiming } from "@/utils/tts/types";
 
 export const BURN_CAPTION_STYLE_V1 = {
-  version: "v1",
-  fontName: "Arial",
+  version: "v1.1",
+  fontName: "Inter",
   fontSizeRatio: 0.065,
-  marginVRatio: 0.38,
+  marginVRatio: 0.18,
   primaryColor: "&H00FFFFFF",
   highlightColor: "&H0000A5FF",
   bold: true,
   wordsPerChunk: 3,
+  /** ASS numpad alignment — 2 = bottom center (Reels-style lower third). */
+  alignment: 2,
 } as const;
 
 export interface BuildAssTrackInput {
@@ -52,7 +54,7 @@ function buildChunkLine(
     .map((word) => {
       const escaped = escapeAssText(word.word);
       if (word.word === activeWord.word && word.startSeconds === activeWord.startSeconds) {
-        return `{\\1c${style.highlightColor}}${escaped}{\\1c${style.primaryColor}}`;
+        return `{\\1c&H00A5FF&}${escaped}{\\1c&HFFFFFF&}`;
       }
 
       return escaped;
@@ -77,6 +79,10 @@ export function buildAssTrack(input: BuildAssTrackInput): string {
   const bold = style.bold ? -1 : 0;
   const chunks = chunkWords(input.words, style.wordsPerChunk);
 
+  if (input.words.length === 0) {
+    throw new Error("Cannot build ASS track without word timings");
+  }
+
   const header = [
     "[Script Info]",
     "Title: SlidePress Burn Captions",
@@ -87,7 +93,7 @@ export function buildAssTrack(input: BuildAssTrackInput): string {
     "",
     "[V4+ Styles]",
     "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-    `Style: Default,${style.fontName},${fontSize},${style.primaryColor},${style.highlightColor},&H00000000,&H64000000,${bold},0,0,0,100,100,0,0,1,2,0,5,40,40,${marginV},1`,
+    `Style: Default,${style.fontName},${fontSize},${style.primaryColor},${style.highlightColor},&H00000000,&H64000000,${bold},0,0,0,100,100,0,0,1,3,0,${style.alignment},40,40,${marginV},1`,
     "",
     "[Events]",
     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
