@@ -1,5 +1,6 @@
 import type { CampaignReferences } from "@/types/references";
 import { hasReferences } from "@/types/references";
+import type { VoicePersona } from "@/utils/tts/voice-catalog";
 
 export interface Brand {
   id: string;
@@ -9,7 +10,7 @@ export interface Brand {
   style_reference_url: string | null;
   logo_reference_url: string | null;
   voice_notes: string | null;
-  preferred_voice_persona: "warm" | "energetic" | "professional" | null;
+  preferred_voice_persona: VoicePersona | null;
   is_default: boolean;
   created_at: string;
   updated_at: string;

@@ -1,8 +1,16 @@
 import { TtsError } from "@/utils/tts/types";
+import { z } from "zod";
 
-export const VOICE_PERSONAS = ["warm", "energetic", "professional"] as const;
+export const VOICE_PERSONAS = [
+  "warm",
+  "confident",
+  "energetic",
+  "professional",
+] as const;
 
 export type VoicePersona = (typeof VOICE_PERSONAS)[number];
+
+export const VoicePersonaSchema = z.enum(VOICE_PERSONAS);
 
 export interface VoiceCatalogEntry {
   persona: VoicePersona;
@@ -19,6 +27,10 @@ const PERSONA_DETAILS: Record<
     label: "Warm & friendly",
     description: "Approachable, conversational tone for lifestyle and coaching content.",
   },
+  confident: {
+    label: "Confident",
+    description: "Clear, polished delivery for promos, tips, and creator-led Reels.",
+  },
   energetic: {
     label: "Energetic",
     description: "Upbeat delivery for hooks, promos, and high-energy Reels.",
@@ -31,6 +43,7 @@ const PERSONA_DETAILS: Record<
 
 const DEV_PLACEHOLDER_VOICE_IDS: Record<VoicePersona, string> = {
   warm: "dev-placeholder-warm",
+  confident: "dev-placeholder-confident",
   energetic: "dev-placeholder-energetic",
   professional: "dev-placeholder-professional",
 };

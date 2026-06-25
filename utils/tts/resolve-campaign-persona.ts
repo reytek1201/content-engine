@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
+import { resolveVoicePersona } from "@/utils/tts/voice-catalog";
 
 export async function resolveCampaignVoicePersona(
   supabase: SupabaseClient,
@@ -23,8 +24,10 @@ export async function resolveCampaignVoicePersona(
     .maybeSingle();
 
   const persona = brand?.preferred_voice_persona;
-  if (persona === "warm" || persona === "energetic" || persona === "professional") {
-    return persona;
+  const resolved = resolveVoicePersona(persona ?? "");
+
+  if (resolved) {
+    return resolved;
   }
 
   return "warm";

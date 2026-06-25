@@ -1,4 +1,4 @@
-import { getVoiceIdForPersona } from "@/utils/tts/voice-catalog";
+import { getVoiceIdForPersona, VoicePersonaSchema } from "@/utils/tts/voice-catalog";
 import { isTtsError, resolveTtsModelId } from "@/utils/tts/types";
 import { normalizeVoiceoverScript } from "@/utils/tts/normalize-script";
 import { getTtsProvider } from "@/utils/tts/provider";
@@ -33,7 +33,7 @@ import { z } from "zod";
 const RequestSchema = z.object({
   campaignId: z.string().uuid(),
   slideId: z.string().uuid(),
-  persona: z.enum(["warm", "energetic", "professional"]).optional(),
+  persona: VoicePersonaSchema.optional(),
   voiceQuality: z.enum(["standard", "studio"]).optional(),
 });
 

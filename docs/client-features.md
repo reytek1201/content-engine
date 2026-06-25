@@ -123,7 +123,7 @@ Every slide includes a **voiceover script** — a natural spoken line Gemini wri
 - **Review** scripts in the workspace alongside each slide
 - **Edit** scripts inline or **rewrite with AI** (tone chips → three options → save)
 - **Copy** any script to clipboard for recording in CapCut, TikTok, or your DAW
-- **Preview AI voice** per slide (warm, energetic, or professional personas)
+- **Preview AI voice** per slide (warm, confident, energetic, or professional personas)
 - **Download narration** as a ZIP (per-slide MP3s + full read-through)
 - **Export video** with AI narration stitched in (see Video export below)
 
@@ -293,7 +293,7 @@ Available in the **iOS and Android apps** (not mobile Safari):
 | **Website URL ingest** | **Phase A shipped** — topic suggestions + pre-fill ([#45](https://github.com/reytek1201/SlidePress.co/issues/45)); Phase B one-click full draft planned |
 | **On-screen video captions** | Deferred — export MP4 + platform captions; burned-in captions not in current build |
 | **Direct platform posting** | **YouTube**, **TikTok**, **Instagram** (Reels + carousel) shipped in code; Google OAuth + TikTok audit + Meta App Review pending for public users — [Epic #27](https://github.com/reytek1201/SlidePress.co/issues/27) · runbooks in `docs/` |
-| **Voice library browser** | Curated personas today (warm / energetic / professional) |
+| **Voice library browser** | Curated personas today (warm / confident / energetic / professional) |
 
 ### Why video export matters (marketing angle)
 

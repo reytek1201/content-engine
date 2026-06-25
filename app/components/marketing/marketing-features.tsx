@@ -36,7 +36,7 @@ const FEATURES = [
     description:
       "Preview how your slides sound, copy captions for each platform, then download your zip, narration, or finished video.",
     bullets: [
-      "Natural AI voices — warm, energetic, or professional",
+      "Natural AI voices — warm, confident, energetic, or professional",
       "TikTok, Instagram & YouTube copy included",
       "Save to Photos or share from the mobile app",
     ],

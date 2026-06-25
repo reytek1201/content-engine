@@ -3,6 +3,7 @@ import {
   getVoiceIdForPersona,
   isTtsError,
 } from "@/utils/tts";
+import { VoicePersonaSchema } from "@/utils/tts/voice-catalog";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -10,7 +11,7 @@ const RequestSchema = z
   .object({
     text: z.string().min(1).max(500).optional(),
     voiceId: z.string().min(1).optional(),
-    persona: z.enum(["warm", "energetic", "professional"]).optional(),
+    persona: VoicePersonaSchema.optional(),
     modelId: z.enum(["eleven_flash_v2_5", "eleven_multilingual_v2"]).optional(),
   })
   .refine((value) => Boolean(value.voiceId || value.persona), {

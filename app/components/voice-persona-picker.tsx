@@ -4,8 +4,16 @@ import { VOICE_PERSONAS, type VoicePersona } from "@/utils/tts/voice-catalog";
 
 export const VOICE_PERSONA_LABELS: Record<VoicePersona, string> = {
   warm: "Warm",
+  confident: "Confident",
   energetic: "Energetic",
   professional: "Professional",
+};
+
+export const VOICE_PERSONA_HINTS: Record<VoicePersona, string> = {
+  warm: "Friendly",
+  confident: "Polished",
+  energetic: "High energy",
+  professional: "Authoritative",
 };
 
 interface VoicePersonaPickerProps {
@@ -37,6 +45,7 @@ export default function VoicePersonaPicker({
             type="button"
             disabled={isDisabled}
             onClick={() => onChange(persona)}
+            title={VOICE_PERSONA_HINTS[persona]}
             className={`rounded-xl border font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${padding} ${
               isActive
                 ? "border-primary bg-primary/10 text-foreground"

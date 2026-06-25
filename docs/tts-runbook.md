@@ -23,18 +23,19 @@ Internal setup for ElevenLabs text-to-speech (Phase 0). Not user-facing document
 ```json
 {
   "warm": "VOICE_ID_WARM",
+  "confident": "VOICE_ID_CONFIDENT",
   "energetic": "VOICE_ID_ENERGETIC",
   "professional": "VOICE_ID_PROFESSIONAL"
 }
 ```
 
-All three keys are required in production. In local development, if unset, placeholder IDs are used so the catalog code can run without an ElevenLabs account.
+All four keys are required in production. In local development, if unset, placeholder IDs are used so the catalog code can run without an ElevenLabs account.
 
 ### Local `.env.local` example
 
 ```bash
 ELEVENLABS_API_KEY=sk_...
-ELEVENLABS_VOICE_IDS='{"warm":"...","energetic":"...","professional":"..."}'
+ELEVENLABS_VOICE_IDS='{"warm":"...","confident":"...","energetic":"...","professional":"..."}'
 ```
 
 ---
@@ -44,7 +45,7 @@ ELEVENLABS_VOICE_IDS='{"warm":"...","energetic":"...","professional":"..."}'
 - [ ] **Creator or Pro** plan (commercial use for SaaS)
 - [ ] Commercial license confirmed for user-generated content distributed to end users
 - [x] API key created with synthesis scope only (no unnecessary permissions)
-- [x] Three launch voices selected and IDs copied into `ELEVENLABS_VOICE_IDS`
+- [x] Four launch voices selected and IDs copied into `ELEVENLABS_VOICE_IDS`
 - [x] Terms/Privacy updated for third-party voice processing (#5) — `app/privacy/page.tsx`, `app/terms/page.tsx`
 - [x] UI copy drafted — `utils/tts/disclosure-copy.ts` (wire in Phase 2 preview/export UI)
 
@@ -110,7 +111,7 @@ User-facing route: `POST /api/tts/preview` (auth required).
 
 Returns `audio/mpeg`. Cached previews (24h, in-memory per instance) do not count toward monthly preview limits.
 
-Brand default voice: `brands.preferred_voice_persona` (`warm` | `energetic` | `professional`).
+Brand default voice: `brands.preferred_voice_persona` (`warm` | `confident` | `energetic` | `professional`).
 
 ---
 

@@ -9,6 +9,7 @@ import { findReusableVideoExportNarration } from "@/utils/find-reusable-video-ex
 import { resolveCampaignVoicePersona } from "@/utils/tts/resolve-campaign-persona";
 import { isTtsError } from "@/utils/tts/types";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
+import { VoicePersonaSchema } from "@/utils/tts/voice-catalog";
 import {
   presetIncludesNarration,
 } from "@/utils/video-export-presets";
@@ -37,7 +38,7 @@ export const maxDuration = 300;
 
 const RequestSchema = z.object({
   campaignId: z.string().uuid(),
-  persona: z.enum(["warm", "energetic", "professional"]).optional(),
+  persona: VoicePersonaSchema.optional(),
   preset: z.enum(["quick_reel", "silent_captions"]).optional(),
   voiceQuality: z.enum(["standard", "studio"]).optional(),
   aspectRatio: z.enum(["4:5", "9:16"]).optional(),

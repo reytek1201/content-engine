@@ -6,6 +6,7 @@ import {
   isSlideCount,
   type SlideCount,
 } from "@/types/slides";
+import { VoicePersonaSchema } from "@/utils/tts/voice-catalog";
 
 export const ReferencesInputSchema = z.object({
   product: z.string().url().optional(),
@@ -29,10 +30,7 @@ export const BrandPatchSchema = z.object({
   style: z.string().url().nullable().optional(),
   logo: z.string().url().nullable().optional(),
   voice_notes: z.string().trim().max(2000).nullable().optional(),
-  preferred_voice_persona: z
-    .enum(["warm", "energetic", "professional"])
-    .nullable()
-    .optional(),
+  preferred_voice_persona: VoicePersonaSchema.nullable().optional(),
 });
 
 export const CreateBrandProductSchema = z.object({

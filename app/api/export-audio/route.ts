@@ -7,6 +7,7 @@ import { resolveCampaignVoicePersona } from "@/utils/tts/resolve-campaign-person
 import { isTtsError } from "@/utils/tts/types";
 import { TTS_EXPORT_DISCLOSURE } from "@/utils/tts/disclosure-copy";
 import type { VoicePersona } from "@/utils/tts/voice-catalog";
+import { VoicePersonaSchema } from "@/utils/tts/voice-catalog";
 import {
   assertTtsAudioExportLimit,
   isUsageLimitError,
@@ -23,7 +24,7 @@ import { z } from "zod";
 
 const RequestSchema = z.object({
   campaignId: z.string().uuid(),
-  persona: z.enum(["warm", "energetic", "professional"]).optional(),
+  persona: VoicePersonaSchema.optional(),
   voiceQuality: z.enum(["standard", "studio"]).optional(),
 });
 

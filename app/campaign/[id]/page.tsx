@@ -4,6 +4,8 @@ import { createClient } from "@/utils/supabase/server";
 import { appRobots } from "@/utils/site-metadata";
 import type { Campaign, Slide, SlideImage } from "@/types/campaign";
 import type { PlatformCaption } from "@/types/captions";
+import type { VoicePersona } from "@/utils/tts/voice-catalog";
+import { resolveVoicePersona } from "@/utils/tts/voice-catalog";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -77,7 +79,7 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
   }
 
   let brandName: string | null = null;
-  let initialPreferredVoicePersona: "warm" | "energetic" | "professional" = "warm";
+  let initialPreferredVoicePersona: VoicePersona = "warm";
 
   if (typedCampaign.brand_id) {
     const { data: brand } = await supabase
@@ -89,12 +91,9 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
 
     brandName = brand?.name ?? null;
 
-    if (
-      brand?.preferred_voice_persona === "warm" ||
-      brand?.preferred_voice_persona === "energetic" ||
-      brand?.preferred_voice_persona === "professional"
-    ) {
-      initialPreferredVoicePersona = brand.preferred_voice_persona;
+    const resolvedPersona = resolveVoicePersona(brand?.preferred_voice_persona ?? "");
+    if (resolvedPersona) {
+      initialPreferredVoicePersona = resolvedPersona;
     }
   }
 

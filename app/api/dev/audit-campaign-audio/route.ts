@@ -8,6 +8,7 @@ import {
   isTtsAuditRouteEnabled,
 } from "@/utils/tts/audit-access";
 import { isTtsError } from "@/utils/tts";
+import { VoicePersonaSchema } from "@/utils/tts/voice-catalog";
 import { createClient } from "@/utils/supabase/server";
 import type { Campaign, Slide } from "@/types/campaign";
 import { NextResponse } from "next/server";
@@ -15,7 +16,7 @@ import { z } from "zod";
 
 const RequestSchema = z.object({
   campaignId: z.string().uuid(),
-  persona: z.enum(["warm", "energetic", "professional"]).optional(),
+  persona: VoicePersonaSchema.optional(),
   voiceId: z.string().min(1).optional(),
 });
 

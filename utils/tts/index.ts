@@ -17,6 +17,7 @@ export { mapElevenLabsError } from "@/utils/tts/map-elevenlabs-error";
 
 export {
   VOICE_PERSONAS,
+  VoicePersonaSchema,
   getVoiceCatalog,
   getVoiceIdForPersona,
   isVoiceCatalogConfigured,
