@@ -62,10 +62,11 @@ function buildChunkLine(
 
 export function buildAssCacheKey(
   narrationFingerprint: string,
+  aspectRatio: string,
   styleVersion: string,
 ): string {
   return createHash("sha256")
-    .update(`${narrationFingerprint}:${styleVersion}`)
+    .update(`${narrationFingerprint}:${aspectRatio}:${styleVersion}`)
     .digest("hex");
 }
 

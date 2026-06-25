@@ -41,6 +41,6 @@ export async function setCachedAssTrack(
   );
 
   if (error) {
-    console.warn("Failed to cache ASS track:", error.message);
+    throw new Error(`Failed to cache ASS track: ${error.message}`);
   }
 }

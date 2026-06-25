@@ -58,7 +58,7 @@ async function finalizeMergedVideoExport(
   metadata: VideoExportMetadata,
   videoUrl: string,
 ): Promise<void> {
-  if (!metadata.burnCaptions || !metadata.assStoragePath) {
+  if (!metadata.burnCaptions || (!metadata.assStoragePath && !metadata.assContent)) {
     await completeVideoExport(exportId, videoUrl);
     return;
   }
@@ -82,6 +82,7 @@ async function finalizeMergedVideoExport(
       exportId,
       videoUrl,
       assStoragePath: metadata.assStoragePath,
+      assContent: metadata.assContent,
     });
 
     await completeVideoExport(exportId, burnedUrl);

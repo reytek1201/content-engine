@@ -39,6 +39,7 @@ export interface VideoExportMetadata {
   reusedNarration?: boolean;
   burnCaptions?: boolean;
   assStoragePath?: string;
+  assContent?: string;
   timingMs?: {
     alignment?: number;
     assGeneration?: number;
@@ -255,6 +256,8 @@ export function parseVideoExportMetadata(
       typeof record.assStoragePath === "string"
         ? record.assStoragePath
         : undefined,
+    assContent:
+      typeof record.assContent === "string" ? record.assContent : undefined,
     timingMs: parseTimingMs(record.timingMs),
   };
 }

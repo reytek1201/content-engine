@@ -40,6 +40,7 @@ export interface PrepareBurnCaptionsInput {
 export interface PreparedBurnCaptions {
   assCacheKey: string;
   assStoragePath: string;
+  assContent: string;
   timingSource: "elevenlabs" | "estimated" | "mixed";
   alignmentMs: number;
   assGenerationMs: number;
@@ -105,6 +106,7 @@ export async function prepareBurnCaptionsAss(
 ): Promise<PreparedBurnCaptions> {
   const assCacheKey = buildAssCacheKey(
     input.narrationFingerprint,
+    input.aspectRatio,
     BURN_CAPTION_STYLE_V1.version,
   );
   const assStoragePath = buildAssStoragePath(
@@ -123,6 +125,7 @@ export async function prepareBurnCaptionsAss(
     return {
       assCacheKey,
       assStoragePath,
+      assContent: cachedAss,
       timingSource: "estimated",
       alignmentMs: 0,
       assGenerationMs: 0,
@@ -148,6 +151,7 @@ export async function prepareBurnCaptionsAss(
   return {
     assCacheKey,
     assStoragePath,
+    assContent,
     timingSource: source,
     alignmentMs,
     assGenerationMs,
@@ -157,9 +161,14 @@ export async function prepareBurnCaptionsAss(
 export async function burnCaptionsOnMergedVideo(input: {
   exportId: string;
   videoUrl: string;
-  assStoragePath: string;
+  assStoragePath?: string;
+  assContent?: string;
 }): Promise<string> {
-  const assContent = await getCachedAssTrack(input.assStoragePath);
+  const assContent =
+    input.assContent ??
+    (input.assStoragePath
+      ? await getCachedAssTrack(input.assStoragePath)
+      : null);
   if (!assContent) {
     throw new Error("Cached ASS track missing for burned captions export");
   }

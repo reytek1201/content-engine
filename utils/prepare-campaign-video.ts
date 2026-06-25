@@ -36,6 +36,7 @@ export interface PrepareCampaignVideoResult {
   slideCount: number;
   totalChars: number;
   assStoragePath?: string;
+  assContent?: string;
   burnCaptionTimingMs?: {
     alignment?: number;
     assGeneration?: number;
@@ -173,6 +174,7 @@ export async function prepareCampaignVideo(
         slideCount: sortedSlides.length,
         totalChars,
         assStoragePath: preparedAss?.assStoragePath,
+        assContent: preparedAss?.assContent,
         burnCaptionTimingMs: preparedAss
           ? {
               alignment: preparedAss.alignmentMs,
@@ -195,6 +197,7 @@ export async function prepareCampaignVideo(
       slideCount: sortedSlides.length,
       totalChars,
       assStoragePath: preparedAss?.assStoragePath,
+      assContent: preparedAss?.assContent,
       burnCaptionTimingMs: preparedAss
         ? {
             alignment: preparedAss.alignmentMs,

@@ -139,6 +139,7 @@ export function buildComposeStageMetadata(input: {
     reusedNarration: input.reusedNarration,
     burnCaptions: input.burnCaptions,
     assStoragePath: input.prepared.assStoragePath,
+    assContent: input.prepared.assContent,
     timingMs: input.prepared.burnCaptionTimingMs,
   };
 }
