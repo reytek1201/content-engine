@@ -31,22 +31,21 @@ function formatRenewalDate(isoDate: string): string {
   }).format(new Date(isoDate));
 }
 
-function formatSubscriptionPeriodEnd(isoDate: string): string {
+function formatSubscriptionPeriodEnd(isoDate: string, tier: Tier): string {
   const label = formatRenewalDate(isoDate);
   if (new Date(isoDate).getTime() < Date.now()) {
-    return `Ended ${label}`;
+    return tier === "free" ? `Resets ${label}` : `Ended ${label}`;
   }
-  return `Renews ${label}`;
+  return tier === "free" ? `Resets ${label}` : `Renews ${label}`;
 }
 
 interface CreditTileProps {
   label: string;
   remaining: number;
   limit: number;
-  isLifetime: boolean;
 }
 
-function CreditTile({ label, remaining, limit, isLifetime }: CreditTileProps) {
+function CreditTile({ label, remaining, limit }: CreditTileProps) {
   const displayRemaining = limit > 0 ? Math.min(remaining, limit) : remaining;
   const used = limit > 0 ? limit - displayRemaining : 0;
   const pct =
@@ -73,7 +72,6 @@ function CreditTile({ label, remaining, limit, isLifetime }: CreditTileProps) {
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         {remaining} remaining
-        {isLifetime ? " (lifetime)" : ""}
       </p>
     </div>
   );
@@ -569,23 +567,19 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
               <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 {usage.planLabel}
               </span>
-              {usage.isLifetimeTier ? (
+              {usage.resetsAt ? (
                 <span className="text-xs text-muted-foreground">
-                  Lifetime credits
-                </span>
-              ) : usage.resetsAt ? (
-                <span className="text-xs text-muted-foreground">
-                  {formatSubscriptionPeriodEnd(usage.resetsAt)}
+                  {formatSubscriptionPeriodEnd(usage.resetsAt, usage.tier)}
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground">
-                  Renews monthly
+                  Resets monthly
                 </span>
               )}
             </div>
             {isNative ? (
               <NativeSubscriptionActions
-                showManage={!usage.isLifetimeTier}
+                showManage={usage.tier !== "free"}
                 restoreMessage={restoreMessage}
                 onRestoreMessage={setRestoreMessage}
                 disabled={activatingPlan}
@@ -593,7 +587,7 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
                   await syncUsageAfterBillingChange(usage.tier);
                 }}
               />
-            ) : !usage.isLifetimeTier ? (
+            ) : usage.tier !== "free" ? (
               <WebPaidManageActions billingSource={usage.billingSource} />
             ) : null}
           </div>
@@ -604,31 +598,26 @@ export default function UsageSettings({ variant = "card" }: UsageSettingsProps) 
               label="Campaigns"
               remaining={usage.remaining.campaigns}
               limit={usage.limits.campaigns}
-              isLifetime={usage.isLifetimeTier}
             />
             <CreditTile
               label="Slide regenerations"
               remaining={usage.remaining.regenerations}
               limit={usage.limits.regenerations}
-              isLifetime={usage.isLifetimeTier}
             />
             <CreditTile
               label="Video exports"
               remaining={usage.remaining.videos}
               limit={usage.limits.videos}
-              isLifetime={usage.isLifetimeTier}
             />
             <CreditTile
               label="Voice previews"
               remaining={usage.remaining.ttsPreviews}
               limit={usage.limits.ttsPreviews}
-              isLifetime={usage.isLifetimeTier}
             />
             <CreditTile
               label="Narration exports"
               remaining={usage.remaining.audioExports}
               limit={usage.limits.audioExports}
-              isLifetime={usage.isLifetimeTier}
             />
             <div className="rounded-xl border border-border bg-background/40 px-4 py-4">
               <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

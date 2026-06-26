@@ -1,5 +1,7 @@
 # Instagram — Phase 3 runbook (verification & launch)
 
+**Claude / AI context:** [`claude-project.md`](claude-project.md) · [`platform-posting.md`](platform-posting.md)
+
 **Epic:** [#27 Direct Platform Posting](https://github.com/reytek1201/SlidePress.co/issues/27) · **Issues:** [#33 Reels](https://github.com/reytek1201/SlidePress.co/issues/33) · [#34 Carousel](https://github.com/reytek1201/SlidePress.co/issues/34)
 
 **Status (June 21, 2026):** OAuth, Reels publish, and Carousel publish **shipped and tested** (Reels + carousel confirmed on @slidepress1). **Meta App Review in progress** — submission started via App Review → “Manage messaging & content on Instagram” use case; demo video + final submit pending. Works for app testers/roles until approved.
@@ -143,3 +145,5 @@ PLATFORM_TOKEN_ENCRYPTION_KEY=
 
 - [`docs/platform-posting.md`](platform-posting.md) — platform epic overview
 - [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md) — parallel OAuth review process for YouTube
+
+*Last updated: June 25, 2026*

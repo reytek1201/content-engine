@@ -1,5 +1,7 @@
 # App Store & Play review notes (draft)
 
+**Claude upload:** Skip this file if sharing the Project — contains reviewer demo credentials. For public AI context use [`claude-project.md`](claude-project.md) Tier 3 note.
+
 Copy-paste sections into **App Store Connect** or **Google Play Console** when you submit TestFlight external beta or a public release.
 
 **Bundle ID (iOS):** `co.slidepress.app`  
@@ -240,3 +242,5 @@ Capture on iPhone (6.7" display) from TestFlight or simulator:
 - Update marketing once TikTok audit passes
 
 See also: [`docs/beta-release.md`](beta-release.md) · [`docs/capacitor.md`](capacitor.md) · [`docs/youtube-phase3-runbook.md`](youtube-phase3-runbook.md)
+
+*Last updated: June 25, 2026*

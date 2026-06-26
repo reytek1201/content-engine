@@ -19,14 +19,14 @@ export interface TierPricing {
 
 /**
  * Hard credit caps per tier. These must match apply_tier_entitlement() in the SQL migration.
- * Free tier = lifetime credits (never refill). Paid tiers reset monthly on renewal.
+ * All tiers hard-reset to caps on their billing period (calendar month for free; renewal for paid).
  */
 export const PLAN_LIMITS: Record<Tier, TierLimits> = {
   free: {
-    campaigns: 3,
-    regenerations: 10,
+    campaigns: 2,
+    regenerations: 4,
     videos: 0,
-    ttsPreviews: 5,
+    ttsPreviews: 4,
     audioExports: 0,
     brands: 1,
     maxPlatformConnections: 1,
@@ -72,8 +72,8 @@ export function getPlanLabel(tier: Tier): string {
   }
 }
 
-export function isLifetimeTier(tier: Tier): boolean {
-  return tier === "free";
+export function isPaidTier(tier: Tier): tier is PaidTier {
+  return tier !== "free";
 }
 
 export function formatPlanPriceLabel(
@@ -88,31 +88,18 @@ export function formatPlanPriceLabel(
   return `${dollars} / mo`;
 }
 
-function formatMonthlyCredit(count: number, unit: string, lifetime: boolean): string {
-  if (lifetime && unit === "campaigns") {
-    return `${count} lifetime campaigns`;
-  }
-  if (lifetime) {
-    return `${count} ${unit}`;
-  }
-  return `${count} ${unit} / month`;
-}
-
 /** Marketing bullets for Settings → Usage plan cards. */
 export function getPlanFeatureBullets(tier: Tier): string[] {
   const limits = PLAN_LIMITS[tier];
-  const lifetime = isLifetimeTier(tier);
 
   const bullets = [
-    formatMonthlyCredit(limits.campaigns, "campaigns", lifetime),
-    formatMonthlyCredit(limits.regenerations, "slide regenerations", lifetime),
-    lifetime
-      ? `${limits.ttsPreviews} voice previews`
-      : `${limits.ttsPreviews} voice previews / month`,
+    `${limits.campaigns} campaigns / month`,
+    `${limits.regenerations} slide regenerations / month`,
+    `${limits.ttsPreviews} voice previews / month`,
     `${limits.brands} brand workspace${limits.brands === 1 ? "" : "s"}`,
   ];
 
-  if (!lifetime) {
+  if (isPaidTier(tier)) {
     bullets.splice(2, 0, `${limits.videos} video exports / month`);
     bullets.push(`${limits.audioExports} narration exports / month`);
   }

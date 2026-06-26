@@ -1,5 +1,7 @@
 # YouTube Shorts — Phase 3 runbook (verification & launch)
 
+**Claude / AI context:** [`claude-project.md`](claude-project.md) · [`platform-posting.md`](platform-posting.md)
+
 **Epic:** [#27 Direct Platform Posting](https://github.com/reytek1201/SlidePress.co/issues/27) · **Issue:** [#31 Phase 3](https://github.com/reytek1201/SlidePress.co/issues/31)
 
 **Status (June 2026):** Phases 0–2 shipped. Phase 3 in progress — **Google OAuth verification submitted** (awaiting approval, ~1–3 weeks). Closed beta works for OAuth **test users** only until approved.
@@ -164,3 +166,5 @@ Run on **web** and **native app** (Capacitor loads production URL).
 ## After YouTube
 
 TikTok (#32) and Instagram Reels (#33) + Carousel (#34) are shipped in code. See [`docs/platform-posting.md`](platform-posting.md) and [`docs/instagram-phase3-runbook.md`](instagram-phase3-runbook.md) for remaining Meta/TikTok app review steps.
+
+*Last updated: June 25, 2026*

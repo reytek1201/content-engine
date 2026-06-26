@@ -2,6 +2,7 @@
 
 import BrandLibraryPanel from "@/app/components/brand-library-panel";
 import CampaignTopicSuggester from "@/app/components/campaign-topic-suggester";
+import FullDraftConfirmSheet from "@/app/components/full-draft-confirm-sheet";
 import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
 import { useActiveBrandOptional } from "@/app/components/active-brand-provider";
 import { brandDetailHref } from "@/utils/brands-back-target";
@@ -139,6 +140,11 @@ export default function CreateCampaignForm({
   const [productPreview, setProductPreview] = useState<string | null>(null);
   const [stylePreview, setStylePreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [fullDraftSheetOpen, setFullDraftSheetOpen] = useState(false);
+  const [fullDraftTopic, setFullDraftTopic] = useState("");
+  const [fullDraftOptions, setFullDraftOptions] = useState<
+    TopicSelectionOptions | undefined
+  >(undefined);
 
   const selectedProduct =
     brandProducts.find((product) => product.id === selectedProductId) ?? null;
@@ -529,6 +535,27 @@ export default function CreateCampaignForm({
     });
   }
 
+  function handleRequestFullDraft(
+    nextTopic: string,
+    options?: TopicSelectionOptions,
+  ) {
+    if (campaignLimitReached || usageLoading) {
+      return;
+    }
+
+    setFullDraftTopic(nextTopic);
+    setFullDraftOptions(options);
+    setFullDraftSheetOpen(true);
+  }
+
+  async function handleConfirmFullDraft() {
+    const topic = fullDraftTopic;
+    const options = fullDraftOptions;
+
+    setFullDraftSheetOpen(false);
+    await handleUseTopicAndGenerate(topic, options);
+  }
+
   function handleSelectTopic(
     nextTopic: string,
     options?: TopicSelectionOptions,
@@ -688,6 +715,10 @@ export default function CreateCampaignForm({
             onUseTopicAndGenerate={(nextTopic, options) => {
               void handleUseTopicAndGenerate(nextTopic, options);
             }}
+            onRequestFullDraft={handleRequestFullDraft}
+            campaignLimitReached={campaignLimitReached}
+            usage={usage}
+            usageLoading={usageLoading}
             onIngestComplete={(payload) => {
               if (
                 payload.productImageUrl &&
@@ -875,7 +906,7 @@ export default function CreateCampaignForm({
             role="status"
             className="mt-6 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100"
           >
-            You&apos;ve used all {usage.limits.campaigns} campaigns on your{" "}
+            You&apos;ve used all {usage.limits.campaigns} campaigns this month on your{" "}
             {usage.planLabel} plan.{" "}
             <Link href="/settings" className="font-medium underline underline-offset-2">
               View usage
@@ -922,6 +953,16 @@ export default function CreateCampaignForm({
           {error}
         </div>
       )}
+
+      <FullDraftConfirmSheet
+        open={fullDraftSheetOpen}
+        onClose={() => setFullDraftSheetOpen(false)}
+        onConfirm={() => void handleConfirmFullDraft()}
+        slideCount={slideCount}
+        topic={fullDraftTopic}
+        usage={usage}
+        isConfirming={isLoading}
+      />
     </>
   );
 }

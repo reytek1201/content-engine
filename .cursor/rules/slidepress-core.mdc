@@ -1,0 +1,43 @@
+---
+description: SlidePress project profile, stack, and core philosophy
+alwaysApply: true
+---
+
+# SlidePress — Core
+
+Solo-founder marketing automation: topic → carousel slides → AI images → voiceover → captions → zip / narration / MP4 → direct post (YouTube, TikTok, Instagram).
+
+**Live:** [slidepress.co](https://www.slidepress.co) · **Repo name:** `content-engine`
+
+## Philosophy
+
+- **Efficiency:** Minimize DB roundtrips; avoid bloated dependencies.
+- **React Compiler:** `reactCompiler: true` — no `useMemo` / `useCallback` / `React.memo` unless external non-React refs.
+- **Data integrity:** Zod + TypeScript on every AI payload; schemas must match DB columns.
+
+## Stack
+
+| Layer | Tech |
+|-------|------|
+| App | Next.js App Router, React 19, Tailwind (dark zinc + orange) |
+| Host | Vercel |
+| DB / auth | Supabase (`@supabase/ssr`, RLS, Realtime) |
+| Slide copy + voiceover | Google Gemini 2.5 Flash (JSON + Zod) |
+| Images | Fal.ai Nano Banana 2 (async webhooks) |
+| TTS / video | ElevenLabs + FFmpeg (Fal) + narration cache |
+| Mobile | Capacitor 8 — WebView shell, not React Native |
+| Billing | Stripe (web) + RevenueCat (iOS/Android IAP) |
+
+## Layout
+
+- API routes: `app/api/[route]/route.ts`
+- Utils: `utils/` (flat, modular)
+- Types: `types/`
+- Migrations: `supabase/migrations/`
+- Internal docs: `docs/` — see `docs/claude-project.md` for AI context
+
+## Docs for context
+
+- Product: `docs/client-features.md`
+- Launch / ops: `docs/launch-status.md`
+- Architecture: `docs/architecture.md`

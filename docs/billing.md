@@ -2,6 +2,8 @@
 
 Paid subscription tiers with credit-based usage enforcement, dual payment rails (Stripe web + RevenueCat mobile), and tier-gated features.
 
+**Claude / AI context:** [`claude-project.md`](claude-project.md) · [`architecture.md`](architecture.md)
+
 **GitHub epic:** [#14 — Billing & Usage Tiers](https://github.com/reytek1201/SlidePress.co/issues/14)
 
 **Related:** [#1 — ElevenLabs narration & video export](https://github.com/reytek1201/SlidePress.co/issues/1) (video credit enforcement depends on Epic #1)
@@ -30,16 +32,16 @@ Paid subscription tiers with credit-based usage enforcement, dual payment rails 
 
 | Entitlement | Free | Creator | Agency Pro |
 |-------------|------|---------|------------|
-| Campaigns | 3 **lifetime** | 10 / month | 30 / month |
-| Slide regenerations | 10 **lifetime** | 20 / month | 60 / month |
+| Campaigns | 2 / month | 10 / month | 30 / month |
+| Slide regenerations | 4 / month | 20 / month | 60 / month |
 | Video exports | 0 (blocked) | 10 / month | 20 / month |
-| TTS voice previews | 5 **lifetime** | 30 / month | 60 / month |
+| TTS voice previews | 4 / month | 30 / month | 60 / month |
 | Narration ZIP exports | 0 | 5 / month | 15 / month |
 | Brand workspaces | 1 | 3 | 15 |
 | **Platform connections** | **1** (YouTube, TikTok, or Instagram — user’s choice) | **All 3** | **All 3** |
 | Direct platform publish | On connected platform only | All connected | All connected |
 | Carousel zip / captions / manual export | Yes (within campaign limits) | Yes | Yes |
-| Reset cadence | Never | Monthly | Monthly |
+| Reset cadence | Calendar month | Subscription renewal | Subscription renewal |
 
 **Design principles (v2):**
 
@@ -105,7 +107,8 @@ usage_events (audit log, append-only)
 | `utils/usage-limits.ts` | Read balances, assert limits, consume credits |
 | Stripe webhooks | Web checkout fulfillment |
 | RevenueCat webhooks | Mobile IAP fulfillment |
-| `apply_tier_entitlement()` | Shared helper — both webhooks call this |
+| `apply_tier_entitlement()` | Shared helper — webhooks + free-tier cron call this |
+| `GET /api/cron/refill-free-credits` | Daily Vercel Cron — calendar-month free-tier refills |
 
 **Enforcement is server-side only** on every costly API route. Never trust client-side credit checks.
 
@@ -127,8 +130,8 @@ Provisioned automatically on signup via trigger on `auth.users`.
 | `stripe_customer_id` | text | Nullable |
 | `stripe_subscription_id` | text | Nullable |
 | `revenuecat_app_user_id` | text | Nullable; usually = `user_id` |
-| `current_period_start` | timestamptz | Paid tiers only |
-| `current_period_end` | timestamptz | Paid tiers only |
+| `current_period_start` | timestamptz | Period start (all tiers) |
+| `current_period_end` | timestamptz | Next reset — calendar month (free) or subscription renewal (paid) |
 
 **RLS:** users can `SELECT` their own row. No client `UPDATE` — only service role (webhooks + admin client).
 
@@ -136,26 +139,21 @@ Provisioned automatically on signup via trigger on `auth.users`.
 
 ### Free-tier defaults (on signup)
 
-| Credit | v1 (code) | v2 (proposed) |
-|--------|-----------|---------------|
-| Campaigns | 3 | 3 |
-| Regenerations | 10 | 10 |
-| Video | 0 | 0 |
-| TTS previews | 5 | 5 |
-| Audio export | 0 | 0 |
+| Credit | Campaigns | Regenerations | Video | TTS previews | Audio export |
+|--------|-----------|---------------|-------|--------------|--------------|
+| Free (monthly) | 2 | 4 | 0 | 4 | 0 |
 
-### Monthly refill (paid tiers, on renewal)
+### Monthly refill
 
-| Tier | | Campaigns | Regens | Videos | TTS previews | Audio export |
-|------|---|-----------|--------|--------|--------------|--------------|
-| creator | v1 | 15 | 30 | 5 | 30 | 5 |
-| creator | **v2** | **10** | **20** | **10** | 30 | 5 |
-| agency | v1 | 50 | 100 | 15 | 60 | 15 |
-| agency | **v2** | **30** | **60** | **20** | 60 | 15 |
+| Tier | Trigger | Campaigns | Regens | Videos | TTS previews | Audio export |
+|------|---------|-----------|--------|--------|--------------|--------------|
+| free | Vercel Cron (calendar month) | **2** | **4** | 0 | **4** | 0 |
+| creator | Stripe / RC renewal | **10** | **20** | **10** | 30 | 5 |
+| agency | Stripe / RC renewal | **30** | **60** | **20** | 60 | 15 |
 
-Free tier never refills. Paid tiers **hard reset** to caps (not additive).
+All tiers **hard reset** to caps (not additive).
 
-**v2 migration:** `supabase/migrations/20260623000001_tier_entitlement_v2.sql` updates `apply_tier_entitlement()`. New refills use v2 caps; mid-cycle balances are unchanged until the next renewal webhook.
+**Migrations:** `20260623000001_tier_entitlement_v2.sql` (paid v2 caps); `20260630000001_free_tier_monthly.sql` (free monthly allotments).
 
 ---
 
@@ -366,15 +364,15 @@ Customers on old $19 / $49 Prices **keep that rate** until they cancel or switch
 
 ### QA
 
-- [ ] New signup → free defaults (3 / 10 / 0 / 5 / 0)
+- [ ] New signup → free defaults (2 / 4 / 0 / 4 / 0) + period tracking
 - [ ] Free: 2nd platform connect blocked
-- [ ] Free: 4th campaign blocked with upsell
+- [ ] Free: 3rd campaign blocked with upsell (monthly cap)
 - [x] Stripe upgrade Creator → v2 credits (10 / 20 / 10) — smoke test green (Jun 23, 2026)
 - [ ] Stripe upgrade Agency → v2 credits (30 / 60 / 20)
 - [x] Checkout shows $24 / $79 (not legacy $19 / $49)
 - [ ] Cancel subscription → free tier + connection grace handling
 - [ ] Brand limits: 1 / 3 / 15 per tier
-- [ ] Period reset refills paid credits (hard reset, not additive)
+- [ ] Period reset refills credits (hard reset, not additive) — paid via webhooks; free via cron
 - [ ] Video: dual aspect = 2 credits (document in UI)
 - [ ] Webhook idempotency (replay same event)
 - [ ] Cross-platform: web subscription visible in native app
@@ -386,7 +384,7 @@ Customers on old $19 / $49 Prices **keep that rate** until they cancel or switch
 
 | Sprint | Scope | Exit criteria |
 |--------|-------|---------------|
-| **A** | Schema + limits refactor | Free tier enforces 3 lifetime campaigns |
+| **A** | Schema + limits refactor | Free tier enforces monthly campaign caps |
 | **B** | Stripe web | Test card upgrades to Creator |
 | **C** | Brand gating + platform connection caps (v2) | Brand + connection caps enforced |
 | **D** | Video credits | Blocked on free; decrement on export |
@@ -399,7 +397,7 @@ Customers on old $19 / $49 Prices **keep that rate** until they cancel or switch
 |---|-------|--------|
 | 15 | usage_balances schema + signup trigger | A |
 | 16 | tier config + refactor usage-limits.ts | A |
-| 24 | monthly credit refill job | A |
+| 24 | monthly credit refill job (free tier cron) | A |
 | 18 | Stripe Checkout + webhooks | B |
 | 19 | Settings upgrade UI (web) | B |
 | 17 | brand count tier gating | C |
@@ -427,4 +425,4 @@ Revisit after ~3 months of `usage_events` + conversion data. Candidates:
 
 ---
 
-*Last updated: June 23, 2026 — Stripe live verified*
+*Last updated: June 25, 2026 — Stripe live verified*

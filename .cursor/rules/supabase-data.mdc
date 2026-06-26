@@ -1,0 +1,29 @@
+---
+description: Supabase, migrations, and data access patterns
+globs: "{utils/supabase/**,supabase/**,utils/usage-limits.ts,utils/plan-limits.ts}"
+alwaysApply: false
+---
+
+# Supabase & Data
+
+## Clients
+
+- Server routes / Server Actions: `createClient()` from `utils/supabase/server.ts`
+- Client components: `utils/supabase/client.ts`
+- Webhooks / admin: service role only where RLS must be bypassed
+
+## Patterns
+
+- Bulk single-flight inserts for multi-row data (slides, captions)
+- Realtime subscriptions for async assets (images, captions, exports) — avoid client polling-only UX
+- RLS: users see only their own campaigns, brands, connections
+
+## Migrations
+
+- Filename: `supabase/migrations/YYYYMMDDHHMMSS_description.sql`
+- Apply to production before deploying code that depends on new columns
+- Billing tier caps live in `apply_tier_entitlement()` — keep in sync with `utils/plan-limits.ts`
+
+## Key tables
+
+`campaigns`, `slides`, `slide_images`, `platform_captions`, `platform_connections`, `platform_posts`, `usage_balances`, `usage_events`, `brands`, `exports`

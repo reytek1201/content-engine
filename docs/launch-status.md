@@ -1,10 +1,10 @@
 # SlidePress — Launch status & next phase
 
-**Last updated:** June 24, 2026
+**Last updated:** June 25, 2026
 
 Single source of truth for where store setup, billing, and platform audits stand — and what to work on next.
 
-**Related:** [`beta-release.md`](beta-release.md) · [`billing.md`](billing.md) · [`platform-posting.md`](platform-posting.md) · [`app-store-review-notes.md`](app-store-review-notes.md)
+**Related:** [`claude-project.md`](claude-project.md) · [`architecture.md`](architecture.md) · [`beta-release.md`](beta-release.md) · [`billing.md`](billing.md) · [`platform-posting.md`](platform-posting.md) · [`app-store-review-notes.md`](app-store-review-notes.md)
 
 **GitHub:** [Epic #14 Billing](https://github.com/reytek1201/SlidePress.co/issues/14) · [Epic #27 Platform posting](https://github.com/reytek1201/SlidePress.co/issues/27) · [Epic #44 Launch](https://github.com/reytek1201/SlidePress.co/issues/44) · [#45 Website ingest Phase A](https://github.com/reytek1201/SlidePress.co/issues/45) ✅
 
@@ -118,7 +118,7 @@ Priority: unblock billing QA and platform gating in production.
 
 Run on web + one native device after Phase A migrations:
 
-- [ ] Free tier defaults (3 / 10 / 0 campaigns / regens / videos)
+- [ ] Free tier defaults (2 / 4 / 0 campaigns / regens / videos)
 - [ ] Free: 2nd platform connect blocked; 4th campaign upsell
 - [x] Stripe upgrade → v2 credits (10/20/10 Creator) — smoke test green (Jun 23, 2026)
 - [ ] Stripe upgrade Agency → v2 credits (30/60/20)

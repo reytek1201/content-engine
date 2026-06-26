@@ -2,7 +2,9 @@
 
 Use this before **TestFlight** (iOS) and **Play internal testing** (Android).
 
-**Launch status (stores, billing, audits):** see **[`docs/launch-status.md`](launch-status.md)** — updated June 24, 2026.
+**Claude / AI context:** [`claude-project.md`](claude-project.md) · [`launch-status.md`](launch-status.md)
+
+**Launch status (stores, billing, audits):** see **[`docs/launch-status.md`](launch-status.md)** — updated June 25, 2026.
 
 ### Store setup snapshot
 
@@ -199,3 +201,5 @@ Users opt in under **Settings → Notifications**. Configure **APNs** (iOS) and/
 - When stable, promote to **public** App Store / Play release (separate review)
 
 See `docs/client-features.md` for Phase 6 (billing, video export).
+
+*Last updated: June 25, 2026*

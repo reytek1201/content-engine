@@ -110,8 +110,8 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
           Prices are shown in the app or at checkout before you confirm a
           purchase. Paid plans include monthly credit allowances for campaigns,
           slide regenerations, video exports, voice previews, narration exports,
-          and brand workspaces. Free-tier credits are lifetime and do not
-          reset.
+          and brand workspaces. Free-tier credits reset monthly on the calendar
+          month (same caps each period, non-accumulating).
         </p>
         <p className="mt-3">
           <strong className="text-foreground">Web.</strong> Subscriptions on{" "}

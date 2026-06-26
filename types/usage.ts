@@ -66,10 +66,8 @@ export interface UsageSummary {
   canCreateBrand: boolean;
   brands: UsageBrands;
   platformConnections: UsagePlatformConnections;
-  /** ISO date — next renewal for paid tiers; null for free (credits never refill). */
+  /** ISO date — next credit reset (calendar month for free; renewal for paid). */
   resetsAt: string | null;
-  /** True for free tier (lifetime credits, no monthly reset). */
-  isLifetimeTier: boolean;
   /** Stripe web checkout vs mobile IAP; null when free or billing rail unknown. */
   billingSource: BillingSource | null;
   totalCampaigns: number;

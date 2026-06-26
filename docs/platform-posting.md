@@ -1,5 +1,7 @@
 # SlidePress — Direct Platform Posting
 
+**Claude / AI context:** [`claude-project.md`](claude-project.md) · [`architecture.md`](architecture.md)
+
 **Post campaigns to social platforms from SlidePress without manual export + copy/paste.**
 
 **GitHub epic:** [Epic — Direct Platform Posting](https://github.com/reytek1201/SlidePress.co/issues/27)
@@ -219,3 +221,5 @@ Plan for ~6 uploads/day on default quota or request an increase before marketing
 | TikTok | 2–4 weeks + audit wait | ✅ code shipped |
 | Instagram Reels | 2–3 weeks + Meta review | ✅ code shipped · review in progress |
 | Instagram Carousel | 2–3 weeks (after Reels) | ✅ code shipped · review in progress |
+
+*Last updated: June 25, 2026*

@@ -7,6 +7,7 @@ import type {
   TopicSelectionOptions,
   WebsiteIngestCompletePayload,
 } from "@/types/website-ingest";
+import type { UsageSummary } from "@/types/usage";
 import { useState } from "react";
 
 type SuggesterMode = "website" | "photo";
@@ -17,12 +18,19 @@ interface CampaignTopicSuggesterProps {
     topic: string,
     options?: TopicSelectionOptions,
   ) => void;
+  onRequestFullDraft?: (
+    topic: string,
+    options?: TopicSelectionOptions,
+  ) => void;
   onIngestComplete?: (payload: WebsiteIngestCompletePayload) => void;
   onSaveBrandKit?: (payload: WebsiteIngestCompletePayload) => Promise<void>;
   brandId?: string | null;
   selectedTopic?: string;
   slideCount?: number;
   disabled?: boolean;
+  campaignLimitReached?: boolean;
+  usage?: UsageSummary | null;
+  usageLoading?: boolean;
   defaultExpanded?: boolean;
   inputId?: string;
 }
@@ -30,12 +38,16 @@ interface CampaignTopicSuggesterProps {
 export default function CampaignTopicSuggester({
   onSelectTopic,
   onUseTopicAndGenerate,
+  onRequestFullDraft,
   onIngestComplete,
   onSaveBrandKit,
   brandId = null,
   selectedTopic = "",
   slideCount,
   disabled = false,
+  campaignLimitReached = false,
+  usage = null,
+  usageLoading = false,
   defaultExpanded = false,
   inputId,
 }: CampaignTopicSuggesterProps) {
@@ -79,9 +91,13 @@ export default function CampaignTopicSuggester({
             brandId={brandId}
             onSelectTopic={onSelectTopic}
             onUseTopicAndGenerate={onUseTopicAndGenerate}
+            onRequestFullDraft={onRequestFullDraft}
             onIngestComplete={onIngestComplete}
             onSaveBrandKit={onSaveBrandKit}
             disabled={disabled}
+            campaignLimitReached={campaignLimitReached}
+            usage={usage}
+            usageLoading={usageLoading}
           />
         ) : (
           <PhotoTopicSuggester
@@ -102,9 +118,13 @@ export default function CampaignTopicSuggester({
       brandId={brandId}
       onSelectTopic={onSelectTopic}
       onUseTopicAndGenerate={onUseTopicAndGenerate}
+      onRequestFullDraft={onRequestFullDraft}
       onIngestComplete={onIngestComplete}
       onSaveBrandKit={onSaveBrandKit}
       disabled={disabled}
+      campaignLimitReached={campaignLimitReached}
+      usage={usage}
+      usageLoading={usageLoading}
     />
   );
 }

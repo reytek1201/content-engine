@@ -2,6 +2,8 @@
 
 Native iOS and Android shells that load the production web app in a WebView.
 
+**Claude / AI context:** [`claude-project.md`](claude-project.md) · [`architecture.md`](architecture.md)
+
 **Default URL:** `https://www.slidepress.co` (configured in `capacitor.config.ts`)
 
 The Next.js app stays on Vercel — no static export. Capacitor opens the live site.
@@ -351,3 +353,5 @@ Show campaign progress on the home screen and tap to jump back into SlidePress. 
 - Rebuild AAB after widget changes; run `npm run cap:sync` before Gradle build
 
 **API:** `GET /api/widget/snapshot` — server builds snapshot from campaign list / journey state (auth required).
+
+*Last updated: June 25, 2026*

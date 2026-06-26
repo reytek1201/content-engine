@@ -2,6 +2,8 @@
 
 Internal setup for ElevenLabs text-to-speech (Phase 0). Not user-facing documentation.
 
+**Claude / AI context:** [`claude-project.md`](claude-project.md) · [`architecture.md`](architecture.md)
+
 **GitHub:** Epic [#1](https://github.com/reytek1201/SlidePress.co/issues/1) · Phase 0 issues [#2](https://github.com/reytek1201/SlidePress.co/issues/2)–[#5](https://github.com/reytek1201/SlidePress.co/issues/5)
 
 ---
@@ -212,4 +214,4 @@ Apply `supabase/migrations/20260617000002_tts_usage_events.sql` before recording
 
 ---
 
-*Last updated: June 2026*
+*Last updated: June 25, 2026*

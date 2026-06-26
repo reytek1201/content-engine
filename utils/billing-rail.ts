@@ -1,6 +1,6 @@
 import type { BillingSource, UsageRemaining } from "@/types/usage";
 import type { Tier } from "@/utils/plan-limits";
-import { getPlanLimits, isLifetimeTier } from "@/utils/plan-limits";
+import { getPlanLimits } from "@/utils/plan-limits";
 
 /** Stripe web vs RevenueCat IAP — used for manage-subscription UI. */
 export function resolveBillingSource(
@@ -8,7 +8,7 @@ export function resolveBillingSource(
   stripeCustomerId: string | null | undefined,
   revenuecatAppUserId: string | null | undefined,
 ): BillingSource | null {
-  if (isLifetimeTier(tier)) return null;
+  if (tier === "free") return null;
   if (stripeCustomerId) return "stripe";
   if (revenuecatAppUserId) return "iap";
   return null;

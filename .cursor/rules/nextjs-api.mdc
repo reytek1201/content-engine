@@ -1,0 +1,33 @@
+---
+description: API route conventions for SlidePress serverless endpoints
+globs: app/api/**/*.ts
+alwaysApply: false
+---
+
+# API Routes
+
+## Structure
+
+Every route in `app/api/[name]/route.ts`:
+
+1. `createClient()` from `@/utils/supabase/server` — cookie-aware auth
+2. `getUser()` — return `401` if missing
+3. Zod `safeParse` on body — return `400` with `details` on failure
+4. Ownership check on campaign/brand rows — `403` / `404`
+5. `try/catch` — explicit HTTP status + `{ success: false, error: "..." }`
+
+## Limits & billing
+
+Use `assertAiRateLimit`, `assertCampaignLimit`, `consume_credit` from `utils/usage-limits.ts` and `utils/plan-limits.ts`. Return `LIMIT_EXCEEDED` with `tier` and `upgradeUrl` when capped.
+
+## AI routes
+
+- Gemini: structured JSON via `responseMimeType: "application/json"` + Zod parse
+- Fal: queue + webhook at `/api/webhooks/fal`; client listens via Supabase Realtime + 5s polling fallback
+- TTS: server-only ElevenLabs; never expose API keys to client
+
+## Example error shape
+
+```json
+{ "success": false, "error": "Human-readable message", "code": "LIMIT_EXCEEDED" }
+```

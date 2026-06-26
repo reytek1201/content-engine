@@ -1,7 +1,7 @@
 import type { UsageSummary } from "@/types/usage";
 import { resolveBillingSource } from "@/utils/billing-rail";
 import { HIDDEN_CAMPAIGN_STATUSES } from "@/utils/campaign-visibility";
-import { getPlanLabel, getPlanLimits, isLifetimeTier } from "@/utils/plan-limits";
+import { getPlanLabel, getPlanLimits } from "@/utils/plan-limits";
 import type { Tier } from "@/utils/plan-limits";
 import { getPlatformConnectionSummary } from "@/utils/platform-connection-limits";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -142,7 +142,6 @@ export async function getUsageSummary(
     },
     platformConnections,
     resetsAt: balance.current_period_end ?? null,
-    isLifetimeTier: isLifetimeTier(tier),
     billingSource: resolveBillingSource(
       tier,
       balance.stripe_customer_id,

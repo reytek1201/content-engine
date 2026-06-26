@@ -1,5 +1,7 @@
 # Notifications & Widgets Roadmap
 
+**Claude / AI context:** [`claude-project.md`](claude-project.md) · [`capacitor.md`](capacitor.md)
+
 **Mobile engagement** — push alerts when async work finishes, and home-screen widgets for ambient campaign status.
 
 ---
@@ -111,3 +113,5 @@ Multiple campaigns per widget, live thumbnails, posting from widget without open
 - [`docs/capacitor.md`](capacitor.md) — push + widgets native setup
 - [`docs/beta-release.md`](beta-release.md) — optional APNs/FCM setup for TestFlight
 - [`docs/client-features.md`](client-features.md) — product roadmap index
+
+*Last updated: June 25, 2026*

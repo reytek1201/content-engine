@@ -1,5 +1,7 @@
 # SlidePress — Product Features
 
+**Claude / AI context:** [`claude-project.md`](claude-project.md) · [`architecture.md`](architecture.md)
+
 **Turn a topic into post-ready carousel campaigns and AI-narrated video in minutes.**
 
 SlidePress is a marketing automation app for creators and small teams who need social content fast: slide copy, AI-generated visuals, voiceover scripts, platform captions, and one-click export. No design tool juggling. No blank-page syndrome.
@@ -452,4 +454,4 @@ SlidePress turns a topic into a full social campaign: headlines on every slide, 
 
 ---
 
-*Last updated: June 24, 2026*
+*Last updated: June 25, 2026*

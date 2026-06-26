@@ -1,0 +1,28 @@
+---
+description: React and UI patterns for SlidePress components
+globs: app/**/*.tsx
+alwaysApply: false
+---
+
+# React & UI
+
+## Components
+
+- Functional components with explicit TypeScript prop interfaces
+- Server Components for data fetch; `'use client'` only for interactivity
+- Never mutate state objects — pure updates only
+
+## Styling
+
+- Tailwind; dark zinc background, orange primary CTAs
+- Semantic colors: green success, amber progress/warning, red errors
+- Shared shell via app layout components — match existing page widths
+
+## Native (Capacitor)
+
+Detect native via `SlidePressApp/` user agent or `window.WEBVIEW_SERVER_URL`. Native-only: haptics, bottom sheets, Save to Photos, pull-to-refresh, biometric lock. No Stripe checkout in native — RevenueCat IAP only.
+
+## Performance
+
+- React Compiler handles memoization — do not add manual memo wrappers
+- Bulk Supabase inserts for slide arrays — no per-row loops in hot paths

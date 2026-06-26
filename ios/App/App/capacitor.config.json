@@ -39,7 +39,6 @@
 		"SharePlugin",
 		"StatusBarPlugin",
 		"PurchasesPlugin",
-		"SecureStoragePlugin",
-		"NativeAppleSignInPlugin"
+		"SecureStoragePlugin"
 	]
 }
