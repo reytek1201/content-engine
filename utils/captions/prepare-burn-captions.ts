@@ -14,6 +14,8 @@ import {
 } from "@/utils/burn-captions-video";
 import { uploadFalMedia } from "@/utils/fal-video";
 import { getMp3DurationSeconds } from "@/utils/merge-mp3-buffers";
+import { captionOffsetForVideoCompose } from "@/utils/captions/caption-video-sync";
+import { VIDEO_CROSSFADE_SECONDS } from "@/utils/compose-slide-video";
 import {
   estimateWordTimingsForScript,
   offsetWordTimings,
@@ -57,10 +59,15 @@ async function resolveGlobalWordTimings(
 
   for (const slide of slides) {
     const durationSeconds = await getMp3DurationSeconds(slide.audio);
+    const videoOffsetSeconds = captionOffsetForVideoCompose(
+      offsetSeconds,
+      slide.slideIndex,
+      VIDEO_CROSSFADE_SECONDS,
+    );
     let slideWords: WordTiming[];
 
     if (slide.wordTimings && slide.wordTimings.length > 0) {
-      slideWords = offsetWordTimings(slide.wordTimings, offsetSeconds);
+      slideWords = offsetWordTimings(slide.wordTimings, videoOffsetSeconds);
       if (slide.timingSource === "elevenlabs") {
         hasElevenLabs = true;
       } else {
@@ -70,7 +77,7 @@ async function resolveGlobalWordTimings(
       slideWords = estimateWordTimingsForScript(
         slide.script,
         durationSeconds,
-        offsetSeconds,
+        videoOffsetSeconds,
       );
       hasEstimated = true;
     }

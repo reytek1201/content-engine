@@ -94,6 +94,21 @@ export async function prepareCampaignVideo(
           modelId,
           usage: input.usage,
         });
+
+        if (
+          withTimestamps &&
+          narrationSlides.some(
+            (slide) => !slide.wordTimings || slide.wordTimings.length === 0,
+          )
+        ) {
+          narrationSlides = await synthesizeCampaignNarration({
+            slides: sortedSlides,
+            persona: input.persona,
+            modelId,
+            withTimestamps: true,
+            usage: input.usage,
+          });
+        }
       } catch (error) {
         console.warn(
           "Cached narration reuse failed; falling back to synthesis:",

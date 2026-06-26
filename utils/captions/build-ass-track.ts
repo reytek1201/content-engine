@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { WordTiming } from "@/utils/tts/types";
 
 export const BURN_CAPTION_STYLE_V1 = {
-  version: "v1.2",
+  version: "v1.3",
   fontName: "Inter",
   fontSizeRatio: 0.065,
   marginVRatio: 0.18,

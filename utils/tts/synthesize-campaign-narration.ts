@@ -103,14 +103,46 @@ export async function synthesizeCampaignNarration(
           const cachedTimings = timingsCachePath
             ? await getCachedNarrationTimings(timingsCachePath)
             : null;
+          const hasTimings =
+            Boolean(cachedTimings?.words && cachedTimings.words.length > 0);
+
+          if (!input.withTimestamps || hasTimings) {
+            return {
+              slideIndex: slide.slide_index,
+              filename: `slide-${padSlideIndex(slide.slide_index)}.mp3`,
+              audio: cachedAudio,
+              charCount: normalizedText.length,
+              wordTimings: cachedTimings?.words,
+              timingSource: cachedTimings?.source,
+            };
+          }
+
+          const timingResult = await provider.synthesize({
+            text: slide.voiceover_script!,
+            voiceId,
+            modelId,
+            withTimestamps: true,
+            usage: {
+              userId,
+              campaignId,
+              slideId: slide.id,
+            },
+          });
+
+          if (timingsCachePath && timingResult.wordTimings?.length) {
+            await setCachedNarrationTimings(timingsCachePath, {
+              source: timingResult.timingSource ?? "elevenlabs",
+              words: timingResult.wordTimings,
+            });
+          }
 
           return {
             slideIndex: slide.slide_index,
             filename: `slide-${padSlideIndex(slide.slide_index)}.mp3`,
             audio: cachedAudio,
             charCount: normalizedText.length,
-            wordTimings: cachedTimings?.words,
-            timingSource: cachedTimings?.source,
+            wordTimings: timingResult.wordTimings,
+            timingSource: timingResult.timingSource ?? "elevenlabs",
           };
         }
       }
