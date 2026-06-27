@@ -71,11 +71,13 @@ Paste a public business URL on the create form to skip the blank-page start:
 
 ### Campaign workspace
 
-- **Campaign journey strip** — guided flow: **Copy → Assets → Video → Publish**, with honest checkmarks, next-step CTA, and step navigation (hidden on Details tab). **Assets** covers slide images *and* platform captions. Publish turns green when posted to **YouTube, TikTok, or Instagram**
-- **Auto-captions** — captions generate automatically when images finish (no modal); workspace switches to **Publish** when both images and captions are ready
-- **First-time workspace tour** — three coach marks (journey strip, Publish tab, publish sections); dismiss once via localStorage
-- **Inline campaign rename** — edit title from the workspace header
-- **Tabbed workspace** — **Slides | Publish | Details** on web and mobile; auto-switch to Publish when **images and captions** are both ready
+- **Campaign journey strip** — guided flow: **Copy → Assets → Video → Publish**, with honest checkmarks, next-step CTA, and step navigation. **Assets** covers slide images *and* platform captions. Video and Publish steps switch to their tabs. Publish turns green when posted to **YouTube, TikTok, or Instagram**
+- **Auto-captions** — captions generate automatically when images finish (no modal); workspace **stays on Slides** when draft is ready, with an optional banner to export video or go to Publish
+- **First-time workspace tour** — coach marks (journey strip, Video tab, Publish tab); dismiss once via localStorage
+- **Inline campaign rename** — edit title from the workspace header (all breakpoints)
+- **Tabbed workspace** — **Slides | Video | Publish** on web and mobile
+- **Workspace header** — compact metadata strip (aspect · slides · brand); overflow menu with **View brief**, Duplicate, and Delete
+- **View brief** — read-only sheet with original topic, reference images, and source website URL (when stored)
 - **Scroll-to-top** button when deep in the page (above mobile tab bar)
 - View all slides with **text overlay** and **voiceover script** (written for natural spoken delivery)
 - **Edit headlines** inline (up to 12 words per slide)
@@ -86,9 +88,9 @@ Paste a public business URL on the create form to skip the blank-page start:
 - **Carousel preview** — swipe between ready slides; on mobile, **swipe down** to dismiss the viewer
 - **Generate images** when ready — one click for the whole campaign
 - Live **image progress** — “2 of 5 images ready” with realtime updates
-- Metadata at a glance: **target audience**, **aspect ratio**, **slide count**, **brand**
-- **Duplicate campaign** from the workspace header — reuse topic and references, fresh AI copy
-- **Delete campaign** in a **Danger zone** at the bottom (confirm before permanent removal)
+- Metadata at a glance in the workspace header: **aspect ratio**, **slide count**, **brand**
+- **View brief** (overflow menu) — original topic, reference images, source URL when from website ingest
+- **Duplicate campaign** and **Delete campaign** in the header overflow menu; delete still requires confirmation
 
 ### Image generation
 
@@ -150,7 +152,7 @@ Processing runs on the server (TTS → slide compose → audio merge). Cached na
 ### Publish copy & direct posting
 
 - **Platform captions** for TikTok, Instagram, and YouTube Shorts — **auto-generated** when slide images complete
-- Publish section in the **Publish** tab — captions; **9:16 video export**; **Post to YouTube Shorts**, **TikTok**, and **Instagram** (Reels + carousel); file **downloads** (zip, narration) at the bottom
+- Publish section in the **Publish** tab — captions; **Post to YouTube Shorts**, **TikTok**, and **Instagram** (Reels + carousel); file **downloads** (zip) at the bottom. **Video export** lives on the **Video** tab.
 - **Writing post copy overlay** — appears while captions generate; amber error + **Try again** if generation fails; polling recovery if realtime misses the insert
 - **Copy all** (via journey strip) or **copy per field** (title, caption, hashtags) to clipboard
 - **Regenerate captions only** — updates publish copy without touching slide images
@@ -353,7 +355,7 @@ Phased delivery for SlidePress. **Mobile today** = responsive web + **native iOS
 
 | Deliverable | Status |
 |-------------|--------|
-| Tabbed campaign workspace (Slides / Publish / Details) | ✅ |
+| Tabbed campaign workspace (Slides / Video / Publish) | ✅ |
 | Campaign journey strip (progress + next step unified) | ✅ |
 | Campaign list publish-status badges | ✅ |
 | First-time workspace tour | ✅ |

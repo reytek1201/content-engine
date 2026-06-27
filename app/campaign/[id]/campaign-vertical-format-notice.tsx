@@ -14,7 +14,7 @@ export default function CampaignVerticalFormatNotice({
   if (state === "generating") {
     return (
       <div
-        id="section-publish-vertical-format"
+        id="section-video-vertical-format"
         className="rounded-xl border border-primary/25 bg-primary/10 px-4 py-4"
       >
         <p className="text-sm font-semibold text-foreground">
@@ -30,7 +30,7 @@ export default function CampaignVerticalFormatNotice({
 
   return (
     <div
-      id="section-publish-vertical-format"
+      id="section-video-vertical-format"
       className="rounded-xl border border-primary/25 bg-primary/10 px-4 py-4"
     >
       <p className="text-sm font-semibold text-foreground">

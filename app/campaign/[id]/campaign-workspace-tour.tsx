@@ -4,7 +4,7 @@ import type { CampaignWorkspaceTab } from "@/app/campaign/[id]/campaign-workspac
 import { CAMPAIGN_JOURNEY_STRIP_ID } from "@/utils/campaign-progress";
 import { useEffect, useState } from "react";
 
-const TOUR_STORAGE_KEY = "slidepress-workspace-tour-dismissed-v1";
+const TOUR_STORAGE_KEY = "slidepress-workspace-tour-dismissed-v2";
 
 interface TourStep {
   id: string;
@@ -19,22 +19,22 @@ const TOUR_STEPS: TourStep[] = [
     id: "journey",
     title: "Campaign journey",
     description:
-      "Track progress from copy to YouTube. Tap a step to jump there, or use the primary action below.",
+      "Track progress from copy to publish. Tap a step to jump there, or use the primary action below.",
     targetId: CAMPAIGN_JOURNEY_STRIP_ID,
+  },
+  {
+    id: "video-tab",
+    title: "Video tab",
+    description:
+      "Export Quick Reels, preview voice, and download narration — separate from posting.",
+    targetId: "campaign-workspace-tab-video",
   },
   {
     id: "publish-tab",
     title: "Publish tab",
     description:
-      "Captions, video export, YouTube posting, and file downloads live here — not on Slides.",
+      "Captions, platform posting, and slide downloads live here.",
     targetId: "campaign-workspace-tab-publish",
-  },
-  {
-    id: "publish-panel",
-    title: "Publish sections",
-    description:
-      "Work top to bottom: captions → 9:16 video → YouTube Shorts → downloads.",
-    targetId: "section-publish",
     tab: "publish",
   },
 ];

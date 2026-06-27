@@ -29,9 +29,14 @@ export function parseNativeAppDeepLink(url: string): string | null {
 
 export function buildCampaignWidgetDeepLink(
   campaignId: string,
-  options?: { tab?: "publish" },
+  options?: { tab?: "publish" | "video" },
 ): string {
-  const query = options?.tab ? "?tab=publish" : "";
+  const query =
+    options?.tab === "publish"
+      ? "?tab=publish"
+      : options?.tab === "video"
+        ? "?tab=video"
+        : "";
 
   return `${APP_SCHEME_PREFIX}campaign/${campaignId}${query}`;
 }

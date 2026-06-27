@@ -13,7 +13,7 @@ Internal docs for product, ops, and AI context.
 | Doc | Description |
 |-----|-------------|
 | [`claude-project.md`](claude-project.md) | **Claude.ai Project setup** — instructions to paste, files to upload |
-| [`architecture.md`](architecture.md) | Repo layout, API map, stack, conventions |
+| [`architecture.md`](architecture.md) | Repo layout, API map, navigation, stack, conventions |
 | [`client-features.md`](client-features.md) | Product features, workflows, roadmap |
 | [`launch-status.md`](launch-status.md) | Launch checklist, store status, blockers |
 

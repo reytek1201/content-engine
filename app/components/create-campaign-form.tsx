@@ -452,6 +452,8 @@ export default function CreateCampaignForm({
 
     try {
       const references = await resolveReferencesForSubmit();
+      const cachedIngest = getCachedWebsiteIngest();
+      const sourceUrl = cachedIngest?.inputUrl?.trim();
 
       const response = await fetch("/api/generate-text", {
         method: "POST",
@@ -464,6 +466,7 @@ export default function CreateCampaignForm({
           brand_product_id: selectedProductId || undefined,
           references:
             Object.keys(references).length > 0 ? references : undefined,
+          ...(sourceUrl ? { source_url: sourceUrl } : {}),
         }),
       });
 

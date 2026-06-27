@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       references: referencesInput,
       brand_id: brandIdInput,
       brand_product_id: brandProductIdInput,
+      source_url: sourceUrlInput,
     } = parsedInput.data;
     const references = normalizeReferencesInput(referencesInput);
 
@@ -114,6 +115,7 @@ export async function POST(request: Request) {
         product_reference_url: references.product ?? null,
         style_reference_url: references.style ?? null,
         logo_reference_url: references.logo ?? null,
+        source_url: sourceUrlInput ?? null,
       })
       .select("id")
       .single();

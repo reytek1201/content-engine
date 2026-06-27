@@ -128,6 +128,7 @@ export async function POST(request: Request) {
         product_reference_url: typedSource.product_reference_url,
         style_reference_url: typedSource.style_reference_url,
         logo_reference_url: typedSource.logo_reference_url,
+        source_url: typedSource.source_url,
       })
       .select("id")
       .single();

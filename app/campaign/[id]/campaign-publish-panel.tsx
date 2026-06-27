@@ -1,34 +1,18 @@
 "use client";
 
-import CampaignVerticalFormatNotice from "@/app/campaign/[id]/campaign-vertical-format-notice";
-import CampaignLockedNotice from "@/app/campaign/[id]/campaign-locked-notice";
 import CampaignCaptionsAccordion from "@/app/campaign/[id]/campaign-captions-accordion";
 import CampaignExportPanel from "@/app/campaign/[id]/campaign-export-panel";
 import CampaignTikTokPublishPanel from "@/app/campaign/[id]/campaign-tiktok-publish-panel";
 import CampaignInstagramPublishPanel from "@/app/campaign/[id]/campaign-instagram-publish-panel";
 import CampaignInstagramCarouselPublishPanel from "@/app/campaign/[id]/campaign-instagram-carousel-publish-panel";
 import CampaignYouTubePublishPanel from "@/app/campaign/[id]/campaign-youtube-publish-panel";
-import CampaignNarrationPanel from "@/app/campaign/[id]/campaign-narration-panel";
-import CampaignVideoLockedPanel from "@/app/campaign/[id]/campaign-video-locked-panel";
-import CampaignVideoPanel, {
-  type LastVideoExportInfo,
-} from "@/app/campaign/[id]/campaign-video-panel";
 import type { CaptionCopyField, PlatformCaption } from "@/types/captions";
-import type { VoicePersona } from "@/utils/tts/voice-catalog";
-import type { AspectRatio } from "@/types/campaign";
-import type { VideoExportPreset } from "@/utils/video-export-presets";
 import type { VerticalFormatPublishState, CarouselFormatPublishState } from "@/utils/slide-aspect-images";
 
 interface CampaignPublishPanelProps {
   campaignId: string;
   sortedCaptions: PlatformCaption[];
   imagesComplete: boolean;
-  hasVoiceoverScripts: boolean;
-  videoExportReady: boolean;
-  hasVideoCredits: boolean;
-  videoCreditsKnown: boolean;
-  videoPlanLabel: string;
-  videoTier: string;
   canGenerateCaptions: boolean;
   isGeneratingCaptions: boolean;
   captionsMessage: string | null;
@@ -36,38 +20,20 @@ interface CampaignPublishPanelProps {
   copiedCopyKey: string | null;
   copiedAllCaptions: boolean;
   isNativeApp: boolean;
-  preferredVoicePersona: VoicePersona;
-  videoPreset: VideoExportPreset;
-  burnCaptions: boolean;
-  aspectRatioLabel: string;
-  dualFormatVideoReady?: boolean;
   verticalFormatPublishState?: VerticalFormatPublishState;
   carouselFormatPublishState?: CarouselFormatPublishState;
-  videoExportAspectRatio?: AspectRatio;
   onAddVerticalFormat?: () => void;
-  brandId: string | null;
-  isSavingVoicePersona: boolean;
   isExporting: boolean;
-  isExportingAudio: boolean;
   isSavingAllPhotos: boolean;
   saveAllPhotosProgress: { saved: number; total: number } | null;
   savedAllPhotos: boolean;
   exportMessage: string | null;
-  audioExportMessage: string | null;
-  isExportingVideo: boolean;
-  isDownloadingLastVideoExport?: boolean;
-  videoExportMessage: string | null;
-  videoExportError?: string | null;
-  lastVideoExport?: LastVideoExportInfo | null;
   publishRefreshKey?: number;
   onPublishComplete?: () => void;
   onYouTubePublishingChange?: (publishing: boolean) => void;
   onTikTokPublishingChange?: (publishing: boolean) => void;
   onInstagramPublishingChange?: (publishing: boolean) => void;
   onInstagramCarouselPublishingChange?: (publishing: boolean) => void;
-  publishTabHint?: string | null;
-  hasVideoExport?: boolean;
-  youtubeAlreadyPublished?: boolean;
   campaignStatus: string;
   onGenerateCaptions: () => void;
   onCopyCaptionField: (
@@ -75,14 +41,7 @@ interface CampaignPublishPanelProps {
     field: CaptionCopyField
   ) => void;
   onCopyAllCaptions: () => void;
-  onPersonaChange: (persona: VoicePersona) => void;
-  onVideoPresetChange: (preset: VideoExportPreset) => void;
-  onBurnCaptionsChange: (enabled: boolean) => void;
-  onVideoExportAspectRatioChange?: (aspectRatio: AspectRatio) => void;
   onDownloadZip: () => void;
-  onDownloadNarration: () => void;
-  onExportVideo: () => void;
-  onDownloadLastVideoExport?: () => void;
   onSaveAllToPhotos: () => void;
 }
 
@@ -90,12 +49,6 @@ export default function CampaignPublishPanel({
   campaignId,
   sortedCaptions,
   imagesComplete,
-  hasVoiceoverScripts,
-  videoExportReady,
-  hasVideoCredits,
-  videoCreditsKnown,
-  videoPlanLabel,
-  videoTier,
   canGenerateCaptions,
   isGeneratingCaptions,
   captionsMessage,
@@ -103,56 +56,29 @@ export default function CampaignPublishPanel({
   copiedCopyKey,
   copiedAllCaptions,
   isNativeApp,
-  preferredVoicePersona,
-  videoPreset,
-  burnCaptions,
-  aspectRatioLabel,
-  dualFormatVideoReady = false,
   verticalFormatPublishState = "not_applicable",
   carouselFormatPublishState = "not_applicable",
-  videoExportAspectRatio,
   onAddVerticalFormat,
-  brandId,
-  isSavingVoicePersona,
   isExporting,
-  isExportingAudio,
   isSavingAllPhotos,
   saveAllPhotosProgress,
   savedAllPhotos,
   exportMessage,
-  audioExportMessage,
-  isExportingVideo,
-  isDownloadingLastVideoExport = false,
-  videoExportMessage,
-  videoExportError = null,
-  lastVideoExport = null,
   publishRefreshKey = 0,
   onPublishComplete,
   onYouTubePublishingChange,
   onTikTokPublishingChange,
   onInstagramPublishingChange,
   onInstagramCarouselPublishingChange,
-  publishTabHint = null,
-  hasVideoExport = false,
-  youtubeAlreadyPublished = false,
   campaignStatus,
   onGenerateCaptions,
   onCopyCaptionField,
   onCopyAllCaptions,
-  onPersonaChange,
-  onVideoPresetChange,
-  onBurnCaptionsChange,
-  onVideoExportAspectRatioChange,
   onDownloadZip,
-  onDownloadNarration,
-  onExportVideo,
-  onDownloadLastVideoExport,
   onSaveAllToPhotos,
 }: CampaignPublishPanelProps) {
   const captionsReady = sortedCaptions.length > 0 && !isGeneratingCaptions;
   const disabled = campaignStatus === "generating_text";
-  const showVideoPanel =
-    videoExportReady && (hasVideoCredits || Boolean(lastVideoExport));
 
   return (
     <section
@@ -165,8 +91,7 @@ export default function CampaignPublishPanel({
             Publish
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6 md:max-w-2xl">
-            Post to platforms here: captions → 9:16 video → YouTube or TikTok.
-            File downloads (zip, narration) are at the bottom.
+            Copy captions, post to YouTube, TikTok, or Instagram, and download slide assets.
           </p>
         </div>
 
@@ -182,36 +107,19 @@ export default function CampaignPublishPanel({
         )}
       </div>
 
-      {publishTabHint ? (
-        <div className="mt-4 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-foreground sm:mt-5">
-          {publishTabHint}
-        </div>
-      ) : null}
-
-      {(verticalFormatPublishState === "needs_add" ||
-        verticalFormatPublishState === "generating") &&
-      onAddVerticalFormat ? (
-        <div className="mt-4 sm:mt-5">
-          <CampaignVerticalFormatNotice
-            state={verticalFormatPublishState}
-            onAddVerticalFormat={onAddVerticalFormat}
-          />
-        </div>
-      ) : null}
-
       <div
         id="section-publish-captions"
         className="mt-4 scroll-mt-32 sm:mt-6 md:scroll-mt-40"
       >
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-          Step 1 · Captions
+          Captions
         </p>
 
         {captionsReady && (
           <div className="mt-3 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3">
             <p className="text-sm font-semibold text-emerald-200">Captions ready</p>
             <p className="mt-1 text-sm leading-6 text-emerald-200/90">
-              Export your video next, then post to YouTube, TikTok, or Instagram.
+              Copy captions or post to platforms below. Export video on the Video tab.
             </p>
             <button
               type="button"
@@ -263,7 +171,7 @@ export default function CampaignPublishPanel({
               <p className="text-xs leading-5 text-muted-foreground sm:text-sm">
                 {imagesComplete
                   ? "Generate hooks, post copy, and hashtags for TikTok, Instagram, and YouTube Shorts."
-                  : "Finish generating slide images in the Slides section first."}
+                  : "Finish generating slide images on the Slides tab first."}
               </p>
               {imagesComplete && (
                 <button
@@ -290,78 +198,11 @@ export default function CampaignPublishPanel({
 
       {imagesComplete && (
         <div
-          id="section-publish-video"
-          className="mt-6 scroll-mt-32 sm:mt-8 md:scroll-mt-40"
-        >
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-            Step 2 · Video export
-          </p>
-
-          {!captionsReady ? (
-            <CampaignLockedNotice
-              variant="action"
-              title="Generate captions first"
-              description="Video export unlocks after captions — you need YouTube title and description before posting a Short."
-            >
-              <button
-                type="button"
-                onClick={onGenerateCaptions}
-                disabled={!canGenerateCaptions || isGeneratingCaptions}
-                className="btn-primary w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
-              >
-                {isGeneratingCaptions
-                  ? "Generating captions…"
-                  : "Generate captions"}
-              </button>
-            </CampaignLockedNotice>
-          ) : (
-            <>
-              {showVideoPanel && (
-                <CampaignVideoPanel
-                  showVideoPanel
-                  canStartNewExport={hasVideoCredits}
-                  aspectRatioLabel={aspectRatioLabel}
-                  disabled={disabled}
-                  isExportingVideo={isExportingVideo}
-                  isDownloadingLastExport={isDownloadingLastVideoExport}
-                  videoExportMessage={videoExportMessage}
-                  videoExportError={videoExportError}
-                  lastVideoExport={lastVideoExport}
-                  videoPreset={videoPreset}
-                  burnCaptions={burnCaptions}
-                  dualFormatEnabled={dualFormatVideoReady}
-                  verticalFormatState={verticalFormatPublishState}
-                  videoExportAspectRatio={videoExportAspectRatio}
-                  onVideoExportAspectRatioChange={onVideoExportAspectRatioChange}
-                  onAddVerticalFormat={onAddVerticalFormat}
-                  onPresetChange={onVideoPresetChange}
-                  onBurnCaptionsChange={onBurnCaptionsChange}
-                  onExportVideo={onExportVideo}
-                  onDownloadLastExport={onDownloadLastVideoExport}
-                />
-              )}
-
-              {videoExportReady &&
-                videoCreditsKnown &&
-                !hasVideoCredits &&
-                !lastVideoExport && (
-                <CampaignVideoLockedPanel
-                  planLabel={videoPlanLabel}
-                  tier={videoTier}
-                />
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {imagesComplete && (
-        <div
           id="section-youtube-publish"
           className="mt-6 scroll-mt-32 sm:mt-8 md:scroll-mt-40"
         >
           <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-            Step 3 · YouTube Shorts
+            YouTube Shorts
           </p>
 
           <CampaignYouTubePublishPanel
@@ -387,7 +228,7 @@ export default function CampaignPublishPanel({
           className="mt-6 scroll-mt-32 sm:mt-8 md:scroll-mt-40"
         >
           <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-            Step 4 · TikTok
+            TikTok
           </p>
 
           <CampaignTikTokPublishPanel
@@ -410,7 +251,7 @@ export default function CampaignPublishPanel({
           className="mt-6 scroll-mt-32 sm:mt-8 md:scroll-mt-40"
         >
           <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-            Step 5 · Instagram Reels
+            Instagram Reels
           </p>
 
           <CampaignInstagramPublishPanel
@@ -432,7 +273,7 @@ export default function CampaignPublishPanel({
           className="mt-6 scroll-mt-32 sm:mt-8 md:scroll-mt-40"
         >
           <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
-            Step 6 · Instagram Carousel
+            Instagram Carousel
           </p>
 
           <CampaignInstagramCarouselPublishPanel
@@ -449,36 +290,25 @@ export default function CampaignPublishPanel({
       )}
 
       {captionsReady && (
-        <div className="mt-6 flex flex-col gap-4 sm:mt-8 sm:gap-6">
+        <div className="mt-6 sm:mt-8">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
             Downloads
           </p>
 
-          {hasVoiceoverScripts && (
-            <CampaignNarrationPanel
-              preferredVoicePersona={preferredVoicePersona}
-              brandId={brandId}
+          <div className="mt-3">
+            <CampaignExportPanel
+              imagesComplete={imagesComplete}
+              isNativeApp={isNativeApp}
               disabled={disabled}
-              isSavingVoicePersona={isSavingVoicePersona}
-              isExportingAudio={isExportingAudio}
-              audioExportMessage={audioExportMessage}
-              onPersonaChange={onPersonaChange}
-              onDownloadNarration={onDownloadNarration}
+              isExporting={isExporting}
+              isSavingAllPhotos={isSavingAllPhotos}
+              saveAllPhotosProgress={saveAllPhotosProgress}
+              savedAllPhotos={savedAllPhotos}
+              exportMessage={exportMessage}
+              onDownloadZip={onDownloadZip}
+              onSaveAllToPhotos={onSaveAllToPhotos}
             />
-          )}
-
-          <CampaignExportPanel
-            imagesComplete={imagesComplete}
-            isNativeApp={isNativeApp}
-            disabled={disabled}
-            isExporting={isExporting}
-            isSavingAllPhotos={isSavingAllPhotos}
-            saveAllPhotosProgress={saveAllPhotosProgress}
-            savedAllPhotos={savedAllPhotos}
-            exportMessage={exportMessage}
-            onDownloadZip={onDownloadZip}
-            onSaveAllToPhotos={onSaveAllToPhotos}
-          />
+          </div>
         </div>
       )}
     </section>

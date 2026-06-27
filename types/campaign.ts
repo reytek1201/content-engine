@@ -25,6 +25,7 @@ export interface Campaign {
   product_reference_url: string | null;
   style_reference_url: string | null;
   logo_reference_url: string | null;
+  source_url: string | null;
   created_at: string;
   updated_at: string;
 }

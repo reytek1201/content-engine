@@ -305,7 +305,7 @@ function buildJourneySteps(input: {
   const scrollTargets: Record<VisibleJourneyStepId, string> = {
     copy: "section-slides",
     images: "section-slides",
-    video: "section-publish-video",
+    video: "section-video",
     publish: "section-publish",
   };
 
@@ -662,7 +662,7 @@ function getCampaignNextStepFromInput(
           "YouTube and TikTok need vertical slides before you can export a Quick Reel.",
         disabled: false,
         loading: false,
-        scrollTargetId: "section-publish-vertical-format",
+        scrollTargetId: "section-video-vertical-format",
         secondaries,
       };
     }
@@ -688,7 +688,7 @@ function getCampaignNextStepFromInput(
           "Vertical images are generating — export and post once they finish.",
         disabled: true,
         loading: true,
-        scrollTargetId: "section-publish-vertical-format",
+        scrollTargetId: "section-video-vertical-format",
         secondaries,
       };
     }
@@ -716,7 +716,7 @@ function getCampaignNextStepFromInput(
           "Export your Quick Reel next — required before posting to platforms.",
         disabled: isExportingVideo,
         loading: isExportingVideo,
-        scrollTargetId: "section-publish-video",
+        scrollTargetId: "section-video",
         secondaries,
       };
     }
@@ -827,11 +827,11 @@ export const CAMPAIGN_NEXT_STEP_BAR_ID = CAMPAIGN_JOURNEY_STRIP_ID;
 
 export function scrollTargetForNextStepAction(action: NextStepAction): string {
   if (action === "add_vertical_format") {
-    return "section-publish-vertical-format";
+    return "section-video-vertical-format";
   }
 
-  if (action === "export_video") {
-    return "section-publish-video";
+  if (action === "export_video" || action === "download_narration") {
+    return "section-video";
   }
 
   if (
@@ -846,8 +846,7 @@ export function scrollTargetForNextStepAction(action: NextStepAction): string {
   if (
     action === "copy_captions" ||
     action === "generate_captions" ||
-    action === "download_zip" ||
-    action === "download_narration"
+    action === "download_zip"
   ) {
     return "section-publish";
   }

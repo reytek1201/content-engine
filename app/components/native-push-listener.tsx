@@ -73,6 +73,10 @@ function getCampaignRouteFromNotification(action: ActionPerformed): string | nul
     return `/campaign/${campaignId}?tab=publish`;
   }
 
+  if (tab === "video") {
+    return `/campaign/${campaignId}?tab=video`;
+  }
+
   return `/campaign/${campaignId}`;
 }
 

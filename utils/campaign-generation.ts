@@ -56,6 +56,7 @@ export const RequestSchema = z.object({
   references: ReferencesInputSchema.optional(),
   brand_id: z.string().uuid().optional(),
   brand_product_id: z.string().uuid().optional(),
+  source_url: z.string().url().optional(),
 });
 
 const SlideGenerationFieldsSchema = z.object({
