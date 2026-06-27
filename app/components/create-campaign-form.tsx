@@ -1,9 +1,8 @@
 "use client";
 
-import BrandLibraryPanel from "@/app/components/brand-library-panel";
+import CampaignReferencesSection from "@/app/components/campaign-references-section";
 import CampaignTopicSuggester from "@/app/components/campaign-topic-suggester";
 import FullDraftConfirmSheet from "@/app/components/full-draft-confirm-sheet";
-import ReferenceUploadSlot from "@/app/components/reference-upload-slot";
 import { useActiveBrandOptional } from "@/app/components/active-brand-provider";
 import { brandDetailHref } from "@/utils/brands-back-target";
 import { createClient } from "@/utils/supabase/client";
@@ -204,14 +203,30 @@ export default function CreateCampaignForm({
   }, [activeBrand]);
 
   useEffect(() => {
-    if (!useSavedBrand || productFile) {
+    if (!useSavedBrand) {
       return;
     }
 
-    if (savedReferences.product) {
-      setProductPreview(savedReferences.product);
+    if (!productFile) {
+      setProductPreview(savedReferences.product ?? null);
     }
-  }, [productFile, savedReferences.product, useSavedBrand]);
+
+    if (!styleFile) {
+      setStylePreview(savedReferences.style ?? null);
+    }
+
+    if (!logoFile) {
+      setLogoPreview(savedReferences.logo ?? null);
+    }
+  }, [
+    useSavedBrand,
+    productFile,
+    styleFile,
+    logoFile,
+    savedReferences.product,
+    savedReferences.style,
+    savedReferences.logo,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -347,6 +362,13 @@ export default function CreateCampaignForm({
     setUseSavedBrand(value);
 
     if (!value) {
+      setClearedLibrarySlots(new Set());
+      setProductFile(null);
+      setStyleFile(null);
+      setLogoFile(null);
+      setProductPreview(null);
+      setStylePreview(null);
+      setLogoPreview(null);
       return;
     }
 
@@ -652,6 +674,11 @@ export default function CreateCampaignForm({
     Boolean(getSlotPreview("product")) ||
     Boolean(getSlotPreview("style")) ||
     Boolean(getSlotPreview("logo"));
+  const hasReferenceOverrides =
+    Boolean(productFile) ||
+    Boolean(styleFile) ||
+    Boolean(logoFile) ||
+    clearedLibrarySlots.size > 0;
 
   if (isLoading) {
     return (
@@ -824,81 +851,22 @@ export default function CreateCampaignForm({
         </div>
 
         <div className={compact ? "space-y-3" : "mt-8"}>
-          <BrandLibraryPanel
+          <CampaignReferencesSection
+            idPrefix={idPrefix}
             brand={activeBrand}
+            brandProducts={brandProducts}
+            selectedProductId={selectedProductId}
+            onSelectedProductIdChange={setSelectedProductId}
+            savedReferences={savedReferences}
             useSavedBrand={useSavedBrand}
             onUseSavedBrandChange={handleUseSavedBrandChange}
-            isSaving={isSavingBrand}
+            getSlotPreview={getSlotPreview}
+            onReferenceSelect={handleReferenceSelect}
+            isSavingBrand={isSavingBrand}
+            onSaveBrandKit={() => void handleSaveBrandKitOnly()}
+            hasAnyReferencePreview={hasAnyReferencePreview}
+            hasReferenceOverrides={hasReferenceOverrides}
           />
-
-          {brandProducts.length > 0 ? (
-            <div className="mt-4">
-              <label
-                htmlFor={`${idPrefix}brand-product`}
-                className="block text-sm font-medium text-secondary-foreground"
-              >
-                Product (optional)
-              </label>
-              <select
-                id={`${idPrefix}brand-product`}
-                value={selectedProductId}
-                onChange={(event) => setSelectedProductId(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
-              >
-                <option value="">Default brand product image</option>
-                {brandProducts.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-
-          <p className="mt-4 text-sm font-medium text-secondary-foreground">
-            References (optional)
-          </p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Upload new assets or use saved brand references above. New uploads
-            override saved images for this campaign only.
-          </p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <ReferenceUploadSlot
-              id={`${idPrefix}product-reference`}
-              label="Product"
-              description="Your product, app, or offer to feature."
-              slotType="product"
-              previewUrl={getSlotPreview("product")}
-              onFileSelect={(file) => handleReferenceSelect("product", file)}
-            />
-            <ReferenceUploadSlot
-              id={`${idPrefix}style-reference`}
-              label="Style"
-              description="Mood board or carousel style to match."
-              slotType="style"
-              previewUrl={getSlotPreview("style")}
-              onFileSelect={(file) => handleReferenceSelect("style", file)}
-            />
-            <ReferenceUploadSlot
-              id={`${idPrefix}logo-reference`}
-              label="Logo"
-              description="Brand mark for consistent placement."
-              slotType="logo"
-              previewUrl={getSlotPreview("logo")}
-              onFileSelect={(file) => handleReferenceSelect("logo", file)}
-            />
-          </div>
-
-          {hasAnyReferencePreview && (
-            <button
-              type="button"
-              disabled={isSavingBrand}
-              onClick={() => void handleSaveBrandKitOnly()}
-              className="mt-4 inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSavingBrand ? "Saving…" : "Save to brand kit"}
-            </button>
-          )}
         </div>
 
         {campaignLimitReached && usage && (
