@@ -11,6 +11,7 @@ import { toPublicCreatorInfo } from "@/utils/tiktok/publish-settings";
 import { resolveVerticalVideoExport } from "@/utils/platforms/resolve-video-export";
 import {
   getPlatformPostForCampaignExport,
+  getScheduledPlatformPostForExport,
   isPlatformPostInFlight,
 } from "@/utils/platform-post-store";
 import {
@@ -152,6 +153,19 @@ export async function GET(request: Request) {
       }
     }
 
+    let scheduledPost = null;
+
+    if (currentExportId && !alreadyPublished && !isUploading) {
+      scheduledPost = await getScheduledPlatformPostForExport(
+        user.id,
+        campaignId,
+        currentExportId,
+        "tiktok",
+      );
+    }
+
+    const isScheduled = Boolean(scheduledPost);
+
     return NextResponse.json({
       success: true,
       connected: Boolean(connection),
@@ -162,6 +176,8 @@ export async function GET(request: Request) {
       currentExportId,
       alreadyPublished,
       isUploading,
+      isScheduled,
+      scheduledPost,
       profileUrl,
       videoPreviewUrl,
       videoDurationSec,
@@ -176,7 +192,8 @@ export async function GET(request: Request) {
         hasVideoExport &&
         Boolean(creatorInfo) &&
         !alreadyPublished &&
-        !isUploading,
+        !isUploading &&
+        !isScheduled,
       tierAllowed,
       canConnectPlatform,
       upgradeUrl: "/settings/usage",

@@ -1,8 +1,9 @@
 import { buildYouTubeWatchUrl } from "@/utils/youtube/video-metadata";
 import {
   getPlatformPostForCampaignExport,
+  getScheduledPlatformPostForExport,
   isPlatformPostInFlight,
-} from "@/utils/youtube/platform-post-store";
+} from "@/utils/platform-post-store";
 import { getYouTubeConnectionPublic, getYouTubeConnectionRow } from "@/utils/youtube/connection-store";
 import { hasYouTubeUploadScope } from "@/utils/platforms/scopes";
 import { resolveYouTubeVideoExport } from "@/utils/youtube/resolve-video-export";
@@ -96,6 +97,19 @@ export async function GET(request: Request) {
       hasVideoExport = false;
     }
 
+    let scheduledPost = null;
+
+    if (currentExportId && !alreadyPublished && !isUploading) {
+      scheduledPost = await getScheduledPlatformPostForExport(
+        user.id,
+        campaignId,
+        currentExportId,
+        "youtube",
+      );
+    }
+
+    const isScheduled = Boolean(scheduledPost);
+
     return NextResponse.json({
       success: true,
       connected: Boolean(connection),
@@ -106,6 +120,8 @@ export async function GET(request: Request) {
       currentExportId,
       alreadyPublished,
       isUploading,
+      isScheduled,
+      scheduledPost,
       watchUrl,
       canPublish:
         Boolean(connection) &&
@@ -114,7 +130,8 @@ export async function GET(request: Request) {
         Boolean(caption) &&
         hasVideoExport &&
         !alreadyPublished &&
-        !isUploading,
+        !isUploading &&
+        !isScheduled,
       tierAllowed,
       canConnectPlatform,
       upgradeUrl: "/settings/usage",

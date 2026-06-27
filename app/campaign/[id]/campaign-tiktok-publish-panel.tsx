@@ -2,6 +2,7 @@
 
 import CampaignTikTokReadinessChecklist from "@/app/campaign/[id]/campaign-tiktok-readiness-checklist";
 import PlatformTierUpgradeNotice from "@/app/campaign/[id]/platform-tier-upgrade-notice";
+import SchedulePublishPicker from "@/app/campaign/[id]/schedule-publish-picker";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { navigatePlatformOAuth } from "@/utils/native-platform-oauth-flow";
 import { getTikTokPublishErrorMessage } from "@/utils/tiktok/publish-errors";
@@ -42,6 +43,8 @@ interface PublishReadinessResponse {
   currentExportId: string | null;
   alreadyPublished: boolean;
   isUploading: boolean;
+  isScheduled: boolean;
+  scheduledPost: PlatformPostPublic | null;
   canPublish: boolean;
   tierAllowed?: boolean;
   canConnectPlatform?: boolean;
@@ -147,6 +150,7 @@ function getTikTokTeaserHint(
   verticalFormatPublishState: VerticalFormatPublishState,
   publishedUrl: string | null,
   isPublishing: boolean,
+  scheduledPost: PlatformPostPublic | null,
 ): string {
   if (readiness.alreadyPublished || publishedUrl) {
     return "This export is already on TikTok.";
@@ -154,6 +158,12 @@ function getTikTokTeaserHint(
 
   if (readiness.isUploading || isPublishing) {
     return "Publishing in progress — keep this page open.";
+  }
+
+  if (readiness.isScheduled || scheduledPost) {
+    return scheduledPost?.scheduledFor
+      ? `Scheduled for ${new Date(scheduledPost.scheduledFor).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.`
+      : "Scheduled to post.";
   }
 
   if (verticalFormatPublishState === "needs_add") {
@@ -285,6 +295,7 @@ export default function CampaignTikTokPublishPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [scheduledPost, setScheduledPost] = useState<PlatformPostPublic | null>(null);
   const [userExpanded, setUserExpanded] = useState(false);
   const publishInFlightRef = useRef(false);
   const campaignReturnPath = `/campaign/${campaignId}?tab=publish`;
@@ -325,6 +336,8 @@ export default function CampaignTikTokPublishPanel({
       } else if (!data.alreadyPublished) {
         setPublishedUrl(null);
       }
+
+      setScheduledPost(data.scheduledPost ?? null);
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -541,6 +554,7 @@ export default function CampaignTikTokPublishPanel({
     verticalFormatPublishState,
     publishedUrl,
     isPublishing,
+    scheduledPost,
   );
 
   let helperText = "Review your post settings, then publish to TikTok.";
@@ -577,7 +591,9 @@ export default function CampaignTikTokPublishPanel({
     canSubmit &&
     !disabled &&
     !isPublishing &&
-    !readiness.isUploading;
+    !readiness.isUploading &&
+    !readiness.isScheduled &&
+    !scheduledPost;
 
   const panelBody = (
     <>
@@ -871,6 +887,33 @@ export default function CampaignTikTokPublishPanel({
           </a>
         ) : null}
       </div>
+
+      {readiness.connected &&
+      readiness.hasVideoExport &&
+      !readiness.alreadyPublished &&
+      !readiness.isUploading &&
+      !isPublishing ? (
+        <SchedulePublishPicker
+          campaignId={campaignId}
+          platformKey="tiktok"
+          platform="tiktok"
+          publishKind="video"
+          exportId={readiness.currentExportId}
+          tikTokPublishSettings={
+            canSubmit ? (form as unknown as Record<string, unknown>) : null
+          }
+          scheduledPost={scheduledPost}
+          disabled={disabled || !canSubmit}
+          onScheduled={(post) => {
+            setScheduledPost(post);
+            void loadReadiness();
+          }}
+          onCancelled={() => {
+            setScheduledPost(null);
+            void loadReadiness();
+          }}
+        />
+      ) : null}
 
       {isActivePublish ? (
         <p className="mt-3 text-xs leading-5 text-muted-foreground">

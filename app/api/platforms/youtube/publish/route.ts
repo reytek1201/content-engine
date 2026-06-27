@@ -2,8 +2,9 @@ import {
   createPlatformPost,
   getPlatformPostForCampaignExport,
   isPlatformPostInFlight,
+  isPlatformPostScheduled,
   updatePlatformPost,
-} from "@/utils/youtube/platform-post-store";
+} from "@/utils/platform-post-store";
 import {
   ensureFreshYouTubeAccessToken,
   getYouTubeConnectionRow,
@@ -137,6 +138,18 @@ export async function POST(request: Request) {
             }
           : undefined,
       });
+    }
+
+    if (existingPost && isPlatformPostScheduled(existingPost.status)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "This export has a pending scheduled post to YouTube. Cancel it first or wait for it to fire.",
+          code: "SCHEDULED_POST_PENDING",
+          post: existingPost,
+        },
+        { status: 409 },
+      );
     }
 
     if (existingPost && isPlatformPostInFlight(existingPost.status)) {

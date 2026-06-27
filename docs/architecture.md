@@ -61,7 +61,10 @@ Native apps (Capacitor) load the same Vercel deployment in a WebView — no sepa
 | `POST /api/webhooks/stripe` | Stripe subscription fulfillment |
 | `POST /api/webhooks/revenuecat` | Mobile IAP fulfillment |
 | `GET /api/cron/refill-free-credits` | Free-tier calendar-month credit refill |
+| `GET /api/cron/publish-scheduled-posts` | Fire due scheduled platform posts |
 | `/api/platforms/*` | OAuth connect, publish, status |
+| `POST /api/platforms/schedule` | Schedule a future platform post |
+| `DELETE /api/platforms/schedule/:id` | Cancel a pending scheduled post |
 
 ---
 

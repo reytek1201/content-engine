@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/refill-free-credits",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/publish-scheduled-posts",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

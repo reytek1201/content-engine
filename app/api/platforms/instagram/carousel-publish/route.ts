@@ -2,6 +2,7 @@ import {
   createPlatformPost,
   getPlatformPostForCampaignCarousel,
   isPlatformPostInFlight,
+  isPlatformPostScheduled,
   updatePlatformPost,
 } from "@/utils/platform-post-store";
 import {
@@ -137,6 +138,18 @@ export async function POST(request: Request) {
           ? { permalink: existingPost.externalUrl }
           : undefined,
       });
+    }
+
+    if (existingPost && isPlatformPostScheduled(existingPost.status)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "This carousel has a pending scheduled post to Instagram. Cancel it first or wait for it to fire.",
+          code: "SCHEDULED_POST_PENDING",
+          post: existingPost,
+        },
+        { status: 409 },
+      );
     }
 
     if (existingPost && isPlatformPostInFlight(existingPost.status)) {

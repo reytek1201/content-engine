@@ -7,6 +7,7 @@ import { hasInstagramPublishScope } from "@/utils/platforms/scopes";
 import { resolveVerticalVideoExport } from "@/utils/platforms/resolve-video-export";
 import {
   getPlatformPostForCampaignExport,
+  getScheduledPlatformPostForExport,
   isPlatformPostInFlight,
 } from "@/utils/platform-post-store";
 import { getPlatformConnectionSummary } from "@/utils/platform-connection-limits";
@@ -107,6 +108,19 @@ export async function GET(request: Request) {
       }
     }
 
+    let scheduledPost = null;
+
+    if (currentExportId && !alreadyPublished && !isUploading) {
+      scheduledPost = await getScheduledPlatformPostForExport(
+        user.id,
+        campaignId,
+        currentExportId,
+        "instagram",
+      );
+    }
+
+    const isScheduled = Boolean(scheduledPost);
+
     return NextResponse.json({
       success: true,
       connected: Boolean(connection),
@@ -117,6 +131,8 @@ export async function GET(request: Request) {
       currentExportId,
       alreadyPublished,
       isUploading,
+      isScheduled,
+      scheduledPost,
       profileUrl,
       videoPreviewUrl,
       canPublish:
@@ -126,7 +142,8 @@ export async function GET(request: Request) {
         Boolean(captionRow) &&
         hasVideoExport &&
         !alreadyPublished &&
-        !isUploading,
+        !isUploading &&
+        !isScheduled,
       tierAllowed,
       canConnectPlatform,
       upgradeUrl: "/settings/usage",

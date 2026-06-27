@@ -6,6 +6,7 @@ export type CampaignListStatusId =
   | "needs_captions"
   | "needs_video"
   | "ready_to_post"
+  | "scheduled"
   | "on_youtube"
   | "on_tiktok"
   | "on_instagram"
@@ -26,6 +27,7 @@ export function getCampaignListStatus(input: {
   youtubePublished: boolean;
   tiktokPublished?: boolean;
   instagramPublished?: boolean;
+  hasScheduled?: boolean;
 }): CampaignListStatus {
   const { campaignStatus, slideCount, imagesReadyCount, hasCaptions } = input;
   const tiktokPublished = input.tiktokPublished ?? false;
@@ -68,6 +70,10 @@ export function getCampaignListStatus(input: {
 
   if (instagramPublished) {
     return { id: "on_instagram", label: "On Instagram", tone: "emerald" };
+  }
+
+  if (input.hasScheduled) {
+    return { id: "scheduled", label: "Scheduled", tone: "primary" };
   }
 
   if (!input.hasVideoExport) {

@@ -10,6 +10,7 @@ import {
 import { hasInstagramPublishScope } from "@/utils/platforms/scopes";
 import {
   getPlatformPostForCampaignCarousel,
+  getScheduledPlatformPostForCarousel,
   isPlatformPostInFlight,
 } from "@/utils/platform-post-store";
 import { resolveCarouselSlidesForCampaign } from "@/utils/platforms/resolve-carousel-slides";
@@ -114,6 +115,14 @@ export async function GET(request: Request) {
       slideCount >= INSTAGRAM_CAROUSEL_MIN_SLIDES &&
       slideCount <= INSTAGRAM_CAROUSEL_MAX_SLIDES;
 
+    let scheduledPost = null;
+
+    if (!alreadyPublished && !isUploading) {
+      scheduledPost = await getScheduledPlatformPostForCarousel(user.id, campaignId);
+    }
+
+    const isScheduled = Boolean(scheduledPost);
+
     return NextResponse.json({
       success: true,
       connected: Boolean(connection),
@@ -125,6 +134,8 @@ export async function GET(request: Request) {
       slideCountValid,
       alreadyPublished,
       isUploading,
+      isScheduled,
+      scheduledPost,
       profileUrl,
       slidePreviewUrl,
       canPublish:
@@ -135,7 +146,8 @@ export async function GET(request: Request) {
         hasCarouselSlides &&
         slideCountValid &&
         !alreadyPublished &&
-        !isUploading,
+        !isUploading &&
+        !isScheduled,
       tierAllowed,
       canConnectPlatform,
       upgradeUrl: "/settings/usage",

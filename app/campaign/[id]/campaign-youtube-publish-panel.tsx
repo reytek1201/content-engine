@@ -2,6 +2,7 @@
 
 import CampaignYouTubeReadinessChecklist from "@/app/campaign/[id]/campaign-youtube-readiness-checklist";
 import PlatformTierUpgradeNotice from "@/app/campaign/[id]/platform-tier-upgrade-notice";
+import SchedulePublishPicker from "@/app/campaign/[id]/schedule-publish-picker";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { navigatePlatformOAuth } from "@/utils/native-platform-oauth-flow";
 import { getYouTubePublishErrorMessage } from "@/utils/youtube/publish-errors";
@@ -23,6 +24,8 @@ interface PublishReadinessResponse {
   currentExportId: string | null;
   alreadyPublished: boolean;
   isUploading: boolean;
+  isScheduled: boolean;
+  scheduledPost: PlatformPostPublic | null;
   canPublish: boolean;
   tierAllowed?: boolean;
   canConnectPlatform?: boolean;
@@ -125,6 +128,7 @@ export default function CampaignYouTubePublishPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [scheduledPost, setScheduledPost] = useState<PlatformPostPublic | null>(null);
   const publishInFlightRef = useRef(false);
   const campaignReturnPath = `/campaign/${campaignId}?tab=publish`;
   const uploadAuthorizeUrl = buildPlatformAuthorizeUrl(
@@ -160,6 +164,8 @@ export default function CampaignYouTubePublishPanel({
       } else if (!data.alreadyPublished) {
         setPublishedUrl(null);
       }
+
+      setScheduledPost(data.scheduledPost ?? null);
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -344,6 +350,10 @@ export default function CampaignYouTubePublishPanel({
       "Step 2: Export a 9:16 Quick Reel above, then post directly to YouTube.";
   } else if (readiness.isUploading || isPublishing) {
     helperText = "Publishing in progress. Keep this page open until it finishes.";
+  } else if (readiness.isScheduled || scheduledPost) {
+    helperText = scheduledPost?.scheduledFor
+      ? `Scheduled to post on ${new Date(scheduledPost.scheduledFor).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.`
+      : "Scheduled to post.";
   } else if (readiness.alreadyPublished || publishedUrl) {
     helperText =
       "This export is already on YouTube. Export a new 9:16 video to post again.";
@@ -355,7 +365,9 @@ export default function CampaignYouTubePublishPanel({
     !isPublishing &&
     !readiness.isUploading &&
     !readiness.alreadyPublished &&
-    !needsUploadScope;
+    !needsUploadScope &&
+    !readiness.isScheduled &&
+    !scheduledPost;
 
   return (
     <YouTubePanelShell helperText={helperText}>
@@ -436,6 +448,30 @@ export default function CampaignYouTubePublishPanel({
           </a>
         ) : null}
       </div>
+
+      {readiness.connected &&
+      readiness.hasVideoExport &&
+      !readiness.alreadyPublished &&
+      !readiness.isUploading &&
+      !isPublishing ? (
+        <SchedulePublishPicker
+          campaignId={campaignId}
+          platformKey="youtube"
+          platform="youtube"
+          publishKind="video"
+          exportId={readiness.currentExportId}
+          scheduledPost={scheduledPost}
+          disabled={disabled}
+          onScheduled={(post) => {
+            setScheduledPost(post);
+            void loadReadiness();
+          }}
+          onCancelled={() => {
+            setScheduledPost(null);
+            void loadReadiness();
+          }}
+        />
+      ) : null}
 
       {isPublishing || readiness.isUploading ? (
         <p className="mt-3 text-xs leading-5 text-muted-foreground">

@@ -23,7 +23,7 @@ export async function loadCampaignListStatuses(
 
   const campaignIds = campaigns.map((campaign) => campaign.id);
 
-  const [captionsResult, exportsResult, postsResult] = await Promise.all([
+  const [captionsResult, exportsResult, postsResult, scheduledResult] = await Promise.all([
     supabase
       .from("platform_captions")
       .select("campaign_id")
@@ -41,6 +41,12 @@ export async function loadCampaignListStatuses(
       .in("campaign_id", campaignIds)
       .eq("status", "published")
       .in("platform", ["youtube", "tiktok", "instagram"]),
+    supabase
+      .from("platform_posts")
+      .select("campaign_id")
+      .in("campaign_id", campaignIds)
+      .eq("status", "scheduled")
+      .eq("schedule_status", "pending"),
   ]);
 
   const captionsByCampaign = new Set(
@@ -76,6 +82,10 @@ export async function loadCampaignListStatuses(
     }
   }
 
+  const scheduledByCampaign = new Set(
+    (scheduledResult.data ?? []).map((row) => row.campaign_id as string),
+  );
+
   const statuses: Record<string, CampaignListStatus> = {};
 
   for (const campaign of campaigns) {
@@ -93,6 +103,7 @@ export async function loadCampaignListStatuses(
       youtubePublished: youtubePublishedByCampaign.has(campaign.id),
       tiktokPublished: tiktokPublishedByCampaign.has(campaign.id),
       instagramPublished: instagramPublishedByCampaign.has(campaign.id),
+      hasScheduled: scheduledByCampaign.has(campaign.id),
     });
   }
 

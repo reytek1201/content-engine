@@ -2,6 +2,7 @@
 
 import CampaignInstagramCarouselReadinessChecklist from "@/app/campaign/[id]/campaign-instagram-carousel-readiness-checklist";
 import PlatformTierUpgradeNotice from "@/app/campaign/[id]/platform-tier-upgrade-notice";
+import SchedulePublishPicker from "@/app/campaign/[id]/schedule-publish-picker";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { navigatePlatformOAuth } from "@/utils/native-platform-oauth-flow";
 import { getInstagramPublishErrorMessage } from "@/utils/instagram/publish-errors";
@@ -24,6 +25,8 @@ interface PublishReadinessResponse {
   slideCountValid: boolean;
   alreadyPublished: boolean;
   isUploading: boolean;
+  isScheduled: boolean;
+  scheduledPost: PlatformPostPublic | null;
   canPublish: boolean;
   tierAllowed?: boolean;
   canConnectPlatform?: boolean;
@@ -117,6 +120,7 @@ export default function CampaignInstagramCarouselPublishPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [scheduledPost, setScheduledPost] = useState<PlatformPostPublic | null>(null);
   const publishInFlightRef = useRef(false);
   const campaignReturnPath = `/campaign/${campaignId}?tab=publish`;
   const publishAuthorizeUrl = buildPlatformAuthorizeUrl(
@@ -154,6 +158,8 @@ export default function CampaignInstagramCarouselPublishPanel({
       } else if (!data.alreadyPublished) {
         setPublishedUrl(null);
       }
+
+      setScheduledPost(data.scheduledPost ?? null);
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -324,6 +330,10 @@ export default function CampaignInstagramCarouselPublishPanel({
     helperText = `Instagram carousels need 2–10 slides. This campaign has ${readiness.slideCount}.`;
   } else if (readiness.isUploading || isPublishing) {
     helperText = "Publishing in progress. Keep this page open until it finishes.";
+  } else if (readiness.isScheduled || scheduledPost) {
+    helperText = scheduledPost?.scheduledFor
+      ? `Scheduled to post on ${new Date(scheduledPost.scheduledFor).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.`
+      : "Scheduled to post.";
   } else if (readiness.alreadyPublished || publishedUrl) {
     helperText =
       "This carousel is already on Instagram. Create a new campaign to post again.";
@@ -336,6 +346,8 @@ export default function CampaignInstagramCarouselPublishPanel({
     !readiness.isUploading &&
     !readiness.alreadyPublished &&
     !needsPublishScope &&
+    !readiness.isScheduled &&
+    !scheduledPost &&
     carouselFormatPublishState === "ready";
 
   return (
@@ -417,6 +429,31 @@ export default function CampaignInstagramCarouselPublishPanel({
           </a>
         ) : null}
       </div>
+
+      {readiness.connected &&
+      readiness.hasCarouselSlides &&
+      readiness.slideCountValid &&
+      !readiness.alreadyPublished &&
+      !readiness.isUploading &&
+      !isPublishing &&
+      carouselFormatPublishState === "ready" ? (
+        <SchedulePublishPicker
+          campaignId={campaignId}
+          platformKey="instagram_carousel"
+          platform="instagram"
+          publishKind="carousel"
+          scheduledPost={scheduledPost}
+          disabled={disabled}
+          onScheduled={(post) => {
+            setScheduledPost(post);
+            void loadReadiness();
+          }}
+          onCancelled={() => {
+            setScheduledPost(null);
+            void loadReadiness();
+          }}
+        />
+      ) : null}
 
       {isPublishing || readiness.isUploading ? (
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
