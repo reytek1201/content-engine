@@ -60,8 +60,8 @@ Native apps (Capacitor) load the same Vercel deployment in a WebView — no sepa
 | `POST /api/webhooks/fal` | Fal image + video completion |
 | `POST /api/webhooks/stripe` | Stripe subscription fulfillment |
 | `POST /api/webhooks/revenuecat` | Mobile IAP fulfillment |
-| `GET /api/cron/refill-free-credits` | Free-tier calendar-month credit refill |
-| `GET /api/cron/publish-scheduled-posts` | Fire due scheduled platform posts |
+| `GET /api/cron/refill-free-credits` | Free-tier calendar-month credit refill (Vercel Cron, daily) |
+| `GET /api/cron/publish-scheduled-posts` | Fire due scheduled platform posts (GitHub Actions every 5 min — Hobby plan) |
 | `/api/platforms/*` | OAuth connect, publish, status |
 | `POST /api/platforms/schedule` | Schedule a future platform post |
 | `DELETE /api/platforms/schedule/:id` | Cancel a pending scheduled post |
@@ -321,7 +321,7 @@ Details: [`billing.md`](billing.md).
 | ElevenLabs | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_IDS` |
 | Stripe | `STRIPE_SECRET_KEY`, `STRIPE_PRICE_*`, `STRIPE_WEBHOOK_SECRET` |
 | RevenueCat | `REVENUECAT_WEBHOOK_SECRET`, `NEXT_PUBLIC_REVENUECAT_*` |
-| Cron | `CRON_SECRET` (Vercel Cron → free-tier refill) |
+| Cron | `CRON_SECRET` (Vercel Cron → free-tier refill; GitHub Actions → publish-scheduled-posts) |
 | App URL | `NEXT_PUBLIC_APP_URL` (webhooks, OAuth redirects) |
 
 Never commit secrets. Server-only keys must not appear in client bundles.
