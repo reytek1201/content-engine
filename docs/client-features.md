@@ -137,15 +137,15 @@ Scripts are authored with **text-to-speech in mind** and synthesized via **Eleve
 
 Available on **4:5 and 9:16** campaigns when all slide images and voiceover scripts are ready for the format you export.
 
-- **Quick Reel** — AI narration, crossfade transitions between slides, merged into an MP4
-- **Silent video** — no voiceover; slides timed to your scripts with crossfades (mute-friendly posts)
-- **Standard or Studio** voice quality on Quick Reel (Studio uses a higher-quality ElevenLabs model)
-- **Brand default voice** — preferred persona saved per brand
+- **Quick Reel** — AI narration stitched into an MP4; slides held for each slide’s narration duration (hard cuts between slides via Fal FFmpeg)
+- **Silent video** — no voiceover; slides timed to your scripts (mute-friendly posts)
+- **Burned-in captions** (Quick Reel only) — optional toggle embeds word-synced captions into the MP4 (~2–5 min render vs ~1–3 min without)
+- **Brand default voice** — preferred persona saved per brand (ElevenLabs Flash)
 - **Dual-format campaigns** — when both 4:5 and 9:16 images exist, pick which format to render; each export uses one video credit
 - **Web:** download MP4 directly
 - **Native app:** share sheet saves a proper `.mp4` to Photos or Files
 
-Processing runs on the server (TTS → slide compose → audio merge). Cached narration is reused when you re-export the same scripts — no second ElevenLabs charge for unchanged slides.
+Processing: TTS + optional ASS prep → Fal slide stitch → Fal audio merge → optional local caption burn. Cached narration is reused when you re-export the same scripts — no second ElevenLabs charge for unchanged slides.
 
 **Beta limit:** 3 video exports per month (configurable). Counts **one export per successful render request** — exporting both 4:5 and 9:16 from the same campaign uses two credits.
 
@@ -390,7 +390,7 @@ Mobile engagement: push alerts when async work finishes, and home-screen widgets
 1. Foundation — server-side TTS, voice catalog, usage metering  
 2. Voice preview in workspace  
 3. Audio export (narration ZIP)  
-4. Video export — slides → MP4 (4:5 + 9:16, AI voice, crossfades)  
+4. Video export — slides → MP4 (4:5 + 9:16, AI voice; optional burned-in captions)  
 5. Polish — Quick Reel / Silent video presets, brand voice  
 
 **6A+ — Voiceover editing & slide fixes** ✅ *shipped*

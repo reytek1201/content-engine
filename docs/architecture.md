@@ -4,7 +4,7 @@ Technical map for AI assistants and contributors. **Product behavior** is in [`c
 
 **Claude upload:** See [`claude-project.md`](claude-project.md) for Project instructions and file checklist.
 
-*Last updated: June 25, 2026*
+*Last updated: June 27, 2026*
 
 ---
 
@@ -192,7 +192,7 @@ On catastrophic text failure with `campaignDeleted`, workspace redirects to `/ca
 | Tab | Primary content |
 |-----|-----------------|
 | **Slides** | Slide cards, image gen, regen, aspect toggle, filmstrip |
-| **Video** | Voice/narration, video export (Quick Reel / Silent), dual-format export |
+| **Video** | Voice/narration, video export (Quick Reel / Silent), burned-in captions toggle, dual-format export |
 | **Publish** | Captions, zip/narration downloads, platform publish panels |
 
 **Workspace header:** inline title, compact metadata strip (aspect · slide count · brand), overflow menu (View brief, Duplicate, Delete).
@@ -221,6 +221,31 @@ Video tab sections:
 **Overlays** (block interaction, no route): `CampaignOperationOverlay` — draft build, captions, video export, platform publish, zip, narration, format variant. Active kind from `pickActiveCampaignOperation` in `utils/campaign-operation-overlay.ts`.
 
 **Realtime / polling** updates slides and campaign status in place — no navigation.
+
+### Video export pipeline
+
+Quick Reel exports run asynchronously via Fal FFmpeg + optional local caption burn:
+
+```
+POST /api/export-video
+  → TTS synthesis (+ ASS prep when burn_captions)
+  → Fal queue: images-to-video (slide stitch, hard cuts)
+GET /api/exports/:id (poll) + POST /api/webhooks/fal
+  → Fal queue: merge-audio-video
+  → [if burn_captions] local FFmpeg ASS burn on Vercel
+  → exports.status = completed, output_url set
+```
+
+| Stage (`metadata.stage`) | Where it runs | UI overlay step |
+|------------------------|---------------|-----------------|
+| `images_to_video` | Fal | Rendering slides |
+| `merge_audio` | Fal | Adding voiceover |
+| `burn_captions` | Vercel (FFmpeg) | Burning captions |
+| `compose_slides` | Legacy local FFmpeg | Rendering slides (old in-flight exports only) |
+
+Key files: `utils/queue-fal-images-to-video.ts`, `utils/advance-video-export.ts`, `utils/captions/prepare-burn-captions.ts`, `utils/reconcile-stale-video-export.ts`.
+
+Stale `processing` exports auto-fail on new export attempt (>15 min global, or >6 min legacy compose deadlock). Client poll timeout: 10 min (20 min with burned captions).
 
 ### Settings navigation
 

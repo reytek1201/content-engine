@@ -1,6 +1,6 @@
 # SlidePress — Launch status & next phase
 
-**Last updated:** June 25, 2026
+**Last updated:** June 27, 2026
 
 Single source of truth for where store setup, billing, and platform audits stand — and what to work on next.
 
@@ -125,6 +125,7 @@ Run on web + one native device after Phase A migrations:
 - [ ] Downgrade → 7-day connection grace then revoke
 - [ ] Brand limits 1 / 3 / 15
 - [ ] **Campaign flow:** create from website URL → Use & generate → images + captions without refresh; fix slide regen shows spinner + new image without refresh
+- [ ] **Video export:** 5-slide Quick Reel with burned captions completes in ~2–5 min; stale export auto-clears on retry; push notification on complete ([#46](https://github.com/reytek1201/SlidePress.co/issues/46) tracks crossfade restoration)
 
 ### Phase D — Mobile store QA ([#44](https://github.com/reytek1201/SlidePress.co/issues/44))
 
@@ -169,11 +170,13 @@ Increment build numbers on every store upload.
 | Jun 23, 2026 | **Home screen widgets shipped** — iOS WidgetKit + Android Glance; Epic [#36](https://github.com/reytek1201/SlidePress.co/issues/36) closed ([#39](https://github.com/reytek1201/SlidePress.co/issues/39)–[#43](https://github.com/reytek1201/SlidePress.co/issues/43)) |
 | Jun 24, 2026 | **Website ingest Phase A shipped** — URL → topic cards, ingest cache, Use & generate, brand kit save ([#45](https://github.com/reytek1201/SlidePress.co/issues/45) closed) |
 | Jun 24, 2026 | **Campaign flow hardening** — auto-captions with images, Assets journey step, caption/slide realtime + polling fallbacks, regen UI fixes, draft-ready push |
+| Jun 27, 2026 | **Video export reliability** — restored Fal `images-to-video` compose (hard cuts); local multi-pass FFmpeg removed from new exports; burned-caption overlay stage + stale export cleanup ([#46](https://github.com/reytek1201/SlidePress.co/issues/46) for crossfade follow-up) |
 
 ---
 
 ## Deferred (post-launch)
 
+- **Video export crossfades** — restore smooth slide transitions via dedicated worker or single-pass FFmpeg ([#46](https://github.com/reytek1201/SlidePress.co/issues/46)); Fal stitch uses hard cuts today
 - **Website ingest Phase B** — one-click full draft (text → images → captions → optional video); push when ready — track in GitHub issues
 - Studio tier (~$129 web) — reassess H2 2026 per [`billing.md`](billing.md)
 - YouTube API quota increase — only if >~6 Shorts uploads/day

@@ -143,23 +143,48 @@ Apply migration `supabase/migrations/20260617000004_audio_export.sql` before dep
 
 ## Video export (Phase 4)
 
-User-facing route: `POST /api/export-video` (auth required). Uses Fal FFmpeg (`fal-ai/ffmpeg-api/images-to-video` then `merge-audio-video`) with the existing `FAL_KEY` and `/api/webhooks/fal` callback.
+User-facing route: `POST /api/export-video` (auth required). Pipeline:
+
+1. **Prepare** — ElevenLabs TTS (+ word timings when `burn_captions: true`); narration MP3 uploaded to Fal storage; ASS subtitle track built and cached.
+2. **Compose** — Fal `fal-ai/ffmpeg-api/images-to-video` queues from POST (hard cuts between slides, 24 fps).
+3. **Merge** — Fal `fal-ai/ffmpeg-api/merge-audio-video` when Quick Reel preset includes narration.
+4. **Burn captions** (optional) — local FFmpeg burns ASS into merged MP4 on Vercel during poll advancement.
+
+Uses `FAL_KEY` and `/api/webhooks/fal` callback; `GET /api/exports/:id` polls Fal queue when webhooks are unavailable.
 
 ```json
-{ "campaignId": "...", "persona": "warm" }
+{
+  "campaignId": "...",
+  "persona": "warm",
+  "preset": "quick_reel",
+  "aspectRatio": "9:16",
+  "burn_captions": true
+}
 ```
 
-Requirements: **9:16** campaign, all slide images ready, every slide has a voiceover script.
+Requirements: **4:5 or 9:16** campaign, all slide images ready for the target format, every slide has a voiceover script (Quick Reel). Burned captions require Quick Reel preset.
 
 Returns `{ exportId, status: "processing" }`. Poll `GET /api/exports/:id` until `status` is `completed`, then download `outputUrl`.
 
 Rate-limited to 2 requests/minute. Monthly cap via `BETA_VIDEO_EXPORTS_PER_MONTH` (default `3`).
 
-Apply migration `supabase/migrations/20260617000005_video_export.sql` before deploying.
+`GET /api/exports/:id` returns `export.stage` for the rendering overlay:
 
-`GET /api/exports/:id` polls Fal queue status when webhooks are unavailable (wrong `NEXT_PUBLIC_APP_URL`, deployment protection, etc.) and returns `export.stage` (`images_to_video` | `merge_audio`) for the rendering overlay.
+| Stage | Overlay label |
+|-------|---------------|
+| `images_to_video` | Rendering slides |
+| `merge_audio` | Adding voiceover |
+| `burn_captions` | Burning captions |
 
-Client poll timeout is 10 minutes (`VIDEO_EXPORT_POLL_TIMEOUT_MS`).
+Client poll timeout: **10 minutes** default (`VIDEO_EXPORT_POLL_TIMEOUT_MS`); **20 minutes** when `burn_captions` is enabled (`VIDEO_EXPORT_POLL_TIMEOUT_BURN_CAPTIONS_MS`).
+
+**Timing (typical 5-slide Quick Reel):** ~1–3 minutes without burned captions; ~2–5 minutes with burned captions.
+
+**Stale exports:** `failStaleVideoExportsForCampaign` runs at the start of each new export — marks `processing` exports failed after 15 minutes, or legacy `compose_slides` deadlocks after 6 minutes.
+
+**Legacy:** In-flight exports on `compose_slides` (local multi-pass FFmpeg) are still advanced on poll until they complete or time out. New exports use Fal `images_to_video` only.
+
+Apply migration `supabase/migrations/20260617000005_video_export.sql` before deploying. Burned captions: `20260629000001_exports_burn_captions.sql`.
 
 ### Narration cache
 
