@@ -56,10 +56,6 @@ const ANGLE_LABELS: Record<WebsiteTopicAngle, string> = {
 
 interface WebsiteTopicSuggesterProps {
   onSelectTopic: (topic: string, options?: TopicSelectionOptions) => void;
-  onUseTopicAndGenerate?: (
-    topic: string,
-    options?: TopicSelectionOptions,
-  ) => void;
   onRequestFullDraft?: (
     topic: string,
     options?: TopicSelectionOptions,
@@ -139,7 +135,6 @@ function IngestErrorNotice({
 
 export default function WebsiteTopicSuggester({
   onSelectTopic,
-  onUseTopicAndGenerate,
   onRequestFullDraft,
   onIngestComplete,
   onSaveBrandKit,
@@ -178,8 +173,6 @@ export default function WebsiteTopicSuggester({
   const [isSavingBrandKit, setIsSavingBrandKit] = useState(false);
   const [brandKitSaved, setBrandKitSaved] = useState(false);
   const [brandKitError, setBrandKitError] = useState<string | null>(null);
-
-  const generateDisabled = disabled || usageLoading || campaignLimitReached;
 
   useEffect(() => {
     const cache = getCachedWebsiteIngest();
@@ -580,16 +573,12 @@ export default function WebsiteTopicSuggester({
           <span className="font-medium text-secondary-foreground">
             Use this topic
           </span>{" "}
-          pre-fills the form.{" "}
-          <span className="font-medium text-secondary-foreground">
-            Use &amp; generate
-          </span>{" "}
-          starts immediately.{" "}
+          pre-fills the form so you can edit before generating.{" "}
           <span className="font-medium text-secondary-foreground">
             Create full draft
           </span>{" "}
-          shows cost before slide images and captions run (
-          {formatDraftDurationShort(slideCount)}).
+          shows cost, then writes slide copy, generates images, and platform
+          captions ({formatDraftDurationShort(slideCount)}).
         </p>
 
         <div className="mt-3 space-y-3">
@@ -643,20 +632,6 @@ export default function WebsiteTopicSuggester({
                   >
                     {isSelected ? "Using this topic" : "Use this topic"}
                   </button>
-                  {onUseTopicAndGenerate ? (
-                    <button
-                      type="button"
-                      disabled={generateDisabled}
-                      onClick={() => {
-                        onUseTopicAndGenerate(suggestion.topic, {
-                          recommendedFormat: suggestion.recommendedFormat,
-                        });
-                      }}
-                      className="inline-flex items-center justify-center rounded-lg border border-border px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Use &amp; generate
-                    </button>
-                  ) : null}
                   {onRequestFullDraft ? (
                     campaignLimitReached && usage ? (
                       <p className="w-full rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2 text-xs leading-5 text-amber-100">

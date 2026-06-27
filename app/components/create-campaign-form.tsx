@@ -712,9 +712,6 @@ export default function CreateCampaignForm({
             slideCount={slideCount}
             brandId={activeBrand?.id ?? null}
             onSelectTopic={handleSelectTopic}
-            onUseTopicAndGenerate={(nextTopic, options) => {
-              void handleUseTopicAndGenerate(nextTopic, options);
-            }}
             onRequestFullDraft={handleRequestFullDraft}
             campaignLimitReached={campaignLimitReached}
             usage={usage}

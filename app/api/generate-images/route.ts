@@ -75,13 +75,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (typedCampaign.status === "generating_images") {
-      return NextResponse.json(
-        { success: false, error: "Image generation already in progress" },
-        { status: 409 },
-      );
-    }
-
     const { data: slides, error: slidesError } = await supabase
       .from("slides")
       .select("*")
@@ -96,6 +89,20 @@ export async function POST(request: Request) {
     }
 
     const typedSlides = slides as Slide[];
+
+    if (typedCampaign.status === "generating_images") {
+      const inFlight = typedSlides.some(
+        (slide) => slide.fal_request_id && !slide.image_url,
+      );
+
+      if (inFlight) {
+        return NextResponse.json(
+          { success: false, error: "Image generation already in progress" },
+          { status: 409 },
+        );
+      }
+    }
+
     const slidesToGenerate = typedSlides.filter((slide) => !slide.image_url);
 
     if (slidesToGenerate.length === 0) {

@@ -321,6 +321,7 @@ export function resolveCampaignOperationOverlay(input: {
 
 export function pickActiveCampaignOperation(input: {
   videoExportError: string | null;
+  draftBuildError: string | null;
   isExportingVideo: boolean;
   isPublishingYouTube: boolean;
   isPublishingTikTok: boolean;
@@ -352,7 +353,7 @@ export function pickActiveCampaignOperation(input: {
     return "instagram_carousel_publish";
   }
 
-  if (input.isBuildingDraft) {
+  if (input.draftBuildError || input.isBuildingDraft) {
     return "draft_build";
   }
 

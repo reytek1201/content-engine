@@ -69,7 +69,7 @@ function widgetJourneyStepFromListStatus(input: {
   }
 
   if (
-    input.listStatusId === "generating" ||
+    input.listStatusId === "generating_images" ||
     input.listStatusId === "needs_images"
   ) {
     return "images";
@@ -268,9 +268,11 @@ export function buildWidgetSnapshotFromListEntry(input: {
             ? "Generate images"
             : input.listStatusId === "needs_video"
               ? "Export video"
-              : input.listStatusId === "generating"
-                ? "Generating…"
-                : "Continue";
+              : input.listStatusId === "generating_copy"
+                ? "Writing copy…"
+                : input.listStatusId === "generating_images"
+                  ? "Generating images…"
+                  : "Continue";
 
   const deepLink =
     journeyStep === "video" || journeyStep === "publish"
@@ -286,7 +288,8 @@ export function buildWidgetSnapshotFromListEntry(input: {
     isGenerating:
       input.campaignStatus === "generating_text" ||
       input.campaignStatus === "generating_images" ||
-      input.listStatusId === "generating",
+      input.listStatusId === "generating_copy" ||
+      input.listStatusId === "generating_images",
     deepLink,
   });
 }

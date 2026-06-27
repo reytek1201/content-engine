@@ -76,7 +76,7 @@ import { setBiometricLockDeferred } from "@/utils/biometric-lock-defer";
 import {
   type VideoExportUiStage,
 } from "@/utils/video-export-stages";
-import { SLIDE_IMAGE_POLL_INTERVAL_MS } from "@/utils/slide-image-generation-client";
+import { SLIDE_IMAGE_POLL_INTERVAL_MS, DRAFT_IMAGE_STUCK_TIMEOUT_MS } from "@/utils/slide-image-generation-client";
 import {
   getVerticalFormatPublishState,
   getCarouselFormatPublishState,
@@ -130,6 +130,7 @@ export default function CampaignWorkspace({
   const [captionGenerationError, setCaptionGenerationError] = useState<
     string | null
   >(null);
+  const [draftBuildError, setDraftBuildError] = useState<string | null>(null);
   const [isPublishingYouTube, setIsPublishingYouTube] = useState(false);
   const [isPublishingTikTok, setIsPublishingTikTok] = useState(false);
   const [isPublishingInstagram, setIsPublishingInstagram] = useState(false);
@@ -210,6 +211,7 @@ export default function CampaignWorkspace({
   const buildingFullDraftRef = useRef(
     searchParams.get("auto_images") === "1",
   );
+  const generatingImagesStartedAtRef = useRef<number | null>(null);
   const captionsRecoveryStartedRef = useRef(false);
   const captionsPollStartedAtRef = useRef<number | null>(null);
   const lastUserScrollAtRef = useRef(0);
@@ -316,8 +318,8 @@ export default function CampaignWorkspace({
     (isGeneratingImages || isGeneratingCaptions);
   const canGenerateImages =
     !isGenerating &&
-    campaign.status !== "generating_images" &&
-    !primaryImagesComplete;
+    !primaryImagesComplete &&
+    (campaign.status !== "generating_images" || !isAnySlideGenerating);
   const sortedCaptions = sortCaptionsByPlatform(captions);
   const canGenerateCaptions = slides.length > 0 && !isGeneratingCaptions;
   const hasVoiceoverScripts = slides.some((slide) =>
@@ -893,6 +895,45 @@ export default function CampaignWorkspace({
     };
   }, [awaitingRegenCompletion, isAnySlideGenerating, refreshSlides]);
 
+  useEffect(() => {
+    if (draftReady) {
+      setDraftBuildError(null);
+      buildingFullDraftRef.current = false;
+    }
+  }, [draftReady]);
+
+  useEffect(() => {
+    if (
+      campaign.status !== "generating_images" ||
+      imagesComplete ||
+      draftBuildError
+    ) {
+      if (campaign.status !== "generating_images") {
+        generatingImagesStartedAtRef.current = null;
+      }
+
+      return;
+    }
+
+    if (generatingImagesStartedAtRef.current === null) {
+      generatingImagesStartedAtRef.current = Date.now();
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (imagesComplete) {
+        return;
+      }
+
+      setDraftBuildError(
+        "Image generation is taking longer than expected. Close this dialog, then tap Generate images to retry any missing slides.",
+      );
+    }, DRAFT_IMAGE_STUCK_TIMEOUT_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [campaign.status, draftBuildError, imagesComplete]);
+
   const refreshCaptions = useCallback(async (): Promise<PlatformCaption[]> => {
     const { data, error: captionsError } = await supabase
       .from("platform_captions")
@@ -949,11 +990,14 @@ export default function CampaignWorkspace({
 
       await requestCaptionsGeneration();
     } catch (recoveryError) {
-      setCaptionGenerationError(
+      const message =
         recoveryError instanceof Error
           ? recoveryError.message
-          : "Could not generate captions",
-      );
+          : "Could not generate captions";
+      setCaptionGenerationError(message);
+      if (buildingFullDraftRef.current) {
+        setDraftBuildError(message);
+      }
       setIsGeneratingCaptions(false);
     }
   }, [refreshCaptions, requestCaptionsGeneration]);
@@ -1079,12 +1123,17 @@ export default function CampaignWorkspace({
 
       await Promise.all([refreshSlides(), refreshCampaign()]);
     } catch (generationError) {
-      await refreshCampaign();
-      setError(
+      const message =
         generationError instanceof Error
           ? generationError.message
-          : "Campaign generation failed"
+          : "Campaign generation failed";
+      await Promise.all([refreshSlides(), refreshCampaign()]);
+      setCampaign((current) =>
+        current.status === "generating_text"
+          ? { ...current, status: "failed", error_message: message }
+          : current,
       );
+      setError(message);
     } finally {
       setIsRetryingText(false);
     }
@@ -1311,6 +1360,7 @@ export default function CampaignWorkspace({
 
   async function handleGenerateImages() {
     setError(null);
+    setDraftBuildError(null);
     setIsGenerating(true);
     captionsRecoveryStartedRef.current = false;
     captionsPollStartedAtRef.current = Date.now();
@@ -1335,6 +1385,11 @@ export default function CampaignWorkspace({
         error?: string;
         mode?: string;
       };
+
+      if (response.status === 409) {
+        await Promise.all([refreshSlides(), refreshCampaign()]);
+        return;
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? "Failed to start image generation");
@@ -1379,11 +1434,16 @@ export default function CampaignWorkspace({
         }));
       }
     } catch (generateError) {
-      setError(
+      const message =
         generateError instanceof Error
           ? generateError.message
-          : "Something went wrong"
-      );
+          : "Something went wrong";
+      await Promise.all([refreshSlides(), refreshCampaign()]);
+      if (buildingFullDraftRef.current) {
+        setDraftBuildError(message);
+      } else {
+        setError(message);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -1741,6 +1801,7 @@ export default function CampaignWorkspace({
     () =>
       pickActiveCampaignOperation({
         videoExportError,
+        draftBuildError,
         isExportingVideo,
         isPublishingYouTube,
         isPublishingTikTok,
@@ -1754,6 +1815,7 @@ export default function CampaignWorkspace({
       }),
     [
       videoExportError,
+      draftBuildError,
       isExportingVideo,
       isPublishingYouTube,
       isPublishingTikTok,
@@ -2575,13 +2637,31 @@ export default function CampaignWorkspace({
             : undefined
         }
         error={
-          activeCampaignOperation === "video_export" ? videoExportError : null
+          activeCampaignOperation === "video_export"
+            ? videoExportError
+            : activeCampaignOperation === "draft_build"
+              ? draftBuildError
+              : activeCampaignOperation === "captions"
+                ? captionGenerationError
+                : null
         }
         onDismiss={() => {
-          setVideoExportError(null);
-          setVideoExportStage("preparing");
-          activeVideoExportIdRef.current = null;
-          syncVideoExportBiometricDefer();
+          if (activeCampaignOperation === "video_export") {
+            setVideoExportError(null);
+            setVideoExportStage("preparing");
+            activeVideoExportIdRef.current = null;
+            syncVideoExportBiometricDefer();
+            return;
+          }
+
+          if (activeCampaignOperation === "draft_build") {
+            setDraftBuildError(null);
+            return;
+          }
+
+          if (activeCampaignOperation === "captions") {
+            setCaptionGenerationError(null);
+          }
         }}
       />
     </div>

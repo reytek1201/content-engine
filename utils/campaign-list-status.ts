@@ -1,5 +1,6 @@
 export type CampaignListStatusId =
-  | "generating"
+  | "generating_copy"
+  | "generating_images"
   | "failed"
   | "needs_images"
   | "needs_captions"
@@ -34,11 +35,12 @@ export function getCampaignListStatus(input: {
     return { id: "failed", label: "Failed", tone: "red" };
   }
 
-  if (
-    campaignStatus === "generating_text" ||
-    campaignStatus === "generating_images"
-  ) {
-    return { id: "generating", label: "Generating", tone: "muted" };
+  if (campaignStatus === "generating_text") {
+    return { id: "generating_copy", label: "Writing copy", tone: "muted" };
+  }
+
+  if (campaignStatus === "generating_images") {
+    return { id: "generating_images", label: "Generating images", tone: "muted" };
   }
 
   const imagesComplete =

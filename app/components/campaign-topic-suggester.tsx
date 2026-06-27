@@ -14,10 +14,6 @@ type SuggesterMode = "website" | "photo";
 
 interface CampaignTopicSuggesterProps {
   onSelectTopic: (topic: string, options?: TopicSelectionOptions) => void;
-  onUseTopicAndGenerate?: (
-    topic: string,
-    options?: TopicSelectionOptions,
-  ) => void;
   onRequestFullDraft?: (
     topic: string,
     options?: TopicSelectionOptions,
@@ -37,7 +33,6 @@ interface CampaignTopicSuggesterProps {
 
 export default function CampaignTopicSuggester({
   onSelectTopic,
-  onUseTopicAndGenerate,
   onRequestFullDraft,
   onIngestComplete,
   onSaveBrandKit,
@@ -90,7 +85,6 @@ export default function CampaignTopicSuggester({
             slideCount={slideCount}
             brandId={brandId}
             onSelectTopic={onSelectTopic}
-            onUseTopicAndGenerate={onUseTopicAndGenerate}
             onRequestFullDraft={onRequestFullDraft}
             onIngestComplete={onIngestComplete}
             onSaveBrandKit={onSaveBrandKit}
@@ -117,7 +111,6 @@ export default function CampaignTopicSuggester({
       slideCount={slideCount}
       brandId={brandId}
       onSelectTopic={onSelectTopic}
-      onUseTopicAndGenerate={onUseTopicAndGenerate}
       onRequestFullDraft={onRequestFullDraft}
       onIngestComplete={onIngestComplete}
       onSaveBrandKit={onSaveBrandKit}
