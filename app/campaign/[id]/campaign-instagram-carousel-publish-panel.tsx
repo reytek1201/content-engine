@@ -2,7 +2,11 @@
 
 import CampaignInstagramCarouselReadinessChecklist from "@/app/campaign/[id]/campaign-instagram-carousel-readiness-checklist";
 import PlatformTierUpgradeNotice from "@/app/campaign/[id]/platform-tier-upgrade-notice";
-import SchedulePublishPicker from "@/app/campaign/[id]/schedule-publish-picker";
+import {
+  SchedulePublishRoot,
+  SchedulePublishStatus,
+  SchedulePublishTrigger,
+} from "@/app/campaign/[id]/schedule-publish-picker";
 import { useIsNativeApp } from "@/app/hooks/use-is-native-app";
 import { navigatePlatformOAuth } from "@/utils/native-platform-oauth-flow";
 import { getInstagramPublishErrorMessage } from "@/utils/instagram/publish-errors";
@@ -350,6 +354,81 @@ export default function CampaignInstagramCarouselPublishPanel({
     !scheduledPost &&
     carouselFormatPublishState === "ready";
 
+  const showSchedule =
+    readiness.connected &&
+    readiness.hasCarouselSlides &&
+    readiness.slideCountValid &&
+    !readiness.alreadyPublished &&
+    !readiness.isUploading &&
+    !isPublishing &&
+    carouselFormatPublishState === "ready";
+
+  const publishActionButtons = (
+    <>
+      {!readiness.connected ? (
+        readiness.canConnectPlatform === false ? (
+          <Link
+            href={readiness.upgradeUrl ?? "/settings/usage"}
+            className="btn-primary inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto sm:px-6"
+          >
+            Upgrade to connect Instagram
+          </Link>
+        ) : (
+          <Link
+            href="/settings/connected-accounts"
+            className="btn-primary inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto sm:px-6"
+          >
+            Connect Instagram
+          </Link>
+        )
+      ) : !readiness.tierAllowed ? (
+        <Link
+          href={readiness.upgradeUrl ?? "/settings/usage"}
+          className="btn-primary inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto sm:px-6"
+        >
+          Upgrade to post to Instagram
+        </Link>
+      ) : needsPublishScope ? (
+        <button
+          type="button"
+          onClick={() => {
+            navigatePlatformOAuth(publishAuthorizeUrl, isNativeApp === true, (nextPath) => {
+              router.replace(nextPath);
+              router.refresh();
+            });
+          }}
+          className="btn-primary w-full py-2.5 text-sm sm:w-auto sm:px-6"
+        >
+          Grant publishing permission
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled={!canClickPublish}
+          onClick={() => void handlePublish()}
+          className="btn-primary w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
+        >
+          {isPublishing || readiness.isUploading
+            ? "Publishing carousel…"
+            : readiness.alreadyPublished
+              ? "Already on Instagram"
+              : "Post carousel to Instagram"}
+        </button>
+      )}
+
+      {publishedUrl ? (
+        <a
+          href={publishedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground sm:w-auto"
+        >
+          View on Instagram
+        </a>
+      ) : null}
+    </>
+  );
+
   return (
     <InstagramCarouselPanelShell helperText={helperText}>
       <CampaignInstagramCarouselReadinessChecklist
@@ -366,78 +445,8 @@ export default function CampaignInstagramCarouselPublishPanel({
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        {!readiness.connected ? (
-          readiness.canConnectPlatform === false ? (
-            <Link
-              href={readiness.upgradeUrl ?? "/settings/usage"}
-              className="btn-primary inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto sm:px-6"
-            >
-              Upgrade to connect Instagram
-            </Link>
-          ) : (
-            <Link
-              href="/settings/connected-accounts"
-              className="btn-primary inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto sm:px-6"
-            >
-              Connect Instagram
-            </Link>
-          )
-        ) : !readiness.tierAllowed ? (
-          <Link
-            href={readiness.upgradeUrl ?? "/settings/usage"}
-            className="btn-primary inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto sm:px-6"
-          >
-            Upgrade to post to Instagram
-          </Link>
-        ) : needsPublishScope ? (
-          <button
-            type="button"
-            onClick={() => {
-              navigatePlatformOAuth(publishAuthorizeUrl, isNativeApp === true, (nextPath) => {
-                router.replace(nextPath);
-                router.refresh();
-              });
-            }}
-            className="btn-primary w-full py-2.5 text-sm sm:w-auto sm:px-6"
-          >
-            Grant publishing permission
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={!canClickPublish}
-            onClick={() => void handlePublish()}
-            className="btn-primary w-full py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
-          >
-            {isPublishing || readiness.isUploading
-              ? "Publishing carousel…"
-              : readiness.alreadyPublished
-                ? "Already on Instagram"
-                : "Post carousel to Instagram"}
-          </button>
-        )}
-
-        {publishedUrl ? (
-          <a
-            href={publishedUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-secondary-foreground transition hover:border-ring/60 hover:text-foreground sm:w-auto"
-          >
-            View on Instagram
-          </a>
-        ) : null}
-      </div>
-
-      {readiness.connected &&
-      readiness.hasCarouselSlides &&
-      readiness.slideCountValid &&
-      !readiness.alreadyPublished &&
-      !readiness.isUploading &&
-      !isPublishing &&
-      carouselFormatPublishState === "ready" ? (
-        <SchedulePublishPicker
+      {showSchedule ? (
+        <SchedulePublishRoot
           campaignId={campaignId}
           platformKey="instagram_carousel"
           platform="instagram"
@@ -452,8 +461,18 @@ export default function CampaignInstagramCarouselPublishPanel({
             setScheduledPost(null);
             void loadReadiness();
           }}
-        />
-      ) : null}
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {publishActionButtons}
+            <SchedulePublishTrigger />
+          </div>
+          <SchedulePublishStatus />
+        </SchedulePublishRoot>
+      ) : (
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          {publishActionButtons}
+        </div>
+      )}
 
       {isPublishing || readiness.isUploading ? (
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
