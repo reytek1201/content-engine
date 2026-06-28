@@ -102,6 +102,8 @@ Paste a public business URL on the create form to skip the blank-page start:
 - **Regenerate a single slide** without redoing the whole campaign
   - **Fix this slide** sheet — shared bottom sheet with swipe-to-dismiss; feedback chips, optional notes, optional snap-a-new product photo (native)
   - Quick feedback chips: **Fix headline text**, Brighter, Minimal, Bold colors, Product larger, Different layout, Try again
+  - **Small edits** (e.g. Brighter, Bold colors) edit the existing image via Fal Edit — the prompt sends chip instructions only, not a full re-statement of the original scene (so changes are visibly applied)
+  - **Layout / headline fixes** use a scene-reset path that rebuilds composition from brand context + headline spec
   - Edit the headline first when on-slide text should change; unsaved headline edits are saved when you regenerate
   - Optional free-text notes for what to change
   - Regeneration respects the **active format** when you have both 4:5 and 9:16
@@ -398,7 +400,7 @@ Mobile engagement: push alerts when async work finishes, and home-screen widgets
 
 - Inline voiceover script edit (PATCH per slide)
 - AI rewrite sheet with tone chips and three options
-- Regenerate slide via **Fix this slide** sheet — includes **Fix headline text** chip, scene-reset prompts for layout changes, auto-save headline before regen
+- Regenerate slide via **Fix this slide** sheet — includes **Fix headline text** chip, scene-reset prompts for layout/headline changes, dominant-edit prompts for small tweaks (Brighter, etc.), auto-save headline before regen
 
 **6B — Dual format (4:5 + 9:16)** ✅ *shipped*
 

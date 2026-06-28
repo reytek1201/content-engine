@@ -106,45 +106,69 @@ export function buildSlideImagePrompt(
   const revisionDirective =
     feedback || REGENERATION_VARIATION_DIRECTIVE;
 
-  const scenePrompt = resetScene
-    ? buildHeadlineOnlyPrompt(
-        slide.text_overlay,
-        campaign.aspect_ratio,
-        references,
-      )
-    : basePrompt;
+  if (resetScene) {
+    const scenePrompt = buildHeadlineOnlyPrompt(
+      slide.text_overlay,
+      campaign.aspect_ratio,
+      references,
+    );
 
-  const parts = [
-    resetScene
-      ? "Use the first reference image only for brand context (product, colors, mood). Do NOT preserve its layout, composition, or any on-image text."
-      : "Edit the first reference image (the current slide creative).",
+    const parts = [
+      "Use the first reference image only for brand context (product, colors, mood). Do NOT preserve its layout, composition, or any on-image text.",
+      "Any additional reference images are brand assets (product, style, logo) — use them only where they support the priority edits below.",
+      `PRIORITY — Apply these user-requested changes: ${revisionDirective}`,
+    ];
+
+    if (rerenderHeadline) {
+      parts.push(
+        `MUST re-render the headline exactly as specified below. Do not copy spelling, wording, or typography from text visible in the reference image: "${slide.text_overlay.replace(/"/g, '\\"')}".`,
+      );
+    }
+
+    parts.push(scenePrompt);
+    parts.push(
+      "The PRIORITY instructions above override the scene description and reference image when they conflict.",
+    );
+
+    if (rerenderHeadline) {
+      parts.push(
+        "Replace all on-image headline text; accuracy and spelling are mandatory.",
+      );
+    } else {
+      parts.push(
+        "Keep the headline text accurate and legible unless the user explicitly asked to change the wording.",
+      );
+    }
+
+    return appendCaptionFriendlyCompositionClause(
+      parts.join(" "),
+      options?.burnCaptions,
+    );
+  }
+
+  const editParts = [
+    "Edit the first reference image (the current slide creative).",
     "Any additional reference images are brand assets (product, style, logo) — use them only where they support the priority edits below.",
     `PRIORITY — Apply these user-requested changes: ${revisionDirective}`,
   ];
 
   if (rerenderHeadline) {
-    parts.push(
+    editParts.push(
       `MUST re-render the headline exactly as specified below. Do not copy spelling, wording, or typography from text visible in the reference image: "${slide.text_overlay.replace(/"/g, '\\"')}".`,
-    );
-  }
-
-  parts.push(scenePrompt);
-  parts.push(
-    "The PRIORITY instructions above override the scene description and reference image when they conflict.",
-  );
-
-  if (rerenderHeadline) {
-    parts.push(
       "Replace all on-image headline text; accuracy and spelling are mandatory.",
     );
   } else {
-    parts.push(
-      "Keep the headline text accurate and legible unless the user explicitly asked to change the wording.",
+    editParts.push(
+      "Keep the headline text exactly as currently shown, with accurate spelling, unless the user explicitly asked to change the wording.",
     );
   }
 
+  editParts.push(
+    "Apply the requested changes above as the dominant edit to this image. Preserve everything else about the existing composition that isn't affected by the requested change.",
+  );
+
   return appendCaptionFriendlyCompositionClause(
-    parts.join(" "),
+    editParts.join(" "),
     options?.burnCaptions,
   );
 }

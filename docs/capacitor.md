@@ -248,7 +248,7 @@ Native camera integration throughout the app using `@capacitor/camera`.
 - **Create form** — **"Snap product → get topic ideas"** button below the topic field. Photo is sent to Gemini vision (`/api/suggest-topic`) which returns 3 campaign topic hooks. User taps one to pre-fill the topic.
 - **Slide regeneration** — **"Snap new product photo"** button in each slide's regenerate controls. Photo is uploaded to Supabase storage and used as an override product reference for that single regen without changing the campaign's saved references.
 
-**Feedback/notes now forwarded:** The slide-level `feedback` chips and `notes` field are now properly forwarded to `/api/regenerate-slide` (was previously unused).
+**Feedback/notes now forwarded:** The slide-level `feedback` chips and `notes` field are forwarded to `/api/regenerate-slide`. Small-edit chips (Brighter, Bold colors, etc.) send edit-only Fal prompts without restating the full scene; layout/headline chips use a scene-reset prompt path (`utils/slide-image-prompt.ts`).
 
 **iOS permissions added to `Info.plist`:**
 - `NSCameraUsageDescription`

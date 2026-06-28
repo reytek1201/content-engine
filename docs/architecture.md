@@ -79,6 +79,19 @@ Native apps (Capacitor) load the same Vercel deployment in a WebView — no sepa
 
 Journey strip states: Copy → Assets (images + captions) → Video → Publish.
 
+### Slide image regeneration (Fix this slide)
+
+`POST /api/regenerate-slide` → `buildSlideImagePrompt()` in `utils/slide-image-prompt.ts` → Fal **Nano Banana 2 Edit** (`fal-ai/nano-banana-2/edit`) with `image_urls`: `[current slide, product?, style?, logo?]`.
+
+Two prompt paths (feedback chips in `types/regenerate-feedback.ts`):
+
+| Path | When | Prompt strategy |
+|------|------|-----------------|
+| **Small edit** | Chips like Brighter, Bold colors, Product larger (no scene reset) | Edit the reference image; **do not** restate `image_prompt` in text — the reference carries scene context; chip instructions are the dominant edit |
+| **Scene reset** | Fix headline text, Different layout, Try again, Minimal, or headline changed | Reference image used for brand context only; fresh headline-only scene prompt; full re-compose |
+
+Chip prompt strings and scene-reset rules are unchanged; only the small-edit path omits the competing full scene paragraph that caused near-identical re-renders.
+
 ---
 
 ## Navigation & routing
