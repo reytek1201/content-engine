@@ -13,7 +13,7 @@ const OUTPUTS = [
     title: "Carousel slides",
     format: "4:5 feed",
     description:
-      "Download a zip of ready-to-post images with your headline on every slide.",
+      "Download a zip of ready-to-post images with your headline on every slide. Add 9:16 later from the same campaign.",
   },
   {
     icon: MicIcon,
@@ -27,7 +27,7 @@ const OUTPUTS = [
     title: "Reel-ready video",
     format: "4:5 or 9:16",
     description:
-      "One tap exports an MP4 with your slides, crossfades, and AI voiceover stitched in.",
+      "One tap exports an MP4 with your slides and AI voiceover stitched in. Optional burned-in captions on Quick Reel.",
   },
 ] as const;
 

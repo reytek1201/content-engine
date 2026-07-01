@@ -4,7 +4,8 @@ import MarketingFeatures from "@/app/components/marketing/marketing-features";
 import MarketingHeader from "@/app/components/marketing/marketing-header";
 import MarketingHero from "@/app/components/marketing/marketing-hero";
 import MarketingOutputs from "@/app/components/marketing/marketing-outputs";
-import MarketingProTeaser from "@/app/components/marketing/marketing-pro-teaser";
+import MarketingPricing from "@/app/components/marketing/marketing-pricing";
+import MarketingPublish from "@/app/components/marketing/marketing-publish";
 import MarketingSteps from "@/app/components/marketing/marketing-steps";
 import Link from "next/link";
 import {
@@ -87,10 +88,11 @@ export default function MarketingLanding() {
       <main>
         <MarketingHero />
         <MarketingOutputs />
+        <MarketingPublish />
         <MarketingFeatures />
         <MarketingSteps />
         <MarketingApps />
-        <MarketingProTeaser />
+        <MarketingPricing />
       </main>
 
       <footer className="border-t border-border">
@@ -98,7 +100,8 @@ export default function MarketingLanding() {
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <BrandLogo href="/" />
             <p className="text-center text-xs text-muted-foreground sm:text-right">
-              Carousel slides, AI narration &amp; video for creators
+              From URL to carousel, narration &amp; video — post where your
+              audience is
               <br />
               <a
                 href="mailto:hello@slidepress.co"

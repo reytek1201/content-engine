@@ -6,10 +6,11 @@ import { getMarketingFeatureImageUrl } from "@/utils/marketing-assets";
 const FEATURES = [
   {
     kicker: "Step 1",
-    title: "Tell us your topic",
+    title: "Tell us your topic — or paste your site",
     description:
-      "Type a pain point, product, or idea — like you would explain it to a friend. Pick 4:5 for feed carousels or 9:16 for Reels and Shorts.",
+      "Type a pain point, product, or idea — or paste your website URL for AI campaign suggestions. Pick 4:5 for feed carousels or 9:16 for Reels and Shorts.",
     bullets: [
+      "Website URL → topic cards or full draft in one action",
       "3, 5, or 7 slides",
       "Optional product & style photos",
       "Separate workspaces per brand or client",
@@ -24,8 +25,9 @@ const FEATURES = [
       "AI writes each slide’s headline and voiceover script, then generates on-brand images with your text already on the creative.",
     bullets: [
       "Edit any headline in one tap",
+      "Rewrite voiceover with AI",
       "Regenerate a single slide if needed",
-      "Preview the full carousel before you publish",
+      "Add the other format when primary images are ready",
     ],
     visual: "slides",
     imageAlt: "SlidePress slides workspace showing generated carousel images",
@@ -34,11 +36,12 @@ const FEATURES = [
     kicker: "Step 3",
     title: "Voice, captions & export",
     description:
-      "Preview how your slides sound, copy captions for each platform, then download your zip, narration, or finished video.",
+      "Preview how your slides sound, copy captions for each platform, then download your zip, narration, or finished video — or post directly.",
     bullets: [
       "Natural AI voices — warm, confident, energetic, or professional",
       "TikTok, Instagram & YouTube copy included",
       "Save to Photos or share from the mobile app",
+      "Schedule posts on Creator & Agency plans",
     ],
     visual: "export",
     imageAlt: "SlidePress publish screen with captions and export options",
@@ -60,7 +63,7 @@ export default function MarketingFeatures() {
       <MarketingSectionIntro
         kicker="Built for creators, not designers"
         title="Everything happens in one simple flow"
-        description="No timelines, layers, or five different apps. If you can type a sentence, you can publish."
+        description="No timelines, layers, or five different apps. Start from a URL or a sentence — publish when you're ready."
       />
 
       <div className="mt-14 space-y-20">

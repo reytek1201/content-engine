@@ -28,6 +28,8 @@ export default function MarketingApps() {
                 <li>· Sign in with Google, Apple, or email</li>
                 <li>· Save all slides to your camera roll in one tap</li>
                 <li>· Share video exports via the system share sheet</li>
+                <li>· Push alerts when images or your full draft are ready</li>
+                <li>· Home screen widgets — continue a campaign or start new</li>
               </ul>
 
               <div className="mt-8">

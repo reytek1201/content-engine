@@ -19,18 +19,21 @@ export default function MarketingHero() {
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div className="text-center lg:text-left">
           <RevealOnScroll when="mount" delay={0}>
-            <p className="brand-kicker text-primary">Social content made simple</p>
+            <p className="brand-kicker text-primary">
+              From topic or website to published post
+            </p>
           </RevealOnScroll>
           <RevealOnScroll when="mount" delay={80}>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
-              Turn your idea into slides and video — no editing skills needed
+              Turn your idea — or your website — into slides and video
             </h1>
           </RevealOnScroll>
           <RevealOnScroll when="mount" delay={160}>
             <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg lg:mx-0">
-              Describe what you want to talk about. SlidePress writes your slides,
-              creates the images, adds a natural AI voice, and gives you captions
-              for TikTok, Instagram, and YouTube — all in one place.
+              Paste a URL or describe what you want to talk about. SlidePress
+              writes your slides, creates on-brand images, adds a natural AI
+              voice, generates platform captions, and lets you export or post to
+              TikTok, Instagram, and YouTube — all in one workspace.
             </p>
           </RevealOnScroll>
 
@@ -47,7 +50,8 @@ export default function MarketingHero() {
 
           <RevealOnScroll when="mount" delay={300}>
             <p className="mt-4 text-xs text-muted-foreground">
-              Free to start · No credit card · Pro plans coming soon
+              Free to start · No credit card · Upgrade when you need video &amp;
+              direct posting
             </p>
           </RevealOnScroll>
 
